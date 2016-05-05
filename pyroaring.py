@@ -4,7 +4,7 @@ libroaring = ctypes.CDLL('libroaring.so')
 
 
 class BitMap:
-
+    __BASE_TYPE__ = ctypes.c_uint32
     def __init__(self, values=None):
         if values is None:
             self.__obj__ = libroaring.roaring_bitmap_create()
@@ -13,7 +13,7 @@ class BitMap:
         else:
             self.check_values(values)
             size = len(values)
-            Array = ctypes.c_uint32*size
+            Array = self.__BASE_TYPE__*size
             values = Array(*values)
             self.__obj__ = libroaring.roaring_bitmap_of_ptr(size, values)
 
@@ -45,3 +45,11 @@ class BitMap:
         if not isinstance(other, self.__class__):
             return False
         return bool(libroaring.roaring_bitmap_equals(self.__obj__, other.__obj__))
+
+    def __iter__(self):
+        size = ctypes.pointer(self.__BASE_TYPE__(-1))
+        to_array = libroaring.roaring_bitmap_to_uint32_array
+        to_array.restype = ctypes.POINTER(self.__BASE_TYPE__)
+        array = to_array(self.__obj__, size)
+        for i in range(size.contents.value):
+            yield int(array[i])
