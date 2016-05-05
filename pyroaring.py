@@ -5,7 +5,10 @@ libroaring = ctypes.CDLL('libroaring.so')
 
 class BitMap:
     __BASE_TYPE__ = ctypes.c_uint32
-    def __init__(self, values=None):
+    def __init__(self, values=None, *, obj=None):
+        if obj is not None:
+            self.__obj__ = obj
+            return
         if values is None:
             self.__obj__ = libroaring.roaring_bitmap_create()
         elif isinstance(values, BitMap):
@@ -53,3 +56,32 @@ class BitMap:
         array = to_array(self.__obj__, size)
         for i in range(size.contents.value):
             yield int(array[i])
+
+    def __repr__(self):
+        values = ', '.join([str(n) for n in self])
+        return 'BitMap([%s])' % values
+
+    def __binary_op__(self, other, function):
+        try:
+            return BitMap(obj=function(self.__obj__, other.__obj__))
+        except AttributeError:
+            raise TypeError('Not a BitMap.')
+
+    def __or__(self, other):
+        return self.__binary_op__(other, libroaring.roaring_bitmap_or)
+
+    def __and__(self, other):
+        return self.__binary_op__(other, libroaring.roaring_bitmap_and)
+
+    def __binary_op_inplace__(self, other, function):
+        try:
+            function(self.__obj__, other.__obj__)
+            return self
+        except AttributeError:
+            raise TypeError('Not a BitMap.')
+
+    def __ior__(self, other):
+        return self.__binary_op_inplace__(other, libroaring.roaring_bitmap_or_inplace)
+
+    def __iand__(self, other):
+        return self.__binary_op_inplace__(other, libroaring.roaring_bitmap_and_inplace)
