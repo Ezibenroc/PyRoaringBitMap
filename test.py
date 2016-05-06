@@ -17,6 +17,8 @@ class BaseTest(unittest.TestCase):
             else:
                 self.assertNotIn(value, bitmap)
 
+class BasicTest(BaseTest):
+
     def test_basic(self):
         bitmap = BitMap()
         expected_set = set()
@@ -55,6 +57,29 @@ class BaseTest(unittest.TestCase):
         self.assertEqual(bitmap1, bitmap2)
         bitmap1.add(42)
         self.assertNotEqual(bitmap1, bitmap2)
+
+    def wrong_op(self, op):
+        bitmap = BitMap()
+        with self.assertRaises(ValueError):
+            op(bitmap, -3)
+        with self.assertRaises(ValueError):
+            op(bitmap, 2**33)
+        with self.assertRaises(ValueError):
+            op(bitmap, 'bla')
+
+    def test_wrong_add(self):
+        self.wrong_op(lambda bitmap, value: bitmap.add(value))
+
+    def test_wrong_contain(self):
+        self.wrong_op(lambda bitmap, value: bitmap.__contains__(value))
+
+    def test_wrong_constructor_values(self):
+        with self.assertRaises(ValueError):
+            bitmap = BitMap([3, 1, -3, 42])
+        with self.assertRaises(ValueError):
+            bitmap = BitMap([3, 2**33, 3, 42])
+        with self.assertRaises(ValueError):
+            bitmap = BitMap([3, 'bla', 3, 42])
 
 class OperationsTest(BaseTest):
 
