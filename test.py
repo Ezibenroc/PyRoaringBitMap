@@ -2,9 +2,10 @@
 
 import unittest
 import random
+import functools
 from pyroaring import BitMap
 
-class BaseTest(unittest.TestCase):
+class Util(unittest.TestCase):
 
     def compare_with_set(self, bitmap, expected_set, universe):
         self.assertEqual(len(bitmap), len(expected_set))
@@ -17,7 +18,18 @@ class BaseTest(unittest.TestCase):
             else:
                 self.assertNotIn(value, bitmap)
 
-class BasicTest(BaseTest):
+    @staticmethod
+    def get_random_set(universe, set_proportion=None):
+        if set_proportion is None:
+            set_proportion = 0.1
+        else:
+            assert set_proportion > 0 and set_proportion < 1
+        min_number = int(len(universe)*set_proportion)
+        max_number = min_number*2
+        size = random.randint(min_number, max_number)
+        return set(random.sample(universe, size))
+
+class BasicTest(Util):
 
     def test_basic(self):
         bitmap = BitMap()
@@ -81,7 +93,7 @@ class BasicTest(BaseTest):
         with self.assertRaises(ValueError):
             bitmap = BitMap([3, 'bla', 3, 42])
 
-class OperationsTest(BaseTest):
+class BinaryOperationsTest(Util):
 
     def setUp(self):
         self.universe = range(100)
@@ -89,11 +101,6 @@ class OperationsTest(BaseTest):
         self.set2 = self.get_random_set(self.universe)
         self.bitmap1 = BitMap(self.set1)
         self.bitmap2 = BitMap(self.set2)
-
-    @staticmethod
-    def get_random_set(universe):
-        size = random.randint(len(universe)/10, 4*len(universe)/10)
-        return set(random.sample(universe, size))
 
     def do_test_binary_op(self, op):
         old_bitmap1 = BitMap(self.bitmap1)
@@ -106,10 +113,12 @@ class OperationsTest(BaseTest):
 
     def test_or(self):
         for _ in range(10):
+            self.setUp()
             self.do_test_binary_op(lambda x,y : x|y)
 
     def test_and(self):
         for _ in range(10):
+            self.setUp()
             self.do_test_binary_op(lambda x,y : x&y)
 
     def do_test_binary_op_inplace(self, op):
@@ -121,11 +130,34 @@ class OperationsTest(BaseTest):
 
     def test_or_inplace(self):
         for _ in range(10):
+            self.setUp()
             self.do_test_binary_op_inplace(lambda x,y : x.__ior__(y))
 
     def test_and_inplace(self):
         for _ in range(10):
+            self.setUp()
             self.do_test_binary_op_inplace(lambda x,y : x.__iand__(y))
+
+class ManyOperationsTest(Util):
+
+    def setUp(self):
+        self.universe = range(1000)
+        self.bitmaps = []
+        self.nb_bitmaps = random.randint(5, 30)
+        for _ in range(self.nb_bitmaps):
+            self.bitmaps.append(BitMap(self.get_random_set(self.universe, set_proportion=0.01)))
+
+    def do_test_or_many(self):
+        copy = [BitMap(bm) for bm in self.bitmaps]
+        result = BitMap.or_many(self.bitmaps)
+        self.assertEqual(copy, self.bitmaps)
+        expected_result = functools.reduce(lambda x, y: x|y, self.bitmaps)
+        self.assertEqual(expected_result, result)
+
+    def test_or_many(self):
+        for _ in range(10):
+            self.setUp()
+            self.do_test_or_many()
 
 if __name__ == "__main__":
     unittest.main()

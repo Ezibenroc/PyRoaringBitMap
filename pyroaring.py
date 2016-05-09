@@ -85,3 +85,11 @@ class BitMap:
 
     def __iand__(self, other):
         return self.__binary_op_inplace__(other, libroaring.roaring_bitmap_and_inplace)
+
+    @classmethod
+    def or_many(cls, bitmaps):
+        size = len(bitmaps)
+        Array = ctypes.c_void_p*size
+        bitmaps = Array(*(ctypes.c_void_p(bm.__obj__) for bm in bitmaps))
+        obj = libroaring.roaring_bitmap_or_many(size, bitmaps)
+        return cls(obj=obj)
