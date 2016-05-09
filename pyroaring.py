@@ -95,11 +95,10 @@ class BitMap:
         return cls(obj=obj)
 
     def serialize(self):
-        size = ctypes.pointer(ctypes.c_uint32(-1))
-        serialize = libroaring.roaring_bitmap_serialize
-        serialize.restype = ctypes.POINTER(ctypes.c_char)
-        buff = serialize(self.__obj__, size)
-        size = size.contents.value
+        size = libroaring.roaring_bitmap_portable_size_in_bytes(self.__obj__)
+        Array = ctypes.c_char*size
+        buff = Array()
+        size = libroaring.roaring_bitmap_portable_serialize(self.__obj__, buff)
         return buff[:size]
 
     @classmethod
@@ -107,5 +106,5 @@ class BitMap:
         size = len(buff)
         Array = ctypes.c_char*size
         buff = Array(*buff)
-        obj = libroaring.roaring_bitmap_deserialize(buff, size)
+        obj = libroaring.roaring_bitmap_portable_deserialize(buff)
         return cls(obj=obj)

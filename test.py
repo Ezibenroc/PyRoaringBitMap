@@ -170,7 +170,7 @@ class SerializationTest(Util):
         self.assertNotEqual(old_bm, new_bm)
 
     def test_serialization(self):
-        for _ in range(100): # the test fails sometime, I suspect a bug
+        for _ in range(100):
             self.do_test_serialization()
 
 if __name__ == "__main__":
