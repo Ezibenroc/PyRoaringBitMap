@@ -93,3 +93,19 @@ class BitMap:
         bitmaps = Array(*(ctypes.c_void_p(bm.__obj__) for bm in bitmaps))
         obj = libroaring.roaring_bitmap_or_many(size, bitmaps)
         return cls(obj=obj)
+
+    def serialize(self):
+        size = ctypes.pointer(ctypes.c_uint32(-1))
+        serialize = libroaring.roaring_bitmap_serialize
+        serialize.restype = ctypes.POINTER(ctypes.c_char)
+        buff = serialize(self.__obj__, size)
+        size = size.contents.value
+        return buff[:size]
+
+    @classmethod
+    def deserialize(cls, buff):
+        size = len(buff)
+        Array = ctypes.c_char*size
+        buff = Array(*buff)
+        obj = libroaring.roaring_bitmap_deserialize(buff, size)
+        return cls(obj=obj)

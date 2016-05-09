@@ -159,5 +159,19 @@ class ManyOperationsTest(Util):
             self.setUp()
             self.do_test_or_many()
 
+class SerializationTest(Util):
+
+    def do_test_serialization(self):
+        old_bm = BitMap(self.get_random_set(range(1000)))
+        buff = old_bm.serialize()
+        new_bm = BitMap.deserialize(buff)
+        self.assertEqual(old_bm, new_bm)
+        old_bm.add(1001)
+        self.assertNotEqual(old_bm, new_bm)
+
+    def test_serialization(self):
+        for _ in range(100): # the test fails sometime, I suspect a bug
+            self.do_test_serialization()
+
 if __name__ == "__main__":
     unittest.main()
