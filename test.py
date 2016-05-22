@@ -3,7 +3,8 @@
 import unittest
 import random
 import functools
-from pyroaring import BitMap
+import os
+from pyroaring import BitMap, load, dump
 
 class Util(unittest.TestCase):
 
@@ -172,6 +173,16 @@ class SerializationTest(Util):
     def test_serialization(self):
         for _ in range(100):
             self.do_test_serialization()
+
+    def test_load_dump(self):
+        filepath = 'testfile'
+        old_bm = BitMap(self.get_random_set(range(1000)))
+        with open(filepath, 'wb') as f:
+            dump(f, old_bm)
+        with open(filepath, 'rb') as f:
+            new_bm = load(f)
+        self.assertEqual(old_bm, new_bm)
+        os.remove(filepath)
 
 if __name__ == "__main__":
     unittest.main()

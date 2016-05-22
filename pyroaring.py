@@ -2,6 +2,13 @@ import ctypes
 import time
 libroaring = ctypes.CDLL('libroaring.so')
 
+def load(fp):
+    buff = fp.read()
+    return BitMap.deserialize(buff)
+
+def dump(fp, bitmap):
+    buff = bitmap.serialize()
+    fp.write(buff)
 
 class BitMap:
     __BASE_TYPE__ = ctypes.c_uint32
