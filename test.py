@@ -71,6 +71,24 @@ class BasicTest(Util):
         bitmap1.add(42)
         self.assertNotEqual(bitmap1, bitmap2)
 
+    def do_test_constructor_range(self, start, end, step):
+        values = range(start, end, step)
+        result = set(BitMap(values))
+        expected = set(values)
+        self.assertEqual(result, expected)
+
+    def test_constructor_range(self):
+        with self.assertRaises(ValueError):
+            bm = BitMap(range(0, 10, 0))
+        with self.assertRaises(ValueError):
+            bm = BitMap(range(10, 0))
+        for start in [0, 3, 2**16-5, 2**17-9]:
+            for end in [start + 10**n for n in range(6)]:
+                for step in range(1, 10):
+                    self.do_test_constructor_range(start, end, step)
+                for step in [3000, 2**16-3, 2**16+5, 2**18+7]:
+                    self.do_test_constructor_range(start, end, step)
+
     def wrong_op(self, op):
         bitmap = BitMap()
         with self.assertRaises(ValueError):
