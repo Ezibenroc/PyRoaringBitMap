@@ -4,90 +4,101 @@ import unittest
 import random
 import functools
 import os
+from hypothesis import given
+import hypothesis.strategies as st
 from pyroaring import BitMap, load, dump
+
+uint18 = st.integers(min_value=0, max_value=2**18)
+uint32 = st.integers(min_value=0, max_value=2**32-1)
+hyp_set = st.sets(uint32,
+                 min_size=0, max_size=2**14, average_size=2**10)
+
+range_max_size = 2**18
+
+range_big_step = uint18.flatmap(lambda n:
+    st.builds(range, st.just(n),
+                     st.integers(min_value=n+1, max_value=n+range_max_size),
+                     st.integers(min_value=2**8, max_value=range_max_size//8)))
+
+range_small_step = uint18.flatmap(lambda n:
+    st.builds(range, st.just(n),
+                     st.integers(min_value=n+1, max_value=n+range_max_size),
+                     st.integers(min_value=1, max_value=2**8)))
+
+range_power2_step = uint18.flatmap(lambda n:
+     st.builds(range, st.just(n),
+                      st.integers(min_value=n+1, max_value=n+range_max_size),
+                      st.integers(min_value=0, max_value=8).flatmap(
+                        lambda n: st.just(2**n)
+                      )))
+
+hyp_range = range_big_step | range_small_step | range_power2_step
+hyp_many_ranges = st.lists(hyp_range, min_size=1, max_size=20)
+hyp_set = st.builds(set, hyp_range)
+hyp_collection = hyp_range | hyp_set
 
 class Util(unittest.TestCase):
 
-    def compare_with_set(self, bitmap, expected_set, universe):
+    comparison_set = random.sample(range(2**8), 100) + random.sample(range(2**32-1), 50)
+
+    def compare_with_set(self, bitmap, expected_set):
         self.assertEqual(len(bitmap), len(expected_set))
         self.assertEqual(set(bitmap), expected_set)
         self.assertEqual(sorted(list(bitmap)), sorted(list(expected_set)))
         self.assertEqual(BitMap(expected_set), bitmap)
-        for value in universe:
+        for value in self.comparison_set:
             if value in expected_set:
                 self.assertIn(value, bitmap)
             else:
                 self.assertNotIn(value, bitmap)
 
-    @staticmethod
-    def get_random_set(universe, set_proportion=None):
-        if set_proportion is None:
-            set_proportion = 0.1
-        else:
-            assert set_proportion > 0 and set_proportion < 1
-        min_number = int(len(universe)*set_proportion)
-        max_number = min_number*2
-        size = random.randint(min_number, max_number)
-        return set(random.sample(universe, size))
-
 class BasicTest(Util):
 
-    def test_basic(self):
+    @given(hyp_range)
+    def test_basic(self, values):
         bitmap = BitMap()
         expected_set = set()
-        universe = range(100)
-        self.compare_with_set(bitmap, expected_set, universe)
-        values = list(universe)
+        self.compare_with_set(bitmap, expected_set)
+        values = list(values)
         random.shuffle(values)
-        for value in values:
+        size = len(values)
+        for value in values[:size//2]:
             bitmap.add(value)
             expected_set.add(value)
-            self.compare_with_set(bitmap, expected_set, universe)
+        self.compare_with_set(bitmap, expected_set)
+        for value in values[size//2:]:
+            bitmap.add(value)
+            expected_set.add(value)
+        self.compare_with_set(bitmap, expected_set)
 
-    def test_bitmap_equality(self):
-        bitmap1 = BitMap()
-        bitmap2 = BitMap()
-        self.assertEqual(bitmap1, bitmap2)
-        bitmap1.add(42)
-        self.assertNotEqual(bitmap1, bitmap2)
-        bitmap2.add(27)
-        self.assertNotEqual(bitmap1, bitmap2)
-        bitmap1.add(27)
-        self.assertNotEqual(bitmap1, bitmap2)
-        bitmap2.add(42)
+
+    @given(hyp_range)
+    def test_bitmap_equality(self, values):
+        bitmap1 = BitMap(values)
+        bitmap2 = BitMap(values)
         self.assertEqual(bitmap1, bitmap2)
 
-    def test_constructor_values(self):
-        values = range(10,80,3)
+    @given(hyp_range, hyp_range)
+    def test_bitmap_unequality(self, values1, values2):
+        st.assume(values1 != values2)
+        bitmap1 = BitMap(values1)
+        bitmap2 = BitMap(values2)
+        self.assertNotEqual(bitmap1, bitmap2)
+
+    @given(hyp_collection)
+    def test_constructor_values(self, values):
         bitmap = BitMap(values)
         expected_set = set(values)
-        universe = range(100)
-        self.compare_with_set(bitmap, expected_set, universe)
+        self.compare_with_set(bitmap, expected_set)
 
-    def test_constructor_copy(self):
-        bitmap1 = BitMap(range(10))
+    @given(hyp_range, uint32)
+    def test_constructor_copy(self, values, other_value):
+        st.assume(other_value not in values)
+        bitmap1 = BitMap(values)
         bitmap2 = BitMap(bitmap1)
         self.assertEqual(bitmap1, bitmap2)
-        bitmap1.add(42)
+        bitmap1.add(other_value)
         self.assertNotEqual(bitmap1, bitmap2)
-
-    def do_test_constructor_range(self, start, end, step):
-        values = range(start, end, step)
-        result = set(BitMap(values))
-        expected = set(values)
-        self.assertEqual(result, expected)
-
-    def test_constructor_range(self):
-        with self.assertRaises(ValueError):
-            bm = BitMap(range(0, 10, 0))
-        with self.assertRaises(ValueError):
-            bm = BitMap(range(10, 0))
-        for start in [0, 3, 2**16-5, 2**17-9]:
-            for end in [start + 10**n for n in range(6)]:
-                for step in range(1, 10):
-                    self.do_test_constructor_range(start, end, step)
-                for step in [3000, 2**16-3, 2**16+5, 2**18+7]:
-                    self.do_test_constructor_range(start, end, step)
 
     def wrong_op(self, op):
         bitmap = BitMap()
@@ -111,15 +122,19 @@ class BasicTest(Util):
             bitmap = BitMap([3, 2**33, 3, 42])
         with self.assertRaises(ValueError):
             bitmap = BitMap([3, 'bla', 3, 42])
+        with self.assertRaises(ValueError):
+            bitmap = BitMap(range(0, 10, 0))
+        with self.assertRaises(ValueError):
+            bitmap = BitMap(range(10, 0, 1))
 
 class BinaryOperationsTest(Util):
 
-    def setUp(self):
-        self.universe = range(100)
-        self.set1 = self.get_random_set(self.universe)
-        self.set2 = self.get_random_set(self.universe)
-        self.bitmap1 = BitMap(self.set1)
-        self.bitmap2 = BitMap(self.set2)
+    @given(hyp_range, hyp_range)
+    def setUp(self, values1, values2):
+        self.set1 = set(values1)
+        self.set2 = set(values2)
+        self.bitmap1 = BitMap(values1)
+        self.bitmap2 = BitMap(values2)
 
     def do_test_binary_op(self, op):
         old_bitmap1 = BitMap(self.bitmap1)
@@ -128,73 +143,54 @@ class BinaryOperationsTest(Util):
         result_bitmap = op(self.bitmap1, self.bitmap2)
         self.assertEqual(self.bitmap1, old_bitmap1)
         self.assertEqual(self.bitmap2, old_bitmap2)
-        self.compare_with_set(result_bitmap, result_set, self.universe)
+        self.compare_with_set(result_bitmap, result_set)
 
     def test_or(self):
-        for _ in range(10):
-            self.setUp()
-            self.do_test_binary_op(lambda x,y : x|y)
+        self.do_test_binary_op(lambda x,y : x|y)
 
     def test_and(self):
-        for _ in range(10):
-            self.setUp()
-            self.do_test_binary_op(lambda x,y : x&y)
+        self.do_test_binary_op(lambda x,y : x&y)
 
     def do_test_binary_op_inplace(self, op):
         old_bitmap2 = BitMap(self.bitmap2)
         op(self.set1, self.set2)
         op(self.bitmap1, self.bitmap2)
         self.assertEqual(self.bitmap2, old_bitmap2)
-        self.compare_with_set(self.bitmap1, self.set1, self.universe)
+        self.compare_with_set(self.bitmap1, self.set1)
 
     def test_or_inplace(self):
-        for _ in range(10):
-            self.setUp()
-            self.do_test_binary_op_inplace(lambda x,y : x.__ior__(y))
+        self.do_test_binary_op_inplace(lambda x,y : x.__ior__(y))
 
     def test_and_inplace(self):
-        for _ in range(10):
-            self.setUp()
-            self.do_test_binary_op_inplace(lambda x,y : x.__iand__(y))
+        self.do_test_binary_op_inplace(lambda x,y : x.__iand__(y))
 
 class ManyOperationsTest(Util):
 
-    def setUp(self):
-        self.universe = range(1000)
-        self.bitmaps = []
-        self.nb_bitmaps = random.randint(5, 30)
-        for _ in range(self.nb_bitmaps):
-            self.bitmaps.append(BitMap(self.get_random_set(self.universe, set_proportion=0.01)))
-
-    def do_test_or_many(self):
-        copy = [BitMap(bm) for bm in self.bitmaps]
-        result = BitMap.or_many(self.bitmaps)
-        self.assertEqual(copy, self.bitmaps)
-        expected_result = functools.reduce(lambda x, y: x|y, self.bitmaps)
+    @given(hyp_many_ranges)
+    def test_or_many(self, all_values):
+        bitmaps = [BitMap(values) for values in all_values]
+        bitmaps_copy = [BitMap(bm) for bm in bitmaps]
+        result = BitMap.or_many(bitmaps)
+        self.assertEqual(bitmaps_copy, bitmaps)
+        expected_result = functools.reduce(lambda x, y: x|y, bitmaps)
         self.assertEqual(expected_result, result)
-
-    def test_or_many(self):
-        for _ in range(10):
-            self.setUp()
-            self.do_test_or_many()
 
 class SerializationTest(Util):
 
-    def do_test_serialization(self):
-        old_bm = BitMap(self.get_random_set(range(1000)))
+    @given(hyp_range, uint32)
+    def test_serialization(self, values, other_value):
+        st.assume(other_value not in values)
+        old_bm = BitMap(values)
         buff = old_bm.serialize()
         new_bm = BitMap.deserialize(buff)
         self.assertEqual(old_bm, new_bm)
-        old_bm.add(1001)
+        old_bm.add(other_value)
         self.assertNotEqual(old_bm, new_bm)
 
-    def test_serialization(self):
-        for _ in range(100):
-            self.do_test_serialization()
-
-    def test_load_dump(self):
+    @given(hyp_range)
+    def test_load_dump(self, values):
         filepath = 'testfile'
-        old_bm = BitMap(self.get_random_set(range(1000)))
+        old_bm = BitMap(values)
         with open(filepath, 'wb') as f:
             dump(f, old_bm)
         with open(filepath, 'rb') as f:
