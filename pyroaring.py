@@ -20,6 +20,14 @@ class BitMap:
             self.__obj__ = libroaring.roaring_bitmap_create()
         elif isinstance(values, BitMap):
             self.__obj__ = libroaring.roaring_bitmap_copy(values.__obj__)
+        elif isinstance(values, range):
+            if values.step < 0:
+                values = range(values.stop+1, values.start+1, -values.step)
+            if values.start >= values.stop:
+                raise ValueError('Invalid range: max value must be greater than min value.')
+            self.check_value(values.start)
+            self.check_value(values.stop)
+            self.__obj__ = libroaring.roaring_bitmap_from_range(values.start, values.stop, values.step)
         else:
             self.check_values(values)
             size = len(values)
