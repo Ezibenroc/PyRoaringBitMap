@@ -70,6 +70,14 @@ class BasicTest(Util):
             bitmap.add(value)
             expected_set.add(value)
         self.compare_with_set(bitmap, expected_set)
+        for value in values[:size//2]:
+            bitmap.remove(value)
+            expected_set.remove(value)
+        self.compare_with_set(bitmap, expected_set)
+        for value in values[size//2:]:
+            bitmap.remove(value)
+            expected_set.remove(value)
+        self.compare_with_set(bitmap, expected_set)
 
 
     @given(hyp_range)

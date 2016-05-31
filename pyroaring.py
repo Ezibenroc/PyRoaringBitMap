@@ -52,6 +52,10 @@ class BitMap:
         self.check_value(value)
         libroaring.roaring_bitmap_add(self.__obj__, value)
 
+    def remove(self, value):
+        self.check_value(value)
+        libroaring.roaring_bitmap_remove(self.__obj__, value)
+
     def __contains__(self, value):
         self.check_value(value)
         return libroaring.roaring_bitmap_contains(self.__obj__, value)
