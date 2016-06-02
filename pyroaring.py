@@ -36,7 +36,10 @@ class BitMap:
             self.__obj__ = libroaring.roaring_bitmap_of_ptr(size, values)
 
     def __del__(self):
-        libroaring.roaring_bitmap_free(self.__obj__)
+        try:
+            libroaring.roaring_bitmap_free(self.__obj__)
+        except AttributeError: # happens if there is an excepion in __init__ before the creation of __obj__
+            pass
 
     @staticmethod
     def check_value(value):
