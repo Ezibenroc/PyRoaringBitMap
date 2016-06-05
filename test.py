@@ -135,6 +135,22 @@ class BasicTest(Util):
         with self.assertRaises(ValueError):
             bitmap = BitMap(range(10, 0, 1))
 
+class RankTest(Util):
+
+    @given(hyp_range)
+    def test_simple_rank(self, values):
+        bitmap = BitMap(values)
+        for i, value in enumerate(values):
+            self.assertEqual(bitmap[i], value)
+
+    @given(hyp_range, uint32)
+    def test_wrong_rank(self, values, n):
+        bitmap = BitMap(values)
+        with self.assertRaises(ValueError):
+            bitmap[len(values)]
+        with self.assertRaises(ValueError):
+            bitmap[n + len(values)]
+
 class BinaryOperationsTest(Util):
 
     @given(hyp_range, hyp_range)

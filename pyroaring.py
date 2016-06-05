@@ -78,6 +78,7 @@ class BitMap:
         array = to_array(self.__obj__, size)
         for i in range(size.contents.value):
             yield int(array[i])
+        # TODO please fix my memory leak
 
     def __repr__(self):
         values = ', '.join([str(n) for n in self])
@@ -107,6 +108,14 @@ class BitMap:
 
     def __iand__(self, other):
         return self.__binary_op_inplace__(other, libroaring.roaring_bitmap_and_inplace)
+
+    def __getitem__(self, value):
+        self.check_value(value)
+        elt = ctypes.pointer(self.__BASE_TYPE__(-1))
+        valid = libroaring.roaring_bitmap_get_element_of_rank(self.__obj__, value, elt)
+        if not valid:
+            raise ValueError('Invalid rank.')
+        return elt.contents.value
 
     @classmethod
     def or_many(cls, bitmaps):
