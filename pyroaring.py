@@ -112,7 +112,7 @@ class BitMap:
     def __getitem__(self, value):
         self.check_value(value)
         elt = ctypes.pointer(self.__BASE_TYPE__(-1))
-        valid = libroaring.roaring_bitmap_get_element_of_rank(self.__obj__, value, elt)
+        valid = libroaring.roaring_bitmap_select(self.__obj__, value, elt)
         if not valid:
             raise ValueError('Invalid rank.')
         return elt.contents.value
