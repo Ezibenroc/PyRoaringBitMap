@@ -72,13 +72,12 @@ class BitMap:
         return bool(libroaring.roaring_bitmap_equals(self.__obj__, other.__obj__))
 
     def __iter__(self):
-        size = ctypes.pointer(self.__BASE_TYPE__(-1))
-        to_array = libroaring.roaring_bitmap_to_uint32_array
-        to_array.restype = ctypes.POINTER(self.__BASE_TYPE__)
-        array = to_array(self.__obj__, size)
-        for i in range(size.contents.value):
-            yield int(array[i])
-        # TODO please fix my memory leak
+        size = len(self)
+        Array = self.__BASE_TYPE__*size
+        buff = Array()
+        libroaring.roaring_bitmap_to_uint32_array(self.__obj__, buff)
+        for i in range(size):
+            yield int(buff[i])
 
     def __repr__(self):
         values = ', '.join([str(n) for n in self])
