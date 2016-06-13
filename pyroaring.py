@@ -117,12 +117,17 @@ class BitMap:
         return elt.contents.value
 
     @classmethod
-    def or_many(cls, bitmaps):
+    def union(cls, *bitmaps):
         size = len(bitmaps)
-        Array = ctypes.c_void_p*size
-        bitmaps = Array(*(ctypes.c_void_p(bm.__obj__) for bm in bitmaps))
-        obj = libroaring.roaring_bitmap_or_many(size, bitmaps)
-        return cls(obj=obj)
+        if size <= 1:
+            return cls(*bitmaps)
+        elif size == 2:
+            return bitmaps[0] | bitmaps[1]
+        else:
+            Array = ctypes.c_void_p*size
+            bitmaps = Array(*(ctypes.c_void_p(bm.__obj__) for bm in bitmaps))
+            obj = libroaring.roaring_bitmap_or_many(size, bitmaps)
+            return cls(obj=obj)
 
     def serialize(self):
         size = libroaring.roaring_bitmap_portable_size_in_bytes(self.__obj__)

@@ -191,10 +191,10 @@ class BinaryOperationsTest(Util):
 class ManyOperationsTest(Util):
 
     @given(hyp_many_ranges)
-    def test_or_many(self, all_values):
+    def test_union(self, all_values):
         bitmaps = [BitMap(values) for values in all_values]
         bitmaps_copy = [BitMap(bm) for bm in bitmaps]
-        result = BitMap.or_many(bitmaps)
+        result = BitMap.union(*bitmaps)
         self.assertEqual(bitmaps_copy, bitmaps)
         expected_result = functools.reduce(lambda x, y: x|y, bitmaps)
         self.assertEqual(expected_result, result)
