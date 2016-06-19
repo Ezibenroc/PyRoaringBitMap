@@ -95,6 +95,9 @@ class BitMap:
     def __and__(self, other):
         return self.__binary_op__(other, libroaring.roaring_bitmap_and)
 
+    def __xor__(self, other):
+        return self.__binary_op__(other, libroaring.roaring_bitmap_xor)
+
     def __binary_op_inplace__(self, other, function):
         try:
             function(self.__obj__, other.__obj__)
@@ -107,6 +110,9 @@ class BitMap:
 
     def __iand__(self, other):
         return self.__binary_op_inplace__(other, libroaring.roaring_bitmap_and_inplace)
+
+    def __ixor__(self, other):
+        return self.__binary_op__(other, libroaring.roaring_bitmap_xor)
 
     def __getitem__(self, value):
         self.check_value(value)

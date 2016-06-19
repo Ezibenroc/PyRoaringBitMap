@@ -175,6 +175,9 @@ class BinaryOperationsTest(Util):
     def test_and(self):
         self.do_test_binary_op(lambda x,y : x&y)
 
+    def test_xor(self):
+        self.do_test_binary_op(lambda x,y : x^y)
+
     def do_test_binary_op_inplace(self, op):
         old_bitmap2 = BitMap(self.bitmap2)
         op(self.set1, self.set2)
@@ -187,6 +190,9 @@ class BinaryOperationsTest(Util):
 
     def test_and_inplace(self):
         self.do_test_binary_op_inplace(lambda x,y : x.__iand__(y))
+
+    def test_xor_inplace(self):
+        self.do_test_binary_op(lambda x,y : x.__ixor__(y))
 
 class ManyOperationsTest(Util):
 

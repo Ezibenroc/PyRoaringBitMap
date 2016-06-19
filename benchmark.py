@@ -161,6 +161,11 @@ class BinaryIntersection(AbstractBinaryOpBenchMark):
     def do_binary_op(self, values1, values2):
         values1 & values2
 
+class BinarySymmetricDifference(AbstractBinaryOpBenchMark):
+
+    def do_binary_op(self, values1, values2):
+        values1 ^ values2
+
 class BinaryUnionInPlace(AbstractBinaryOpBenchMark):
 
     def do_binary_op(self, values1, values2):
@@ -170,6 +175,11 @@ class BinaryIntersectionInPlace(AbstractBinaryOpBenchMark):
 
     def do_binary_op(self, values1, values2):
         values1 &= values2
+
+class BinarySymmetricDifferenceInPlace(AbstractBinaryOpBenchMark):
+
+    def do_binary_op(self, values1, values2):
+        values1 ^= values2
 
 class AbstractManyOpBenchMark(AbstractBenchMark):
 
@@ -202,7 +212,9 @@ if __name__ == '__main__':
     total_time = time.time()
     sample_sizes = [2**n for n in range(15, 20)]
     classes = [ListConstructor, RangeConstructor, ContinuousRangeConstructor, CopyConstructor,
-        BinaryUnion, BinaryIntersection, BinaryUnionInPlace, BinaryIntersectionInPlace, ManyUnion]
+        BinaryUnion, BinaryIntersection, BinarySymmetricDifference,
+        BinaryUnionInPlace, BinaryIntersectionInPlace, BinarySymmetricDifferenceInPlace,
+        ManyUnion]
     result_dict = None
     for cls in classes:
         print('Run %s...' % cls.__name__)
