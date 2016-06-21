@@ -1,0 +1,51 @@
+import ctypes
+import platform
+libfilename = "libroaring.so"
+if(platform.uname()[0] == "Darwin") :
+    libfilename = "libroaring.dylib"
+libroaring = ctypes.cdll.LoadLibrary(libfilename)
+
+bm_type = ctypes.c_void_p
+val_type = ctypes.c_uint32
+libroaring.roaring_bitmap_create.restype = bm_type
+libroaring.roaring_bitmap_create.argtypes = []
+libroaring.roaring_bitmap_copy.restype = bm_type
+libroaring.roaring_bitmap_copy.argtypes = [bm_type]
+libroaring.roaring_bitmap_from_range.restype = bm_type
+libroaring.roaring_bitmap_from_range.argtypes = [val_type, val_type, val_type]
+libroaring.roaring_bitmap_of_ptr.restype = bm_type
+libroaring.roaring_bitmap_of_ptr.argtypes = [ctypes.c_size_t, ctypes.POINTER(val_type)]
+libroaring.roaring_bitmap_free.restype = None
+libroaring.roaring_bitmap_free.argtypes = [bm_type]
+libroaring.roaring_bitmap_add.restype = None
+libroaring.roaring_bitmap_add.argtypes = [bm_type, val_type]
+libroaring.roaring_bitmap_remove.restype = None
+libroaring.roaring_bitmap_remove.argtypes = [bm_type, val_type]
+libroaring.roaring_bitmap_contains.restype = ctypes.c_bool
+libroaring.roaring_bitmap_contains.argtypes = [bm_type, val_type]
+libroaring.roaring_bitmap_get_cardinality.restype = ctypes.c_size_t
+libroaring.roaring_bitmap_get_cardinality.argtypes = [bm_type]
+libroaring.roaring_bitmap_to_uint32_array.restype = ctypes.POINTER(val_type)
+libroaring.roaring_bitmap_to_uint32_array.argtypes = [val_type]
+libroaring.roaring_bitmap_or.restype = val_type
+libroaring.roaring_bitmap_or.argtypes = [val_type, val_type]
+libroaring.roaring_bitmap_and.restype = val_type
+libroaring.roaring_bitmap_and.argtypes = [val_type, val_type]
+libroaring.roaring_bitmap_xor.restype = val_type
+libroaring.roaring_bitmap_xor.argtypes = [val_type, val_type]
+libroaring.roaring_bitmap_or_inplace.restype = None
+libroaring.roaring_bitmap_or_inplace.argtypes = [val_type, val_type]
+libroaring.roaring_bitmap_and_inplace.restype = None
+libroaring.roaring_bitmap_and_inplace.argtypes = [val_type, val_type]
+libroaring.roaring_bitmap_xor_inplace.restype = None
+libroaring.roaring_bitmap_xor_inplace.argtypes = [val_type, val_type]
+libroaring.roaring_bitmap_select.restype = ctypes.c_bool
+libroaring.roaring_bitmap_select.argtypes = [bm_type, val_type, ctypes.POINTER(val_type)]
+libroaring.roaring_bitmap_or_many.restype = bm_type
+libroaring.roaring_bitmap_or_many.argtypes = [ctypes.c_size_t, ctypes.POINTER(bm_type)]
+libroaring.roaring_bitmap_portable_serialize.restype = ctypes.c_size_t
+libroaring.roaring_bitmap_portable_serialize.argtypes = [bm_type, ctypes.POINTER(ctypes.c_char)]
+libroaring.roaring_bitmap_portable_deserialize.restype = bm_type
+libroaring.roaring_bitmap_portable_deserialize.argtypes = [ctypes.c_char_p]
+libroaring.roaring_bitmap_portable_deserialize.restype = ctypes.c_size_t
+libroaring.roaring_bitmap_portable_deserialize.argtypes = [bm_type]

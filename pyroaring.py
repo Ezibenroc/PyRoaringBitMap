@@ -1,10 +1,4 @@
-import ctypes
-import time
-import platform
-libfilename = "libroaring.so"
-if(platform.uname()[0] == "Darwin") :
-    libfilename = "libroaring.dylib"
-libroaring = ctypes.cdll.LoadLibrary(libfilename)
+from types_declarations import *
 
 def load(fp):
     buff = fp.read()
@@ -15,7 +9,7 @@ def dump(fp, bitmap):
     fp.write(buff)
 
 class BitMap:
-    __BASE_TYPE__ = ctypes.c_uint32
+
     def __init__(self, values=None, *, obj=None):
         if obj is not None:
             self.__obj__ = obj
@@ -35,7 +29,7 @@ class BitMap:
         else:
             self.check_values(values)
             size = len(values)
-            Array = self.__BASE_TYPE__*size
+            Array = val_type*size
             values = Array(*values)
             self.__obj__ = libroaring.roaring_bitmap_of_ptr(size, values)
 
@@ -77,7 +71,7 @@ class BitMap:
 
     def __iter__(self):
         size = len(self)
-        Array = self.__BASE_TYPE__*size
+        Array = val_type*size
         buff = Array()
         libroaring.roaring_bitmap_to_uint32_array(self.__obj__, buff)
         for i in range(size):
@@ -120,7 +114,7 @@ class BitMap:
 
     def __getitem__(self, value):
         self.check_value(value)
-        elt = ctypes.pointer(self.__BASE_TYPE__(-1))
+        elt = ctypes.pointer(val_type(-1))
         valid = libroaring.roaring_bitmap_select(self.__obj__, value, elt)
         if not valid:
             raise ValueError('Invalid rank.')
