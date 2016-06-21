@@ -3,15 +3,22 @@
 This piece of code is a wrapper for the C library [CRoaring](https://github.com/RoaringBitmap/CRoaring).
 It provides a very efficient way to store and manipulate sets of (unsigned 32 bits) integers.
 
+## Requirements
+
+- Python 3.3 or better
+- The Python package ``hypothesis`` (optional, for testing)
+
 ## Installation
 
-Install [CRoaring](https://github.com/RoaringBitmap/CRoaring), the C library for Roaring bitmap.
+Install [CRoaring](https://github.com/RoaringBitmap/CRoaring), the C library for Roaring bitmap and set the LD_LIBRARY_PATH variable.
 
-Add the path to this library in your environment:
+E.g., 
 ```bash
-export LD_LIBRARY_PATH=/path/to/your/CRoaring/build:$LD_LIBRARY_PATH
+sudo apt-get install cmake
+git clone https://github.com/RoaringBitmap/CRoaring.git
+cd CRoaring && mkdir -p build && cd build && cmake .. && make && cd ../..
+export LD_LIBRARY_PATH=CRoaring/build:$LD_LIBRARY_PATH
 ```
-(consider adding this to your `.zshrc` or `.bashrc` if you do not want to type the command each time you use the library).
 
 ## Utilization
 
