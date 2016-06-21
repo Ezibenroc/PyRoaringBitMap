@@ -1,6 +1,10 @@
 import ctypes
 import time
-libroaring = ctypes.CDLL('libroaring.so')
+import platform
+libfilename = "libroaring.so"
+if(platform.uname()[0] == "Darwin") :
+    libfilename = "libroaring.dylib"
+libroaring = ctypes.cdll.LoadLibrary(libfilename)
 
 def load(fp):
     buff = fp.read()

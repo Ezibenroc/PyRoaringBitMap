@@ -1,4 +1,3 @@
-
 language: python
 
 # Ubuntu 14.04 Trusty support (for a modern version of gcc)
