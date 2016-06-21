@@ -1,24 +1,19 @@
 language: python
 
-os:
-  - linux
-  - osx
+# Ubuntu 14.04 Trusty support (for a modern version of gcc)
+sudo: required
+dist: trusty
 
 python:
   - 3.3
   - 3.4
 
-addons:
-  apt:
-    packages:
-      - cmake
-      - pip3
-
 install:
+    - sudo apt-get install cmake
     - git clone https://github.com/RoaringBitmap/CRoaring.git
     - cd CRoaring && mkdir -p build && cd build && cmake .. && make && cd ../..
     - export LD_LIBRARY_PATH=CRoaring/build:$LD_LIBRARY_PATH
-    - pip3 install  --user hypothesis
+    - pip install hypothesis
 
 script:
   - ./test.py
