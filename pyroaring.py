@@ -32,6 +32,7 @@ class BitMap:
             Array = val_type*size
             values = Array(*values)
             self.__obj__ = libroaring.roaring_bitmap_of_ptr(size, values)
+            libroaring.roaring_bitmap_run_optimize(self.__obj__)
 
     def __del__(self):
         try:
@@ -147,3 +148,8 @@ class BitMap:
         buff = Array(*buff)
         obj = libroaring.roaring_bitmap_portable_deserialize(buff)
         return cls(obj=obj)
+
+    def get_statistics(self):
+        stats = ctypes.pointer(BitMapStats())
+        libroaring.roaring_bitmap_statistics(self.__obj__, stats)
+        return stats.contents
