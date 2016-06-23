@@ -1,4 +1,9 @@
+import sys
 from types_declarations import *
+
+is_python2 = sys.version_info < (3, 0)
+if is_python2:
+    print('Warning: %s is faster with Python 3.' % __name__, file=sys.stderr)
 
 def load(fp):
     buff = fp.read()
@@ -10,7 +15,7 @@ def dump(fp, bitmap):
 
 class BitMap:
 
-    def __init__(self, values=None, *, obj=None):
+    def __init__(self, values=None, obj=None):
         if obj is not None:
             self.__obj__ = obj
             return
@@ -18,7 +23,7 @@ class BitMap:
             self.__obj__ = libroaring.roaring_bitmap_create()
         elif isinstance(values, BitMap):
             self.__obj__ = libroaring.roaring_bitmap_copy(values.__obj__)
-        elif isinstance(values, range):
+        elif not is_python2 and isinstance(values, range):
             if values.step < 0:
                 values = range(values.stop+1, values.start+1, -values.step)
             if values.start >= values.stop:
@@ -26,6 +31,15 @@ class BitMap:
             self.check_value(values.start)
             self.check_value(values.stop)
             self.__obj__ = libroaring.roaring_bitmap_from_range(values.start, values.stop, values.step)
+        elif is_python2 and isinstance(values, xrange): # cannot access the fields start, stop and step in a xrange object
+            if len(values) == 0:
+                raise ValueError('Invalid xrange: max value must be greater than min value.')
+            elif len(values) == 1 or values[1]-values[0] != 1:
+                self.__init__(list(values))
+            else:
+                self.check_value(values[0])
+                self.check_value(values[-1])
+                self.__obj__ = libroaring.roaring_bitmap_from_range(values[0], values[-1]+1, 1)
         else:
             self.check_values(values)
             size = len(values)
@@ -63,7 +77,7 @@ class BitMap:
         return libroaring.roaring_bitmap_contains(self.__obj__, value)
 
     def __len__(self):
-        return libroaring.roaring_bitmap_get_cardinality(self.__obj__)
+        return int(libroaring.roaring_bitmap_get_cardinality(self.__obj__))
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):

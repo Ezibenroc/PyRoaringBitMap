@@ -8,6 +8,11 @@ from hypothesis import given
 import hypothesis.strategies as st
 from pyroaring import BitMap, load, dump
 
+try: # Python2 compatibility
+    range = xrange
+except NameError:
+    pass
+
 uint18 = st.integers(min_value=0, max_value=2**18)
 uint32 = st.integers(min_value=0, max_value=2**32-1)
 hyp_set = st.sets(uint32,
