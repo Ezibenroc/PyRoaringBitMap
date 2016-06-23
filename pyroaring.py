@@ -111,7 +111,7 @@ class BitMap:
         return self.__binary_op_inplace__(other, libroaring.roaring_bitmap_and_inplace)
 
     def __ixor__(self, other):
-        return self.__binary_op__(other, libroaring.roaring_bitmap_xor)
+        return self.__binary_op_inplace__(other, libroaring.roaring_bitmap_xor_inplace)
 
     def __getitem__(self, value):
         self.check_value(value)

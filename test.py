@@ -192,7 +192,7 @@ class BinaryOperationsTest(Util):
         self.do_test_binary_op_inplace(lambda x,y : x.__iand__(y))
 
     def test_xor_inplace(self):
-        self.do_test_binary_op(lambda x,y : x.__ixor__(y))
+        self.do_test_binary_op_inplace(lambda x,y : x.__ixor__(y))
 
 class ManyOperationsTest(Util):
 
