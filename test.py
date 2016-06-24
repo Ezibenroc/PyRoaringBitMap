@@ -57,6 +57,11 @@ class Util(unittest.TestCase):
             else:
                 self.assertNotIn(value, bitmap)
 
+    @staticmethod
+    def bitmap_sample(bitmap, size):
+        indices = random.sample(range(len(bitmap)), size)
+        return [bitmap[i] for i in indices]
+
 class BasicTest(Util):
 
     @given(hyp_range)
@@ -284,6 +289,59 @@ class StatisticsTest(Util):
         self.assertEqual(stats.n_values_bitset_containers, 0)
         self.assertEqual(stats.n_values_run_containers, len(values))
         self.assertEqual(stats.n_bytes_run_containers, 12)
+
+class FlipTest(Util):
+
+    def check_flip(self, bm_before, bm_after, start, end):
+        size = 100
+        iter_range = random.sample(range(start, end), min(size, len(range(start, end))))
+        iter_before = self.bitmap_sample(bm_before, min(size, len(bm_before)))
+        iter_after = self.bitmap_sample(bm_after, min(size, len(bm_after)))
+        for elt in iter_range:
+            if elt in bm_before:
+                self.assertNotIn(elt, bm_after)
+            else:
+                self.assertIn(elt, bm_after)
+        for elt in iter_before:
+            if not (start <= elt < end):
+                self.assertIn(elt, bm_after)
+        for elt in iter_after:
+            if not (start <= elt < end):
+                self.assertIn(elt, bm_before)
+
+    @given(hyp_range, uint32, uint32)
+    def test_flip_empty(self, values, start, end):
+        st.assume(start >= end)
+        bm_before = BitMap(values)
+        bm_copy = BitMap(bm_before)
+        bm_after = bm_before.flip(start, end)
+        self.assertEqual(bm_before, bm_copy)
+        self.assertEqual(bm_before, bm_after)
+
+    @given(hyp_range, uint32, uint32)
+    def test_flip(self, values, start, end):
+        st.assume(start < end)
+        bm_before = BitMap(values)
+        bm_copy = BitMap(bm_before)
+        bm_after = bm_before.flip(start, end)
+        self.assertEqual(bm_before, bm_copy)
+        self.check_flip(bm_before, bm_after, start, end)
+
+    @given(hyp_range, uint32, uint32)
+    def test_flip_inplace_empty(self, values, start, end):
+        st.assume(start >= end)
+        bm_before = BitMap(values)
+        bm_after = BitMap(bm_before)
+        bm_after.flip_inplace(start, end)
+        self.assertEqual(bm_before, bm_after)
+
+    @given(hyp_range, uint32, uint32)
+    def test_flip_inplace(self, values, start, end):
+        st.assume(start < end)
+        bm_before = BitMap(values)
+        bm_after = BitMap(bm_before)
+        bm_after.flip_inplace(start, end)
+        self.check_flip(bm_before, bm_after, start, end)
 
 if __name__ == "__main__":
     unittest.main()

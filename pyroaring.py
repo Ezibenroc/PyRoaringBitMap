@@ -57,7 +57,7 @@ class BitMap:
     @staticmethod
     def check_value(value):
         if not isinstance(value, int) or value < 0 or value > 4294967295:
-            raise ValueError('Value %s is not an uint32.' % value)
+            raise ValueError('Value %r is not an uint32.' % value)
 
     @staticmethod
     def check_values(values):
@@ -143,7 +143,7 @@ class BitMap:
         valid = libroaring.roaring_bitmap_select(self.__obj__, value, elt)
         if not valid:
             raise ValueError('Invalid rank.')
-        return elt.contents.value
+        return int(elt.contents.value)
 
     @classmethod
     def union(cls, *bitmaps):
@@ -177,3 +177,13 @@ class BitMap:
         stats = ctypes.pointer(BitMapStats())
         libroaring.roaring_bitmap_statistics(self.__obj__, stats)
         return stats.contents
+
+    def flip(self, start, end):
+        self.check_value(start)
+        self.check_value(end)
+        return BitMap(obj=libroaring.roaring_bitmap_flip(self.__obj__, start, end))
+
+    def flip_inplace(self, start, end):
+        self.check_value(start)
+        self.check_value(end)
+        libroaring.roaring_bitmap_flip_inplace(self.__obj__, start, end)
