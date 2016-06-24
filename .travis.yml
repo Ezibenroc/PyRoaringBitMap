@@ -5,9 +5,11 @@ sudo: required
 dist: trusty
 
 python:
+  - 2.7
   - 3.3
   - 3.4
   - 3.5
+  - pypy
 
 install:
     - sudo apt-get install cmake
@@ -17,4 +19,4 @@ install:
     - pip install hypothesis
 
 script:
-  - ./test.py
+  - python test.py

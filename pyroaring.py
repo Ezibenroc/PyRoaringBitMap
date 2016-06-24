@@ -3,7 +3,7 @@ from types_declarations import *
 
 is_python2 = sys.version_info < (3, 0)
 if is_python2:
-    print('Warning: %s is faster with Python 3.' % __name__, file=sys.stderr)
+    sys.stderr.write('Warning: %s is faster with Python 3.\n' % __name__)
 
 def load(fp):
     buff = fp.read()
