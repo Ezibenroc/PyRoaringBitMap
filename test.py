@@ -6,7 +6,7 @@ import functools
 import os
 from hypothesis import given
 import hypothesis.strategies as st
-from pyroaring import BitMap, load, dump
+from pyroaring import BitMap, load, dump, is_python2
 
 try: # Python2 compatibility
     range = xrange
@@ -98,7 +98,10 @@ class BasicTest(Util):
 
     @given(hyp_range, hyp_range)
     def test_bitmap_unequality(self, values1, values2):
-        st.assume(values1 != values2)
+        if not is_python2:
+            st.assume(values1 != values2)
+        else: # xrange objects are never equal...
+            st.assume(list(values1) != list(values2))
         bitmap1 = BitMap(values1)
         bitmap2 = BitMap(values2)
         self.assertNotEqual(bitmap1, bitmap2)
@@ -209,6 +212,27 @@ class BinaryOperationsTest(Util):
 
     def test_sub_inplace(self):
         self.do_test_binary_op_inplace(lambda x,y : x.__isub__(y))
+
+class ComparisonTest(Util):
+
+    def do_test(self, values1, values2, op):
+        self.assertEqual(op(BitMap(values1), BitMap(values2)), op(set(values1), set(values2)), msg='%s, %s' % (values1, values2))
+
+    @given(hyp_range, hyp_range)
+    def test_le(self, values1, values2):
+        self.do_test(values1, values2, lambda x,y: x <= y)
+
+    @given(hyp_range, hyp_range)
+    def test_ge(self, values1, values2):
+        self.do_test(values1, values2, lambda x,y: x >= y)
+
+    @given(hyp_range, hyp_range)
+    def test_lt(self, values1, values2):
+        self.do_test(values1, values2, lambda x,y: x < y)
+
+    @given(hyp_range, hyp_range)
+    def test_gt(self, values1, values2):
+        self.do_test(values1, values2, lambda x,y: x > y)
 
 class ManyOperationsTest(Util):
 

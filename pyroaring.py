@@ -84,6 +84,9 @@ class BitMap:
             return False
         return bool(libroaring.roaring_bitmap_equals(self.__obj__, other.__obj__))
 
+    def __ne__(self, other):
+        return not(self == other)
+
     def __iter__(self):
         size = len(self)
         Array = val_type*size
@@ -144,6 +147,18 @@ class BitMap:
         if not valid:
             raise ValueError('Invalid rank.')
         return int(elt.contents.value)
+
+    def __le__(self, other):
+        return self&other == self
+
+    def __ge__(self, other):
+        return self&other == other
+
+    def __lt__(self, other):
+        return self&other == self and self != other
+
+    def __gt__(self, other):
+        return self&other == other and self != other
 
     @classmethod
     def union(cls, *bitmaps):
