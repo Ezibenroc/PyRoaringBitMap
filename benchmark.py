@@ -4,12 +4,13 @@ import time
 import random
 import numpy
 import abc
+import json
 from pyroaring import BitMap
 
 class AbstractBenchMark(metaclass=abc.ABCMeta):
     max_int = 2**32
     classes = [BitMap, set]
-    nb_repeat = 1
+    nb_repeat = 20
     agregators=[min, max, numpy.mean, numpy.median]
 
     def __init__(self, sample_sizes):
@@ -47,19 +48,82 @@ class AbstractBenchMark(metaclass=abc.ABCMeta):
 
     @classmethod
     def print_results(cls, comparison_class, results, agregators_to_print=None):
+        if agregators_to_print is None:
+            agregators_to_print = cls.agregators
         for func, d_func in sorted(results.items(), key=(lambda t: '#'+t[0] if 'Constructor' in t[0] else t[0])):
             print('\n# %s' % func)
             for size, d_size in sorted(d_func.items()):
                 print('\tSize=%d' % size)
                 for test_class, values in sorted(d_size.items()):
                     print('\t\tClass %s' % test_class)
-                    agregators_to_print = agregators_to_print or cls.agregators
                     for agregator in agregators_to_print:
                         value = agregator(values)
                         print('\t\t\t%s: %.4f s.' % (agregator.__name__.ljust(6), value))
                     for agregator in agregators_to_print:
                         if test_class != comparison_class:
                             print('\t\t\tRatio of %s with %s: %.4f' % (agregator.__name__.ljust(6), comparison_class, agregator(values)/agregator(d_size[comparison_class])))
+
+    @staticmethod
+    def _results_to_tex_noagreg(f, results): # results has the form { sizeA : [vA1, vA2, ..., vAn], sizeB : [vB1, vB2, ..., vBm], ...}
+        f.write('\t\t\t\\addplot [only marks] table {\n')
+        for size, values in sorted(results.items()):
+            for value in values:
+                f.write('\t\t\t\t%d %f\n' % (size, value))
+        f.write('\t\t\t};\n')
+
+    @staticmethod
+    def _results_to_tex_agreg(f, results, agregator): # results has the form { sizeA : [vA1, vA2, ..., vAn], sizeB : [vB1, vB2, ..., vBm], ...}
+        f.write('\t\t\t\\addplot table {\n')
+        for size, values in sorted(results.items()):
+            value = agregator(values)
+            f.write('\t\t\t\t%d %f\n' % (size, value))
+        f.write('\t\t\t};\n')
+
+    @staticmethod
+    def add_legend(f, legend):
+        f.write('\t\t\t\\addlegendentry{%s}\n' % legend)
+
+    @classmethod
+    def _plot_func(cls, f, d_func, print_all_points, agregators_to_print):
+        f.write('\t\\begin{tikzpicture}\n')
+        f.write('\t\t\\begin{loglogaxis}[\n')
+        f.write('\t\t\txlabel=size,\n')
+        f.write('\t\t\tylabel=run time(s),\n')
+        f.write('\t\t\tlegend style={at={(0, 1)},anchor=north west,fill=none}\n')
+        f.write('\t\t\t]\n')
+        results = dict()
+        # First, we "inverse" the dict...
+        for size, d_size in d_func.items():
+            for test_class, values in d_size.items():
+                try:
+                    results[test_class][size] = values
+                except KeyError:
+                    results[test_class] = {size : values}
+        # Then, we print the points
+        for test_class, d_size in sorted(results.items()):
+            if print_all_points:
+                cls._results_to_tex_noagreg(f, d_size)
+            for agregator in agregators_to_print:
+                cls._results_to_tex_agreg(f, d_size, agregator)
+        # Finally, the legend
+        for test_class, d_size in sorted(results.items()):
+            if print_all_points:
+                cls.add_legend(f, '%s: all points' % test_class)
+            for agregator in agregators_to_print:
+                cls.add_legend(f, '%s: %s' % (test_class, agregator.__name__))
+        f.write('\t\t\\end{loglogaxis}\n')
+        f.write('\t\\end{tikzpicture}\n')
+
+    @classmethod
+    def plot_results(cls, f, results, print_all_points=True, agregators_to_print=None):
+        if agregators_to_print is None:
+            agregators_to_print = cls.agregators
+        f.write('% Do not forget \\usepackage{pgfplots}\n')
+        for func, d_func in sorted(results.items(), key=(lambda t: '#'+t[0] if 'Constructor' in t[0] else t[0])):
+            f.write('\\begin{figure}\n')
+            cls._plot_func(f, d_func, print_all_points, agregators_to_print)
+            f.write('\t\\caption{%s}\n' % func)
+            f.write('\\end{figure}\n')
 
     @classmethod
     def get_random_range(cls, size):
@@ -200,8 +264,10 @@ class ManyUnion(AbstractManyOpBenchMark):
         cls.union(*values)
 
 if __name__ == '__main__':
+    tex_file = 'plots.tex'
+    json_file = 'plots.json'
     total_time = time.time()
-    sample_sizes = [2**n for n in range(15, 20)]
+    sample_sizes = [2**n for n in range(5, 20)]
     classes = [ListConstructor, RangeConstructor, ContinuousRangeConstructor, CopyConstructor,
         BinaryUnion, BinaryIntersection, BinarySymmetricDifference,
         BinaryUnionInPlace, BinaryIntersectionInPlace, BinarySymmetricDifferenceInPlace,
@@ -212,4 +278,10 @@ if __name__ == '__main__':
         result_dict = cls(sample_sizes).run_and_agregate(result_dict)
     total_time = time.time()-total_time
     AbstractBenchMark.print_results('BitMap', result_dict, agregators_to_print=[numpy.mean, numpy.median])
-    print('\nTotal time: %.2f s.' % total_time)
+    with open(tex_file, 'w') as f:
+        AbstractBenchMark.plot_results(f, result_dict, print_all_points=True, agregators_to_print=[numpy.mean])
+    with open(json_file, 'w') as f:
+        json.dump(result_dict, f)
+    print('\nPlots written in file %s' % tex_file)
+    print('Results dumped in file %s' % json_file)
+    print('Total time: %.2f s.' % total_time)
