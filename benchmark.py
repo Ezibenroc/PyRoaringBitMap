@@ -9,20 +9,20 @@ from pyroaring import BitMap
 class AbstractBenchMark(metaclass=abc.ABCMeta):
     max_int = 2**32
     classes = [BitMap, set]
-    nb_repeat = 10
+    nb_repeat = 1
+    agregators=[min, max, numpy.mean, numpy.median]
 
-    def __init__(self, sample_sizes, agregators=[min, max, numpy.mean, numpy.median]):
+    def __init__(self, sample_sizes):
         self.sample_sizes = sample_sizes
-        self.agregators = agregators
 
     def iter_sizes(self):
         try:
             for size in self.sample_sizes:
-                assert size > 0 and size < self.max_int
+                assert isinstance(size, int) and size > 0 and size < self.max_int
                 yield size
         except TypeError: # not iterable
             size = self.sample_sizes
-            assert isinstance(size, int) and size > 0 and size < 2**32
+            assert isinstance(size, int) and size > 0 and size < self.max_int
             yield size
 
     @abc.abstractmethod
@@ -35,12 +35,6 @@ class AbstractBenchMark(metaclass=abc.ABCMeta):
     def run_all(self, size):
         return [self.run(size) for _ in range(self.nb_repeat)]
 
-    def agregate(self, measures, agregate_function):
-        result = []
-        for i in range(len(self.classes)):
-            result.append(agregate_function([m[i] for m in measures]))
-        return result
-
     def run_and_agregate(self, r_dict=None):
         r_dict = r_dict or dict()
         r_func = r_dict[self.__class__.__name__] = dict()
@@ -48,27 +42,24 @@ class AbstractBenchMark(metaclass=abc.ABCMeta):
             r_size = r_func[size] = dict()
             results = self.run_all(size)
             for i, cls in enumerate(self.classes):
-                r_class = r_size[cls.__name__] = dict()
-                for agregator in self.agregators:
-                    result = self.agregate(results, agregator)
-                    r_agr = r_class[agregator.__name__] = result[i]
+                r_class = r_size[cls.__name__] = [r[i] for r in results]
         return r_dict
 
-    @staticmethod
-    def print_results(comparison_class, results, agregators_to_print=None):
+    @classmethod
+    def print_results(cls, comparison_class, results, agregators_to_print=None):
         for func, d_func in sorted(results.items(), key=(lambda t: '#'+t[0] if 'Constructor' in t[0] else t[0])):
             print('\n# %s' % func)
             for size, d_size in sorted(d_func.items()):
                 print('\tSize=%d' % size)
-                for cls, d_cls in sorted(d_size.items()):
-                    print('\t\tClass %s' % cls)
-                    agregators_to_print = agregators_to_print or d_cls.keys()
+                for test_class, values in sorted(d_size.items()):
+                    print('\t\tClass %s' % test_class)
+                    agregators_to_print = agregators_to_print or cls.agregators
                     for agregator in agregators_to_print:
-                        value = d_cls[agregator]
-                        print('\t\t\t%s: %.4f s.' % (agregator.ljust(6), value))
+                        value = agregator(values)
+                        print('\t\t\t%s: %.4f s.' % (agregator.__name__.ljust(6), value))
                     for agregator in agregators_to_print:
-                        if cls != comparison_class:
-                            print('\t\t\tRatio of %s with %s: %.4f' % (agregator.ljust(6), comparison_class, value/d_size[comparison_class][agregator]))
+                        if test_class != comparison_class:
+                            print('\t\t\tRatio of %s with %s: %.4f' % (agregator.__name__.ljust(6), comparison_class, agregator(values)/agregator(d_size[comparison_class])))
 
     @classmethod
     def get_random_range(cls, size):
@@ -220,5 +211,5 @@ if __name__ == '__main__':
         print('Run %s...' % cls.__name__)
         result_dict = cls(sample_sizes).run_and_agregate(result_dict)
     total_time = time.time()-total_time
-    AbstractBenchMark.print_results('BitMap', result_dict, agregators_to_print=['median', 'mean'])
+    AbstractBenchMark.print_results('BitMap', result_dict, agregators_to_print=[numpy.mean, numpy.median])
     print('\nTotal time: %.2f s.' % total_time)
