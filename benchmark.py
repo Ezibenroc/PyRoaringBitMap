@@ -4,7 +4,8 @@ import time
 import random
 import numpy
 import abc
-import json
+import pickle
+import argparse
 from pyroaring import BitMap
 
 class AbstractBenchMark(metaclass=abc.ABCMeta):
@@ -264,24 +265,43 @@ class ManyUnion(AbstractManyOpBenchMark):
         cls.union(*values)
 
 if __name__ == '__main__':
-    tex_file = 'plots.tex'
-    json_file = 'plots.json'
-    total_time = time.time()
-    sample_sizes = [2**n for n in range(5, 20)]
-    classes = [ListConstructor, RangeConstructor, ContinuousRangeConstructor, CopyConstructor,
-        BinaryUnion, BinaryIntersection, BinarySymmetricDifference,
-        BinaryUnionInPlace, BinaryIntersectionInPlace, BinarySymmetricDifferenceInPlace,
-        ManyUnion]
-    result_dict = None
-    for cls in classes:
-        print('Run %s...' % cls.__name__)
-        result_dict = cls(sample_sizes).run_and_agregate(result_dict)
-    total_time = time.time()-total_time
+
+    # Parse arguments
+    parser = argparse.ArgumentParser(
+            description='Benchmark for pyroaring')
+    parser.add_argument('-p', '--plot', type=str,
+            default=None, help='Latex file to generate.')
+    parser.add_argument('-d', '--dump', type=str,
+            default=None, help='Pickle file to dump.')
+    parser.add_argument('-l', '--load', type=str,
+            default=None, help='Pickle file to load. If specified, the computation will not be done, the results will be loaded from the file instead.')
+    args = parser.parse_args()
+
+    if args.load is None:
+        total_time = time.time()
+        sample_sizes = [2**n for n in range(5, 20)]
+        classes = [ListConstructor, RangeConstructor, ContinuousRangeConstructor, CopyConstructor,
+            BinaryUnion, BinaryIntersection, BinarySymmetricDifference,
+            BinaryUnionInPlace, BinaryIntersectionInPlace, BinarySymmetricDifferenceInPlace,
+            ManyUnion]
+        result_dict = None
+        for cls in classes:
+            print('Run %s...' % cls.__name__)
+            result_dict = cls(sample_sizes).run_and_agregate(result_dict)
+        total_time = time.time()-total_time
+    else:
+        with open(args.load, 'rb') as f:
+            result_dict = pickle.load(f)
+        print('Loaded results from file %s' % args.load)
     AbstractBenchMark.print_results('BitMap', result_dict, agregators_to_print=[numpy.mean, numpy.median])
-    with open(tex_file, 'w') as f:
-        AbstractBenchMark.plot_results(f, result_dict, print_all_points=True, agregators_to_print=[numpy.mean])
-    with open(json_file, 'w') as f:
-        json.dump(result_dict, f)
-    print('\nPlots written in file %s' % tex_file)
-    print('Results dumped in file %s' % json_file)
-    print('Total time: %.2f s.' % total_time)
+    print('')
+    if args.plot is not None:
+        with open(args.plot, 'w') as f:
+            AbstractBenchMark.plot_results(f, result_dict, print_all_points=False, agregators_to_print=[numpy.mean])
+        print('\nPlots written in file %s' % args.plot)
+    if args.dump is not None:
+        with open(args.dump, 'wb') as f:
+            pickle.dump(result_dict, f)
+        print('Results dumped in file %s' % args.dump)
+    if args.load is None:
+        print('Total time: %.2f s.' % total_time)
