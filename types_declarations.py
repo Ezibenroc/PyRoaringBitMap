@@ -1,9 +1,17 @@
 import ctypes
 import platform
+import sys
 libfilename = "libroaring.so"
 if(platform.uname()[0] == "Darwin") :
     libfilename = "libroaring.dylib"
-libroaring = ctypes.cdll.LoadLibrary(libfilename)
+try:
+    libroaring = ctypes.cdll.LoadLibrary(libfilename)
+except OSError as e:
+    sys.stderr.write('ERROR: cannot open shared library %s\n' % libfilename)
+    sys.stderr.write('       Please make sure that the library can be found.\n')
+    sys.stderr.write('       For instance, on GNU/Linux, it could be in /usr/lib and /usr/include directories,\n')
+    sys.stderr.write('       or in some other directory with the environment variable LD_LIBRARY_PATH correctly set.\n')
+    raise e
 
 bm_type = ctypes.c_void_p
 val_type = ctypes.c_uint32
