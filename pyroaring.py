@@ -115,8 +115,7 @@ class BitMap:
         return self.__binary_op__(other, libroaring.roaring_bitmap_xor)
 
     def __sub__(self, other):
-        # TODO: could be faster if it was implemented in CRoaring
-        return (self^other)&self
+        return self.__binary_op__(other, libroaring.roaring_bitmap_andnot)
 
     def __binary_op_inplace__(self, other, function):
         try:
@@ -135,10 +134,7 @@ class BitMap:
         return self.__binary_op_inplace__(other, libroaring.roaring_bitmap_xor_inplace)
 
     def __isub__(self, other):
-        # TODO: could be faster if it was implemented in CRoaring
-        tmp = self.__class__(self)
-        self^=other
-        self&=tmp
+        return self.__binary_op_inplace__(other, libroaring.roaring_bitmap_andnot_inplace)
 
     def __getitem__(self, value):
         self.check_value(value)
