@@ -10,14 +10,23 @@ It provides a very efficient way to store and manipulate sets of (unsigned 32 bi
 
 ## Installation
 
-Install [CRoaring](https://github.com/RoaringBitmap/CRoaring), the C library for Roaring bitmap and set the LD_LIBRARY_PATH variable.
+Install [CRoaring](https://github.com/RoaringBitmap/CRoaring), the C library for Roaring bitmap.
 
-E.g., 
+First, get cmake, clone the repository and compile the project:
 ```bash
 sudo apt-get install cmake
 git clone https://github.com/RoaringBitmap/CRoaring.git
-cd CRoaring && mkdir -p build && cd build && cmake .. && make && cd ../..
-export LD_LIBRARY_PATH=CRoaring/build:$LD_LIBRARY_PATH
+cd CRoaring && mkdir -p build && cd build && cmake .. && make
+```
+
+Then, either set the environment variable `LD_LIBRARY_PATH`:
+```bash
+export LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH
+```
+
+Or install the library to your system:
+```bash
+sudo make install
 ```
 
 ## Utilization
@@ -48,6 +57,6 @@ bm1 & bm2 = BitMap([3])
 bm1 | bm2 = BitMap([3, 18, 27, 42])
 ```
 
-**Warning:** An important feature which still misses is a method to remove an element.
+Warning: the creation of a new `BitMap` instance from a Python `list` is quite slow. This is mainly due to the verification of the data consistency (i.e. checking that we have integers between 0 and 2^32-1) and the conversion from the Python data structure to a C array. We should find a way to improve that in a near future.
 
-Moreover, it seems that the creation of a new `BitMap` instance is very slow. This is mainly due to the verification of the data consistency (i.e. checking that we have integers between 0 and 2^32-1) and the conversion from the Python data structure to a C array. We should find a way to improve that in a near future.
+Creating a `BitMap` from a `range` object is much more efficient (e.g. `bm = BitMap(range(2**30))`), since the verifications only have to be done on the bounds of the range.
