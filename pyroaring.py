@@ -1,4 +1,5 @@
 import sys
+import numpy
 from types_declarations import *
 
 is_python2 = sys.version_info < (3, 0)
@@ -41,10 +42,15 @@ class BitMap:
                 self.check_value(values[-1])
                 self.__obj__ = libroaring.roaring_bitmap_from_range(values[0], values[-1]+1, 1)
         else:
-            self.check_values(values)
+            if not isinstance(values, list):
+                values = list(values)
+            c_array = numpy.ascontiguousarray(values, dtype=numpy.int64)
+            wrong_values = (c_array < 0) | (c_array >= 2**32)
+            if wrong_values.any():
+                raise ValueError('Following values are not an uint32:\n %s' % list(c_array[wrong_values]))
             size = len(values)
-            Array = val_type*size
-            values = Array(*values)
+            c_array = c_array.astype(ctypes.c_uint32)
+            values = c_array.ctypes.data_as(ctypes.POINTER(val_type))
             self.__obj__ = libroaring.roaring_bitmap_of_ptr(size, values)
             libroaring.roaring_bitmap_run_optimize(self.__obj__)
 
@@ -56,13 +62,8 @@ class BitMap:
 
     @staticmethod
     def check_value(value):
-        if not isinstance(value, int) or value < 0 or value > 4294967295:
+        if not isinstance(value, int) or value < 0 or value >= 2**32:
             raise ValueError('Value %r is not an uint32.' % value)
-
-    @staticmethod
-    def check_values(values):
-        for value in values:
-            BitMap.check_value(value)
 
     def add(self, value):
         self.check_value(value)

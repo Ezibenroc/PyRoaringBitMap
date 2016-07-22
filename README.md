@@ -6,6 +6,7 @@ It provides a very efficient way to store and manipulate sets of (unsigned 32 bi
 ## Requirements
 
 - Python 3.3 or better
+- Numpy
 - The Python package ``hypothesis`` (optional, for testing)
 
 ## Installation
