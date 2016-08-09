@@ -1,5 +1,4 @@
 import sys
-import numpy
 from types_declarations import *
 
 is_python2 = sys.version_info < (3, 0)
@@ -17,6 +16,7 @@ def dump(fp, bitmap):
 class BitMap:
 
     def __init__(self, values=None, obj=None):
+        """ Construct a BitMap object. If a list of integers is provided, the integers are truncated down to the least significant 32 bits"""
         if obj is not None:
             self.__obj__ = obj
             return
@@ -44,13 +44,8 @@ class BitMap:
         else:
             if not isinstance(values, list):
                 values = list(values)
-            c_array = numpy.ascontiguousarray(values, dtype=numpy.int64)
-            wrong_values = (c_array < 0) | (c_array >= 2**32)
-            if wrong_values.any():
-                raise ValueError('Following values are not an uint32:\n %s' % list(c_array[wrong_values]))
             size = len(values)
-            c_array = c_array.astype(ctypes.c_uint32)
-            values = c_array.ctypes.data_as(ctypes.POINTER(val_type))
+            values = (ctypes.c_uint32 * size)(*values)
             self.__obj__ = libroaring.roaring_bitmap_of_ptr(size, values)
             libroaring.roaring_bitmap_run_optimize(self.__obj__)
 
