@@ -17,7 +17,7 @@ def dump(fp, bitmap):
 class BitMap:
 
     def __init__(self, values=None, obj=None):
-        if obj is not None:
+        if obj is not None and values is None:
             self.__obj__ = obj
             return
         if values is None:
