@@ -137,12 +137,6 @@ class BasicTest(Util):
         self.wrong_op(lambda bitmap, value: bitmap.__contains__(value))
 
     def test_wrong_constructor_values(self):
-        # It seems perfectly fine to truncate values to first 32 bits
-        #with self.assertRaises(ValueError):
-        #    bitmap = BitMap([3, 1, -3, 42])
-        #with self.assertRaises(ValueError):
-        #    bitmap = BitMap([3, 2**100, 3, 42])
-        #
         with self.assertRaises(TypeError): # this should fire a type error!
             bitmap = BitMap([3, 'bla', 3, 42])
         with self.assertRaises(ValueError):
