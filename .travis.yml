@@ -15,7 +15,7 @@ install:
     - git clone https://github.com/RoaringBitmap/CRoaring.git
     - cd CRoaring && mkdir -p build && cd build && cmake .. && make && cd ../..
     - export LD_LIBRARY_PATH=CRoaring/build:$LD_LIBRARY_PATH
-    - pip install hypothesis numpy
+    - pip install hypothesis 
 
 script:
   - python test.py
