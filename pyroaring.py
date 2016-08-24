@@ -42,8 +42,6 @@ class BitMap:
                 self.check_value(values[-1])
                 self.__obj__ = libroaring.roaring_bitmap_from_range(values[0], values[-1]+1, 1)
         else:
-            if not isinstance(values, list):
-                values = list(values)
             size = len(values)
             values = (ctypes.c_uint32 * size)(*values)
             self.__obj__ = libroaring.roaring_bitmap_of_ptr(size, values)
