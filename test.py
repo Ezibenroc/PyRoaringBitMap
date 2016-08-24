@@ -137,11 +137,7 @@ class BasicTest(Util):
         self.wrong_op(lambda bitmap, value: bitmap.__contains__(value))
 
     def test_wrong_constructor_values(self):
-        with self.assertRaises(ValueError):
-            bitmap = BitMap([3, 1, -3, 42])
-        with self.assertRaises(ValueError):
-            bitmap = BitMap([3, 2**33, 3, 42])
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError): # this should fire a type error!
             bitmap = BitMap([3, 'bla', 3, 42])
         with self.assertRaises(ValueError):
             bitmap = BitMap(range(0, 10, 0))

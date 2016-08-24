@@ -6,7 +6,7 @@ It provides a very efficient way to store and manipulate sets of (unsigned 32 bi
 ## Requirements
 
 - Python 3.3 or better
-- Numpy
+- Numpy (optional, for benchmarking)
 - The Python package ``hypothesis`` (optional, for testing)
 
 ## Installation
@@ -57,7 +57,5 @@ bm2       = BitMap([3, 27, 42])
 bm1 & bm2 = BitMap([3])
 bm1 | bm2 = BitMap([3, 18, 27, 42])
 ```
+Warning: when creating a new `BitMap` instance from a Python `list`, we truncate all integers to the least significant bits (values between 0 and 2^32).
 
-Warning: the creation of a new `BitMap` instance from a Python `list` is quite slow. This is mainly due to the verification of the data consistency (i.e. checking that we have integers between 0 and 2^32-1) and the conversion from the Python data structure to a C array. We should find a way to improve that in a near future.
-
-Creating a `BitMap` from a `range` object is much more efficient (e.g. `bm = BitMap(range(2**30))`), since the verifications only have to be done on the bounds of the range.
