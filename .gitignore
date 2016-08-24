@@ -3,3 +3,6 @@ __pycache__
 *.pyc
 *.tex
 *.pickle
+*.pdf
+*.so
+croaring
