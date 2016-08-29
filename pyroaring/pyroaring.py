@@ -1,5 +1,5 @@
 import sys
-from types_declarations import *
+from .types_declarations import *
 
 is_python2 = sys.version_info < (3, 0)
 if is_python2:

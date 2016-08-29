@@ -4,9 +4,12 @@ import unittest
 import random
 import functools
 import os
+import sys
 from hypothesis import given
 import hypothesis.strategies as st
-from pyroaring import BitMap, load, dump, is_python2
+from pyroaring import BitMap, load, dump
+
+is_python2 = sys.version_info < (3, 0)
 
 try: # Python2 compatibility
     range = xrange
