@@ -5,13 +5,31 @@ It provides a very efficient way to store and manipulate sets of (unsigned 32 bi
 
 ## Requirements
 
-- Python 3.3 or better
+- Python 2.7, or Python 3.3 or better
 - Numpy (optional, for benchmarking)
 - The Python package ``hypothesis`` (optional, for testing)
 
 ## Installation
 
-Install [CRoaring](https://github.com/RoaringBitmap/CRoaring), the C library for Roaring bitmap.
+#### Pyroaring
+
+To install pyroaring, simply use:
+```bash
+pip install pyroaring
+```
+
+It may require superuser rights. If you want to avoid this, add `--user` option.
+
+#### CRoaring
+
+An easy way to install CRoaring is to run the built-in script (may require superuser rights):
+```bash
+python -m pyroaring install
+```
+
+If you used `--user` option with pip, then you need to also use `--user` option to install croaring. This does not need any superuser rights.
+
+If you have troubles with the above script or just want to install croaring by yourself, you can use the following steps.
 
 First, get cmake, clone the repository and compile the project:
 ```bash
@@ -58,4 +76,3 @@ bm1 & bm2 = BitMap([3])
 bm1 | bm2 = BitMap([3, 18, 27, 42])
 ```
 Warning: when creating a new `BitMap` instance from a Python `list`, we truncate all integers to the least significant bits (values between 0 and 2^32).
-
