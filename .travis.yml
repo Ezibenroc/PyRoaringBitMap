@@ -12,6 +12,7 @@ python:
 
 install:
     - python3 -m pyroaring install --user
+    - source ~/.bashrc
     - pip install hypothesis
 
 script:
