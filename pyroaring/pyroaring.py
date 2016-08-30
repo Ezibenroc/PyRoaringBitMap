@@ -1,4 +1,5 @@
 import sys
+import array
 from .types_declarations import *
 
 is_python2 = sys.version_info < (3, 0)
@@ -41,10 +42,18 @@ class BitMap:
                 self.check_value(values[0])
                 self.check_value(values[-1])
                 self.__obj__ = libroaring.roaring_bitmap_from_range(values[0], values[-1]+1, 1)
+        elif isinstance(values, array.array) and values.typecode == 'I':
+            assert values.itemsize == 4 # on some hardware an "unsigned int" could have sizeof diff. from 4, but uncommon
+            addr, count = values.buffer_info()
+            p = ctypes.cast(addr,ctypes.POINTER(ctypes.c_uint32))
+            self.__obj__ = libroaring.roaring_bitmap_of_ptr(count, p)
+            libroaring.roaring_bitmap_run_optimize(self.__obj__)
         else:
-            size = len(values)
-            values = (ctypes.c_uint32 * size)(*values)
-            self.__obj__ = libroaring.roaring_bitmap_of_ptr(size, values)
+            v = array.array('I',values)
+            assert v.itemsize == 4 # on some hardware an "unsigned int" could have sizeof diff. from 4, but uncommon
+            addr, count = v.buffer_info()
+            p = ctypes.cast(addr,ctypes.POINTER(ctypes.c_uint32))
+            self.__obj__ = libroaring.roaring_bitmap_of_ptr(count, p)
             libroaring.roaring_bitmap_run_optimize(self.__obj__)
 
     def __del__(self):
