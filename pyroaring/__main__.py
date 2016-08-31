@@ -3,6 +3,7 @@ import sys
 import os.path
 from subprocess import Popen
 import shutil
+import platform
 
 PYROARING_TAG = 'pyroaring_installation'
 BLUE_STR = '\033[1m\033[94m'
@@ -44,7 +45,7 @@ def build_library(sources_dir, lib_name):
     old_path = os.getcwd()
     os.chdir(sources_dir)
     run_command(['bash', 'amalgamation.sh']) # TODO remove bash dependency
-    run_command(['gcc', '-march=native', '-O3', '-std=c11', '-shared', '-o', lib_name, '-fPIC', 'roaring.c'])
+    run_command(['cc', '-march=native', '-O3', '-std=c11', '-shared', '-o', lib_name, '-fPIC', 'roaring.c'])
     os.chdir(old_path)
 
 def fetch_and_build(sources_dir, lib_name):
@@ -106,6 +107,8 @@ def main_install():
         syntax()
     sources_dir = os.path.join(os.getcwd(), 'croaring')
     lib_name = 'libroaring.so'
+    if platform.uname()[0] == "Darwin" :
+        lib_name = "libroaring.dylib" # Macs have a different name for libraries
     if sys.argv[1] == 'install':
         if len(sys.argv) == 2:
             install(sources_dir, lib_name)
