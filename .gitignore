@@ -2,6 +2,8 @@ __pycache__
 .hypothesis
 *.pyc
 *.tex
+*.aux
+*.log
 *.pickle
 *.pdf
 *.so
