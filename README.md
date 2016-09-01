@@ -86,3 +86,21 @@ bm1 & bm2 = BitMap([3])
 bm1 | bm2 = BitMap([3, 18, 27, 42])
 ```
 Warning: when creating a new `BitMap` instance from a Python `list`, we truncate all integers to the least significant bits (values between 0 and 2^32).
+
+## Benchmark
+
+With `benchmark.py`, you can compare the performances of objects implementing the set interface. Currently, we compare `BitMap` with `set`.
+
+The syntax is the following:
+
+```bash
+./benchmark.py -l load_file.pickle -d dump_file.pickle -p plot_file.tex
+```
+
+It will launch the benchmark. The program will not stop until you press `Ctrl-C` or send the signal `SIGINT`.
+
+* Benchmark results will be loaded from the file `load_file.pickle`. It is useful to resume a previous test.
+* Benchmark results will be dumped into file `dump_file.pickle` after its execution. This file can then be loaded in a future execution with option `-l`.
+* Benchmark results will be plotted into file `plot_file.tex`. It is a standalone Latex file using `pgfplots`. It can then be compiled using the command `pdflatex plot_file.tex`.
+
+All these options are optional.
