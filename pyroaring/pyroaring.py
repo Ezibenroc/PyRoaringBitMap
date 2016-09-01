@@ -42,17 +42,11 @@ class BitMap:
                 self.check_value(values[0])
                 self.check_value(values[-1])
                 self.__obj__ = libroaring.roaring_bitmap_from_range(values[0], values[-1]+1, 1)
-        elif isinstance(values, array.array) and values.typecode == 'I':
-            assert values.itemsize == 4 # on some hardware an "unsigned int" could have sizeof diff. from 4, but uncommon
-            addr, count = values.buffer_info()
-            p = ctypes.cast(addr,ctypes.POINTER(ctypes.c_uint32))
-            self.__obj__ = libroaring.roaring_bitmap_of_ptr(count, p)
-            libroaring.roaring_bitmap_run_optimize(self.__obj__)
         else:
-            v = array.array('I',values)
-            assert v.itemsize == 4 # on some hardware an "unsigned int" could have sizeof diff. from 4, but uncommon
-            addr, count = v.buffer_info()
-            p = ctypes.cast(addr,ctypes.POINTER(ctypes.c_uint32))
+            count = len(values)
+            if not (isinstance(values, array.array) and values.typecode == 'I'):
+                values = array.array('I', values)
+            p = (ctypes.c_uint32 * count).from_buffer(values)
             self.__obj__ = libroaring.roaring_bitmap_of_ptr(count, p)
             libroaring.roaring_bitmap_run_optimize(self.__obj__)
 
