@@ -89,6 +89,8 @@ Warning: when creating a new `BitMap` instance from a Python `list`, we truncate
 
 ## Benchmark
 
+#### Utilization
+
 With `benchmark.py`, you can compare the performances of objects implementing the set interface. Currently, we compare `BitMap` with `set`.
 
 The syntax is the following:
@@ -104,3 +106,22 @@ It will launch the benchmark. The program will not stop until you press `Ctrl-C`
 * Benchmark results will be plotted into file `plot_file.tex`. It is a standalone Latex file using `pgfplots`. It can then be compiled using the command `pdflatex plot_file.tex`.
 
 All these options are optional.
+
+The benchmark will run operations of the set interface with randomly generated operands of given size. To do so, it picks randomly the right number of elements in a large enough range of possible elements. It tests for sparse operands (the range of possible elements is 16 times larger than the desired size) and dense operands (the range is 2 times larger).
+
+#### Results
+
+You can find results of the benchmark in file [plots.pdf](plots.pdf).
+
+Experimental settings:
+
+    CPU                : Intel i7-5600U
+    RAM                : 16GB
+    OS                 : GNU/Linux, LMDE2, kernel 4.6.0
+    CRoaring version   : 0.2.1
+    PyRoaring version  : 0.0.2
+    Number of measures : 30
+
+These results show the speedup obtained by using a roaring bitmap instead of the built-in Python set. We plot the average of the ratios `set/BitMap`.
+
+All operations, except the list constructor, are faster with a roaring bitmap than with a set when there is at least 100 elements in the operand(s), regardless of their sparsity. The speedup increases with the size of the operands. The operations are much faster with dense operand(s). We can observe speedup of approximately 1000 for operations on dense operands with one million of elements.
