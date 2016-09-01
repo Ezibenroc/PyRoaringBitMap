@@ -26,17 +26,37 @@ Then restart your shell.
 To install them  system-wide, use the following lines :
 
 ```bash
-pip install pyroaring 
+pip install pyroaring
 ```
 ```bash
-python -m pyroaring install 
+python -m pyroaring install
 ```
 
-Naturally, the latter may require superuser rights (consider prefixing the commands by  ``sudo``). 
+Naturally, the latter may require superuser rights (consider prefixing the commands by  ``sudo``).
 
 
 (If you want to use Python 3 and your system defaults on Python 2.7, you may need to adjust the above commands, e.g., replace ``pip`` by ``pip3`` and python by ``python3``.)
 
+#### Manual Installation of CRoaring
+
+If you have troubles with the installation scripts or just want to install croaring by yourself, you can use the following steps.
+
+First, get cmake, clone the repository and compile the project:
+```bash
+sudo apt-get install cmake
+git clone https://github.com/RoaringBitmap/CRoaring.git
+cd CRoaring && mkdir -p build && cd build && cmake .. && make
+```
+
+Then, either set the environment variable `LD_LIBRARY_PATH`:
+```bash
+export LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH
+```
+
+Or install the library to your system:
+```bash
+sudo make install
+```
 
 ## Utilization
 
@@ -66,26 +86,3 @@ bm1 & bm2 = BitMap([3])
 bm1 | bm2 = BitMap([3, 18, 27, 42])
 ```
 Warning: when creating a new `BitMap` instance from a Python `list`, we truncate all integers to the least significant bits (values between 0 and 2^32).
-
-#### Manual Installation of CRoaring
-
-If you have troubles with the installation scripts or just want to install croaring by yourself, you can use the following steps.
-
-First, get cmake, clone the repository and compile the project:
-```bash
-sudo apt-get install cmake
-git clone https://github.com/RoaringBitmap/CRoaring.git
-cd CRoaring && mkdir -p build && cd build && cmake .. && make
-```
-
-Then, either set the environment variable `LD_LIBRARY_PATH`:
-```bash
-export LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH
-```
-
-Or install the library to your system:
-```bash
-sudo make install
-```
-
-
