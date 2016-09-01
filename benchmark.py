@@ -194,6 +194,11 @@ class BinarySymmetricDifference(AbstractBinaryOpBenchMark):
     def do_binary_op(self, values1, values2):
         values1 ^ values2
 
+class BinaryDifference(AbstractBinaryOpBenchMark):
+
+    def do_binary_op(self, values1, values2):
+        values1 - values2
+
 class BinaryUnionInPlace(AbstractBinaryOpBenchMark):
 
     def do_binary_op(self, values1, values2):
@@ -204,10 +209,25 @@ class BinaryIntersectionInPlace(AbstractBinaryOpBenchMark):
     def do_binary_op(self, values1, values2):
         values1 &= values2
 
+class BinaryDifferenceInPlace(AbstractBinaryOpBenchMark):
+
+    def do_binary_op(self, values1, values2):
+        values1 ^= values2
+
 class BinarySymmetricDifferenceInPlace(AbstractBinaryOpBenchMark):
 
     def do_binary_op(self, values1, values2):
         values1 ^= values2
+
+class EqualityTest(AbstractBinaryOpBenchMark):
+
+    def do_binary_op(self, values1, values2):
+        values1 == values2
+
+class InclusionTest(AbstractBinaryOpBenchMark):
+
+    def do_binary_op(self, values1, values2):
+        values1 < values2
 
 class AbstractManyOpBenchMark(AbstractBenchMark):
 
@@ -232,8 +252,9 @@ class ManyUnion(AbstractManyOpBenchMark):
         cls.union(*values)
 
 classes = [ListConstructor, RangeConstructor, CopyConstructor,
-    BinaryUnion, BinaryIntersection, BinarySymmetricDifference,
-    BinaryUnionInPlace, BinaryIntersectionInPlace, BinarySymmetricDifferenceInPlace,
+    BinaryUnion, BinaryIntersection, BinaryDifference, BinarySymmetricDifference,
+    BinaryUnionInPlace, BinaryIntersectionInPlace, BinaryDifferenceInPlace, BinarySymmetricDifferenceInPlace,
+    EqualityTest, InclusionTest,
     ManyUnion]
 
 class Runer:

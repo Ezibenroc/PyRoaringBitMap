@@ -120,8 +120,8 @@ Experimental settings:
     OS                 : GNU/Linux, LMDE2, kernel 4.6.0
     CRoaring version   : 0.2.1
     PyRoaring version  : 0.0.2
-    Number of measures : 30
+    Number of measures : 8
 
 These results show the speedup obtained by using a roaring bitmap instead of the built-in Python set. We plot the average of the ratios `set/BitMap`.
 
-All operations, except the list constructor, are faster with a roaring bitmap than with a set when there is at least 100 elements in the operand(s), regardless of their sparsity. The speedup increases with the size of the operands. The operations are much faster with dense operand(s). We can observe speedup of approximately 1000 for operations on dense operands with one million of elements.
+All operations, except the list constructor, the equality test and the inclusion test, are faster with a roaring bitmap than with a set when there is at least 100 elements in the operand(s), regardless of their sparsity. The speedup increases with the size of the operands. The operations are much faster with dense operand(s). We can observe speedup of approximately 1000 for operations on dense operands with one million of elements.
