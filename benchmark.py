@@ -85,9 +85,11 @@ class AbstractBenchMark(metaclass=abc.ABCMeta):
         f.write('\t\\begin{tikzpicture}\n')
         f.write('\t\t\\begin{axis}[\n')
         f.write('\t\t\txlabel=size,\n')
+        f.write('\t\t\tylabel=speedup,\n')
         f.write('\t\t\txmode=log,\n')
         f.write('\t\t\tymode=log,\n')
-        f.write('\t\t\tylabel=speedup,\n')
+        f.write('\t\t\txmajorgrids,\n')
+        f.write('\t\t\tymajorgrids,\n')
         f.write('\t\t\tlegend style={at={(0, 1)},anchor=north west,fill=none}\n')
         f.write('\t\t\t]\n')
         for data_func, d_func in sorted(self.ratios.items(), key=lambda x: x[0].__name__):
