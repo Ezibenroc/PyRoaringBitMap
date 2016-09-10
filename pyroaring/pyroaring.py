@@ -195,3 +195,10 @@ class BitMap:
         self.check_value(start)
         self.check_value(end)
         libroaring.roaring_bitmap_flip_inplace(self.__obj__, start, end)
+
+    def update(self, values):
+        count = len(values)
+        if not (isinstance(values, array.array) and values.typecode == 'I'):
+            values = array.array('I', values)
+        p = (ctypes.c_uint32 * count).from_buffer(values)
+        libroaring.roaring_bitmap_add_many(self.__obj__, count, p)

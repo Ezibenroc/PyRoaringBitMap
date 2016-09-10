@@ -124,6 +124,14 @@ class BasicTest(Util):
         bitmap1.add(other_value)
         self.assertNotEqual(bitmap1, bitmap2)
 
+    @given(hyp_range, hyp_range)
+    def test_update(self, initial_values, new_values):
+        bm = BitMap(initial_values)
+        expected = BitMap(bm)
+        bm.update(new_values)
+        expected |= BitMap(new_values)
+        self.assertEqual(bm, expected)
+
     def wrong_op(self, op):
         bitmap = BitMap()
         with self.assertRaises(ValueError):

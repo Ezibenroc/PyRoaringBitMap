@@ -57,6 +57,8 @@ if libroaring is not None:
     libroaring.roaring_bitmap_copy.argtypes = [bm_type]
     libroaring.roaring_bitmap_from_range.restype = bm_type
     libroaring.roaring_bitmap_from_range.argtypes = [val_type, val_type, val_type]
+    libroaring.roaring_bitmap_add_many.restype = None
+    libroaring.roaring_bitmap_add_many.argtypes = [bm_type, ctypes.c_size_t, ctypes.POINTER(val_type)]
     libroaring.roaring_bitmap_of_ptr.restype = bm_type
     libroaring.roaring_bitmap_of_ptr.argtypes = [ctypes.c_size_t, ctypes.POINTER(val_type)]
     libroaring.roaring_bitmap_run_optimize.restype = ctypes.c_bool
