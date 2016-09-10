@@ -39,8 +39,7 @@ range_power2_step = uint18.flatmap(lambda n:
                       )))
 
 hyp_range = range_big_step | range_small_step | range_power2_step
-hyp_set = st.builds(set, hyp_range) | st.sets(uint32,
-                 min_size=0, max_size=2**14, average_size=2**10)
+hyp_set = st.builds(set, hyp_range) # would be great to build a true random set, but it takes too long and hypothesis does a timeout...
 hyp_collection = hyp_range | hyp_set
 hyp_many_collections = st.lists(hyp_collection, min_size=1, max_size=20)
 
