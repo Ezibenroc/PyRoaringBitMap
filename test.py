@@ -18,8 +18,6 @@ except NameError:
 
 uint18 = st.integers(min_value=0, max_value=2**18)
 uint32 = st.integers(min_value=0, max_value=2**32-1)
-hyp_set = st.sets(uint32,
-                 min_size=0, max_size=2**14, average_size=2**10)
 
 range_max_size = 2**18
 
@@ -41,9 +39,10 @@ range_power2_step = uint18.flatmap(lambda n:
                       )))
 
 hyp_range = range_big_step | range_small_step | range_power2_step
-hyp_many_ranges = st.lists(hyp_range, min_size=1, max_size=20)
-hyp_set = st.builds(set, hyp_range)
+hyp_set = st.builds(set, hyp_range) | st.sets(uint32,
+                 min_size=0, max_size=2**14, average_size=2**10)
 hyp_collection = hyp_range | hyp_set
+hyp_many_collections = st.lists(hyp_collection, min_size=1, max_size=20)
 
 class Util(unittest.TestCase):
 
@@ -67,7 +66,7 @@ class Util(unittest.TestCase):
 
 class BasicTest(Util):
 
-    @given(hyp_range)
+    @given(hyp_collection)
     def test_basic(self, values):
         bitmap = BitMap()
         expected_set = set()
@@ -93,18 +92,15 @@ class BasicTest(Util):
         self.compare_with_set(bitmap, expected_set)
 
 
-    @given(hyp_range)
+    @given(hyp_collection)
     def test_bitmap_equality(self, values):
         bitmap1 = BitMap(values)
         bitmap2 = BitMap(values)
         self.assertEqual(bitmap1, bitmap2)
 
-    @given(hyp_range, hyp_range)
+    @given(hyp_collection, hyp_collection)
     def test_bitmap_unequality(self, values1, values2):
-        if not is_python2:
-            st.assume(values1 != values2)
-        else: # xrange objects are never equal...
-            st.assume(list(values1) != list(values2))
+        st.assume(set(values1) != set(values2))
         bitmap1 = BitMap(values1)
         bitmap2 = BitMap(values2)
         self.assertNotEqual(bitmap1, bitmap2)
@@ -115,7 +111,7 @@ class BasicTest(Util):
         expected_set = set(values)
         self.compare_with_set(bitmap, expected_set)
 
-    @given(hyp_range, uint32)
+    @given(hyp_collection, uint32)
     def test_constructor_copy(self, values, other_value):
         st.assume(other_value not in values)
         bitmap1 = BitMap(values)
@@ -124,7 +120,7 @@ class BasicTest(Util):
         bitmap1.add(other_value)
         self.assertNotEqual(bitmap1, bitmap2)
 
-    @given(hyp_range, hyp_range)
+    @given(hyp_collection, hyp_collection)
     def test_update(self, initial_values, new_values):
         bm = BitMap(initial_values)
         expected = BitMap(bm)
@@ -157,13 +153,13 @@ class BasicTest(Util):
 
 class SelectTest(Util):
 
-    @given(hyp_range)
+    @given(hyp_collection)
     def test_simple_select(self, values):
         bitmap = BitMap(values)
-        for i, value in enumerate(values):
+        for i, value in enumerate(sorted(values)):
             self.assertEqual(bitmap[i], value)
 
-    @given(hyp_range, uint32)
+    @given(hyp_collection, uint32)
     def test_wrong_selection(self, values, n):
         bitmap = BitMap(values)
         with self.assertRaises(ValueError):
@@ -173,7 +169,7 @@ class SelectTest(Util):
 
 class BinaryOperationsTest(Util):
 
-    @given(hyp_range, hyp_range)
+    @given(hyp_collection, hyp_collection)
     def setUp(self, values1, values2):
         self.set1 = set(values1)
         self.set2 = set(values2)
@@ -225,25 +221,25 @@ class ComparisonTest(Util):
     def do_test(self, values1, values2, op):
         self.assertEqual(op(BitMap(values1), BitMap(values2)), op(set(values1), set(values2)), msg='%s, %s' % (values1, values2))
 
-    @given(hyp_range, hyp_range)
+    @given(hyp_collection, hyp_collection)
     def test_le(self, values1, values2):
         self.do_test(values1, values2, lambda x,y: x <= y)
 
-    @given(hyp_range, hyp_range)
+    @given(hyp_collection, hyp_collection)
     def test_ge(self, values1, values2):
         self.do_test(values1, values2, lambda x,y: x >= y)
 
-    @given(hyp_range, hyp_range)
+    @given(hyp_collection, hyp_collection)
     def test_lt(self, values1, values2):
         self.do_test(values1, values2, lambda x,y: x < y)
 
-    @given(hyp_range, hyp_range)
+    @given(hyp_collection, hyp_collection)
     def test_gt(self, values1, values2):
         self.do_test(values1, values2, lambda x,y: x > y)
 
 class ManyOperationsTest(Util):
 
-    @given(hyp_many_ranges)
+    @given(hyp_many_collections)
     def test_union(self, all_values):
         bitmaps = [BitMap(values) for values in all_values]
         bitmaps_copy = [BitMap(bm) for bm in bitmaps]
@@ -254,7 +250,7 @@ class ManyOperationsTest(Util):
 
 class SerializationTest(Util):
 
-    @given(hyp_range, uint32)
+    @given(hyp_collection, uint32)
     def test_serialization(self, values, other_value):
         st.assume(other_value not in values)
         old_bm = BitMap(values)
@@ -264,7 +260,7 @@ class SerializationTest(Util):
         old_bm.add(other_value)
         self.assertNotEqual(old_bm, new_bm)
 
-    @given(hyp_range)
+    @given(hyp_collection)
     def test_load_dump(self, values):
         filepath = 'testfile'
         old_bm = BitMap(values)
@@ -277,7 +273,7 @@ class SerializationTest(Util):
 
 class StatisticsTest(Util):
 
-    @given(hyp_range)
+    @given(hyp_collection)
     def test_basic_properties(self, values):
         bitmap = BitMap(values)
         stats = bitmap.get_statistics()
@@ -285,8 +281,9 @@ class StatisticsTest(Util):
             + stats.n_values_run_containers, len(bitmap))
         self.assertEqual(stats.n_bytes_array_containers, 2*stats.n_values_array_containers)
         self.assertEqual(stats.n_bytes_bitset_containers, 2**13*stats.n_bitset_containers)
-        self.assertEqual(stats.min_value, bitmap[0])
-        self.assertEqual(stats.max_value, bitmap[len(bitmap)-1])
+        if len(values) > 0:
+            self.assertEqual(stats.min_value, bitmap[0])
+            self.assertEqual(stats.max_value, bitmap[len(bitmap)-1])
         self.assertEqual(stats.cardinality, len(bitmap))
         self.assertEqual(stats.sum_value, sum(values))
 
@@ -340,7 +337,7 @@ class FlipTest(Util):
             if not (start <= elt < end):
                 self.assertIn(elt, bm_before)
 
-    @given(hyp_range, uint32, uint32)
+    @given(hyp_collection, uint32, uint32)
     def test_flip_empty(self, values, start, end):
         st.assume(start >= end)
         bm_before = BitMap(values)
@@ -349,7 +346,7 @@ class FlipTest(Util):
         self.assertEqual(bm_before, bm_copy)
         self.assertEqual(bm_before, bm_after)
 
-    @given(hyp_range, uint32, uint32)
+    @given(hyp_collection, uint32, uint32)
     def test_flip(self, values, start, end):
         st.assume(start < end)
         bm_before = BitMap(values)
@@ -358,7 +355,7 @@ class FlipTest(Util):
         self.assertEqual(bm_before, bm_copy)
         self.check_flip(bm_before, bm_after, start, end)
 
-    @given(hyp_range, uint32, uint32)
+    @given(hyp_collection, uint32, uint32)
     def test_flip_inplace_empty(self, values, start, end):
         st.assume(start >= end)
         bm_before = BitMap(values)
@@ -366,7 +363,7 @@ class FlipTest(Util):
         bm_after.flip_inplace(start, end)
         self.assertEqual(bm_before, bm_after)
 
-    @given(hyp_range, uint32, uint32)
+    @given(hyp_collection, uint32, uint32)
     def test_flip_inplace(self, values, start, end):
         st.assume(start < end)
         bm_before = BitMap(values)
