@@ -1,6 +1,8 @@
 import ctypes
 import platform
 import sys
+is_python2 = sys.version_info < (3, 0)
+
 libfilename = "libroaring.so"
 if(platform.uname()[0] == "Darwin") :
     libfilename = "libroaring.dylib"
@@ -9,7 +11,7 @@ from .__main__ import syntax_msg
 try:
     libroaring = ctypes.cdll.LoadLibrary(libfilename)
 except OSError as e:
-    if sys.argv[0] != '-m':
+    if (is_python2 and sys.argv[0] != '-c') or (not is_python2 and sys.argv[0] != '-m'):
         sys.stderr.write('ERROR: cannot open shared library %s\n' % libfilename)
         sys.stderr.write('       Please make sure that the library can be found.\n')
         sys.stderr.write('       For instance, on GNU/Linux, it could be in /usr/lib and /usr/include directories,\n')

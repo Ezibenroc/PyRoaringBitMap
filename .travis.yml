@@ -1,19 +1,33 @@
 language: python
 
-# Ubuntu 14.04 Trusty support (for a modern version of gcc)
-sudo: required
-dist: trusty
-
-python:
-  - 2.7
-  - 3.3
-  - 3.4
-  - 3.5
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+      python: 2.7
+    - os: linux
+      dist: trusty
+      sudo: required
+      python: 3.3
+    - os: linux
+      dist: trusty
+      sudo: required
+      python: 3.4
+    - os: linux
+      dist: trusty
+      sudo: required
+      python: 3.5
+# Travis does not support yet Python installation (see https://github.com/travis-ci/travis-ci/issues/2312).
+# We will therefore only test with the preinstalled Python 2.7
+    - os: osx
+      osx_image: xcode8
+      language: generic
 
 install:
-    - python3 -m pyroaring install --user
+    - python -m pyroaring install --user
     - source ~/.bashrc
     - pip install hypothesis
 
 script:
-  - python test.py
+    - python test.py

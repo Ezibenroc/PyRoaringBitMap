@@ -2,7 +2,6 @@ import sys
 import array
 from .types_declarations import *
 
-is_python2 = sys.version_info < (3, 0)
 if is_python2:
     sys.stderr.write('Warning: %s is faster with Python 3.\n' % __name__)
 
