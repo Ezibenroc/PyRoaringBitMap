@@ -107,8 +107,7 @@ if libroaring is not None:
     libroaring.roaring_bitmap_portable_size_in_bytes.argtypes = [bm_type]
     libroaring.roaring_bitmap_statistics.restype = None
     libroaring.roaring_bitmap_statistics.argtypes = [bm_type, ctypes.POINTER(BitMapStats)]
-
     libroaring.roaring_bitmap_flip.restype = bm_type
-    libroaring.roaring_bitmap_flip.argtypes = [bm_type, val_type, val_type]
+    libroaring.roaring_bitmap_flip.argtypes = [bm_type, ctypes.c_uint64, ctypes.c_uint64]
     libroaring.roaring_bitmap_flip_inplace.restype = None
-    libroaring.roaring_bitmap_flip_inplace.argtypes = [bm_type, val_type, val_type]
+    libroaring.roaring_bitmap_flip_inplace.argtypes = [bm_type, ctypes.c_uint64, ctypes.c_uint64]
