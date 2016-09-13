@@ -18,6 +18,7 @@ except NameError:
 
 uint18 = st.integers(min_value=0, max_value=2**18)
 uint32 = st.integers(min_value=0, max_value=2**32-1)
+integer = st.integers(min_value=0, max_value=2**31-1)
 
 range_max_size = 2**18
 
@@ -45,7 +46,7 @@ hyp_many_collections = st.lists(hyp_collection, min_size=1, max_size=20)
 
 class Util(unittest.TestCase):
 
-    comparison_set = random.sample(range(2**8), 100) + random.sample(range(2**32-1), 50)
+    comparison_set = random.sample(range(2**8), 100) + random.sample(range(2**31-1), 50)
 
     def compare_with_set(self, bitmap, expected_set):
         self.assertEqual(len(bitmap), len(expected_set))
@@ -336,7 +337,7 @@ class FlipTest(Util):
             if not (start <= elt < end):
                 self.assertIn(elt, bm_before)
 
-    @given(hyp_collection, uint32, uint32)
+    @given(hyp_collection, integer, integer)
     def test_flip_empty(self, values, start, end):
         st.assume(start >= end)
         bm_before = BitMap(values)
@@ -345,7 +346,7 @@ class FlipTest(Util):
         self.assertEqual(bm_before, bm_copy)
         self.assertEqual(bm_before, bm_after)
 
-    @given(hyp_collection, uint32, uint32)
+    @given(hyp_collection, integer, integer)
     def test_flip(self, values, start, end):
         st.assume(start < end)
         bm_before = BitMap(values)
@@ -354,7 +355,7 @@ class FlipTest(Util):
         self.assertEqual(bm_before, bm_copy)
         self.check_flip(bm_before, bm_after, start, end)
 
-    @given(hyp_collection, uint32, uint32)
+    @given(hyp_collection, integer, integer)
     def test_flip_inplace_empty(self, values, start, end):
         st.assume(start >= end)
         bm_before = BitMap(values)
@@ -362,7 +363,7 @@ class FlipTest(Util):
         bm_after.flip_inplace(start, end)
         self.assertEqual(bm_before, bm_after)
 
-    @given(hyp_collection, uint32, uint32)
+    @given(hyp_collection, integer, integer)
     def test_flip_inplace(self, values, start, end):
         st.assume(start < end)
         bm_before = BitMap(values)
