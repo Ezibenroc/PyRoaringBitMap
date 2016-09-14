@@ -2,9 +2,6 @@ import sys
 import array
 from .types_declarations import *
 
-if is_python2:
-    sys.stderr.write('Warning: %s is faster with Python 3.\n' % __name__)
-
 def load(fp):
     buff = fp.read()
     return BitMap.deserialize(buff)
