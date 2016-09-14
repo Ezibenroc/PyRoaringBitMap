@@ -8,7 +8,6 @@ It provides a very efficient way to store and manipulate sets of (unsigned 32 bi
 - Environment like Linux and MacOS
 - Python 2.7, or Python 3.3 or better
 - A recent C compiler like GCC
-- Numpy (optional, for benchmarking)
 - The Python package ``hypothesis`` (optional, for testing)
 
 ## Installation

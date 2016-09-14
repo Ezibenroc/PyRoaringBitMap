@@ -2,18 +2,20 @@
 
 import time
 import random
-import numpy
 import abc
 import pickle
 import argparse
 import sys
 from pyroaring import BitMap
 
+def mean(l):
+    s = float(sum(l))
+    return s/len(l)
+
 class AbstractBenchMark(metaclass=abc.ABCMeta):
     max_int = 2**32
     sizes = [2**n for n in range(0, 22)]
     classes = [BitMap, set]
-    agregators=[min, max, numpy.mean, numpy.median]
 
     @classmethod
     def get_data(cls, size, bound):
@@ -48,7 +50,7 @@ class AbstractBenchMark(metaclass=abc.ABCMeta):
                     result = self.results[data_func][size]
                     for i in range(len(result[cls])):
                         r.append(result[cls][i]/result[self.classes[0]][i])
-                    d[size][cls] = numpy.mean(r)
+                    d[size][cls] = mean(r)
 
     @abc.abstractmethod
     def run(self, data_func, size):
