@@ -9,10 +9,13 @@ import sys
 from pyroaring import BitMap
 
 def mean(l):
-    s = float(sum(l))
-    return s/len(l)
+    if len(l) > 0:
+        s = float(sum(l))
+        return s/len(l)
+    else:
+        return float('NaN')
 
-class AbstractBenchMark(metaclass=abc.ABCMeta):
+class AbstractBenchMark:
     max_int = 2**32
     sizes = [2**n for n in range(0, 22)]
     classes = [BitMap, set]
@@ -35,7 +38,7 @@ class AbstractBenchMark(metaclass=abc.ABCMeta):
         return cls.get_data(size, bound)
 
     def __init__(self):
-        self.results = {data_func : dict() for data_func in [self.sparse_data, self.dense_data]}
+        self.results = {data_func.__name__ : dict() for data_func in [self.sparse_data, self.dense_data]}
         for data_func, d in self.results.items():
             for size in self.sizes:
                 d[size] = {cls:list() for cls in self.classes}
@@ -52,21 +55,20 @@ class AbstractBenchMark(metaclass=abc.ABCMeta):
                         r.append(result[cls][i]/result[self.classes[0]][i])
                     d[size][cls] = mean(r)
 
-    @abc.abstractmethod
-    def run(self, data_func, size):
-        pass
+        def run(self, data_func, size):
+            raise NotImplementedError
 
     def run_all(self):
-        for data_func in self.results.keys():
+        for data_func in [self.dense_data, self.sparse_data]:
             for size in self.sizes:
                 times = self.run(data_func, size)
                 for i, cls in enumerate(self.classes):
-                    self.results[data_func][size][cls].append(times[i])
+                    self.results[data_func.__name__][size][cls].append(times[i])
 
     def print_results(self):
         print('\n# %s' % self.__class__.__name__)
-        for data_func, d in sorted(self.ratios.items(), key = lambda x: x[0].__name__):
-            print('\t%s' % data_func.__name__)
+        for data_func, d in sorted(self.ratios.items(), key = lambda x: x[0]):
+            print('\t%s' % data_func)
             for size, d_size in sorted(d.items()):
                 print('\t\tSize=%d' % size)
                 for test_class, ratio in sorted(d_size.items(), key = lambda x: x[0].__name__):
@@ -94,7 +96,7 @@ class AbstractBenchMark(metaclass=abc.ABCMeta):
         f.write('\t\t\tymajorgrids,\n')
         f.write('\t\t\tlegend style={at={(0, 1)},anchor=north west,fill=none}\n')
         f.write('\t\t\t]\n')
-        for data_func, d_func in sorted(self.ratios.items(), key=lambda x: x[0].__name__):
+        for data_func, d_func in sorted(self.ratios.items(), key=lambda x: x[0]):
             results = dict()
             # First, we "inverse" the dict...
             for size, d_size in d_func.items():
@@ -106,9 +108,9 @@ class AbstractBenchMark(metaclass=abc.ABCMeta):
             for test_class in self.classes[1:]:
                 self._results_to_tex(f, results[test_class])
         # Finally, the legend
-        for data_func in sorted(self.ratios, key=lambda x: x.__name__):
+        for data_func in sorted(self.ratios, key=lambda x: x):
             for test_class in self.classes[1:]:
-                self.add_legend(f, 'ratio %s/%s: %s' % (test_class.__name__, self.classes[0].__name__, data_func.__name__))
+                self.add_legend(f, 'ratio %s/%s: %s' % (test_class.__name__, self.classes[0].__name__, data_func))
         f.write('\t\t\\end{axis}\n')
         f.write('\t\\end{tikzpicture}\n')
 
@@ -121,9 +123,8 @@ class AbstractBenchMark(metaclass=abc.ABCMeta):
 
 class AbstractConstructorBenchMark(AbstractBenchMark):
 
-    @abc.abstractmethod
     def get_values(self, data_func, size):
-        pass
+        raise NotImplementedError
 
     def run_cls(self, cls, values):
         begin = time.time()
@@ -161,13 +162,12 @@ class CopyConstructor(AbstractConstructorBenchMark):
 
     def run_cls(self, cls, values):
         values = cls(values)
-        return super().run_cls(cls, values)
+        return AbstractConstructorBenchMark.run_cls(self, cls, values)
 
 class AbstractBinaryOpBenchMark(AbstractBenchMark):
 
-    @abc.abstractmethod
     def do_binary_op(self, values1, values2):
-        pass
+        raise NotImplementedError
 
     def run_cls(self, cls, values1, values2):
         values1 = cls(values1)
@@ -233,9 +233,8 @@ class InclusionTest(AbstractBinaryOpBenchMark):
 
 class AbstractManyOpBenchMark(AbstractBenchMark):
 
-    @abc.abstractmethod
     def do_many_op(self, values):
-        pass
+        raise NotImplementedError
 
     def run_cls(self, cls, values_list):
         values_list = [cls(v) for v in values_list]
