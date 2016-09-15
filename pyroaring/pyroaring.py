@@ -10,6 +10,9 @@ def dump(fp, bitmap):
     buff = bitmap.serialize()
     fp.write(buff)
 
+if is_python2:
+    range = xrange
+
 class BitMap:
 
     def __init__(self, values=None, obj=None):
@@ -21,23 +24,16 @@ class BitMap:
             self.__obj__ = libroaring.roaring_bitmap_create()
         elif isinstance(values, BitMap):
             self.__obj__ = libroaring.roaring_bitmap_copy(values.__obj__)
-        elif not is_python2 and isinstance(values, range):
-            if values.step < 0:
-                values = range(values.stop+1, values.start+1, -values.step)
-            if values.start >= values.stop:
+        elif isinstance(values, range):
+            _, (start, stop, step) = values.__reduce__()
+            if step < 0:
+                values = range(stop+1, start+1, -step)
+                _, (start, stop, step) = values.__reduce__()
+            if start >= stop:
                 raise ValueError('Invalid range: max value must be greater than min value.')
-            self.check_value(values.start)
-            self.check_value(values.stop)
-            self.__obj__ = libroaring.roaring_bitmap_from_range(values.start, values.stop, values.step)
-        elif is_python2 and isinstance(values, xrange): # cannot access the fields start, stop and step in a xrange object
-            if len(values) == 0:
-                raise ValueError('Invalid xrange: max value must be greater than min value.')
-            elif len(values) == 1 or values[1]-values[0] != 1:
-                self.__init__(list(values))
-            else:
-                self.check_value(values[0])
-                self.check_value(values[-1])
-                self.__obj__ = libroaring.roaring_bitmap_from_range(values[0], values[-1]+1, 1)
+            self.check_value(start)
+            self.check_value(stop)
+            self.__obj__ = libroaring.roaring_bitmap_from_range(start, stop, step)
         else:
             count = len(values)
             if not (isinstance(values, array.array) and values.typecode == 'I'):
