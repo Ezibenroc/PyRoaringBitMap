@@ -116,9 +116,9 @@ Experimental settings:
 
     CPU                : Intel i7-5600U
     RAM                : 16GB
-    OS                 : GNU/Linux, LMDE2, kernel 4.6.0
-    CRoaring version   : 0.2.1
-    PyRoaring version  : 0.0.2
+    OS                 : GNU/Linux, Ubuntu 16.04, kernel 4.4.0
+    CRoaring version   : 0.2.8
+    PyRoaring version  : 0.0.4
     Number of measures : 8
 
 These results show the speedup obtained by using a roaring bitmap instead of the built-in Python set. We plot the average of the ratios `set/BitMap`.
