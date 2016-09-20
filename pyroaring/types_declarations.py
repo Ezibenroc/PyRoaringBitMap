@@ -77,6 +77,10 @@ if libroaring is not None:
     libroaring.roaring_bitmap_get_cardinality.argtypes = [bm_type]
     libroaring.roaring_bitmap_equals.restype = ctypes.c_bool
     libroaring.roaring_bitmap_equals.argtypes = [bm_type, bm_type]
+    libroaring.roaring_bitmap_is_subset.restype = ctypes.c_bool
+    libroaring.roaring_bitmap_is_subset.argtypes = [bm_type, bm_type]
+    libroaring.roaring_bitmap_is_strict_subset.restype = ctypes.c_bool
+    libroaring.roaring_bitmap_is_strict_subset.argtypes = [bm_type, bm_type]
     libroaring.roaring_bitmap_to_uint32_array.restype = ctypes.POINTER(val_type)
     libroaring.roaring_bitmap_to_uint32_array.argtypes = [bm_type]
     libroaring.roaring_bitmap_or.restype = bm_type

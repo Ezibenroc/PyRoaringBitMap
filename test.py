@@ -219,7 +219,14 @@ class BinaryOperationsTest(Util):
 class ComparisonTest(Util):
 
     def do_test(self, values1, values2, op):
-        self.assertEqual(op(BitMap(values1), BitMap(values2)), op(set(values1), set(values2)), msg='%s, %s' % (values1, values2))
+        self.assertEqual(op(BitMap(values1), BitMap(values1)),
+                         op(set(values1), set(values1)))
+        self.assertEqual(op(BitMap(values1), BitMap(values2)),
+                         op(set(values1), set(values2)))
+        self.assertEqual(op(BitMap(values1)|BitMap(values2), BitMap(values2)),
+                         op(set(values1)|set(values2), set(values2)))
+        self.assertEqual(op(BitMap(values1), BitMap(values1)|BitMap(values2)),
+                         op(set(values1), set(values1)|set(values2)))
 
     @given(hyp_collection, hyp_collection)
     def test_le(self, values1, values2):

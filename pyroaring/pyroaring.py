@@ -134,16 +134,16 @@ class BitMap:
         return int(elt.contents.value)
 
     def __le__(self, other):
-        return self&other == self
+        return bool(libroaring.roaring_bitmap_is_subset(self.__obj__, other.__obj__))
 
     def __ge__(self, other):
-        return self&other == other
+        return bool(libroaring.roaring_bitmap_is_subset(other.__obj__, self.__obj__, ))
 
     def __lt__(self, other):
-        return self&other == self and self != other
+        return bool(libroaring.roaring_bitmap_is_strict_subset(self.__obj__, other.__obj__))
 
     def __gt__(self, other):
-        return self&other == other and self != other
+        return bool(libroaring.roaring_bitmap_is_strict_subset(other.__obj__, self.__obj__, ))
 
     @classmethod
     def union(cls, *bitmaps):
