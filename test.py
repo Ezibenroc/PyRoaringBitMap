@@ -5,6 +5,7 @@ import random
 import functools
 import os
 import sys
+import pickle
 from hypothesis import given
 import hypothesis.strategies as st
 from pyroaring import BitMap, load, dump
@@ -277,6 +278,15 @@ class SerializationTest(Util):
             new_bm = load(f)
         self.assertEqual(old_bm, new_bm)
         os.remove(filepath)
+
+    @given(hyp_collection)
+    def test_pickle_protocol(self, values):
+        old_bm = BitMap(values)
+        pickled = pickle.dumps(old_bm)
+        new_bm = pickle.loads(pickled)
+        self.assertEqual(old_bm, new_bm)
+        self.assertTrue(old_bm is not new_bm)
+        self.assertNotEqual(old_bm.__obj__, new_bm.__obj__)
 
 class StatisticsTest(Util):
 
