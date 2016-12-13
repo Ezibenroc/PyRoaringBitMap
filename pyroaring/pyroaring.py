@@ -10,6 +10,12 @@ def dump(fp, bitmap):
     buff = bitmap.serialize()
     fp.write(buff)
 
+def _deserialize_obj_from_buff(buff):
+    size = len(buff)
+    Array = ctypes.c_char*size
+    buff = Array(*buff)
+    return libroaring.roaring_bitmap_portable_deserialize(buff)
+
 if is_python2:
     range = xrange
 
@@ -167,11 +173,14 @@ class BitMap:
 
     @classmethod
     def deserialize(cls, buff):
-        size = len(buff)
-        Array = ctypes.c_char*size
-        buff = Array(*buff)
-        obj = libroaring.roaring_bitmap_portable_deserialize(buff)
+        obj = _deserialize_obj_from_buff(buff)
         return cls(obj=obj)
+
+    def __getstate__(self):
+        return self.serialize()
+
+    def __setstate__(self, state):
+        self.__obj__ = _deserialize_obj_from_buff(state)
 
     def get_statistics(self):
         stats = ctypes.pointer(BitMapStats())
