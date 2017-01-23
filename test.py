@@ -152,7 +152,7 @@ class BasicTest(Util):
         with self.assertRaises(ValueError):
             bitmap = BitMap(range(10, 0, 1))
 
-class SelectTest(Util):
+class SelectRankTest(Util):
 
     @given(hyp_collection)
     def test_simple_select(self, values):
@@ -167,6 +167,39 @@ class SelectTest(Util):
             bitmap[len(values)]
         with self.assertRaises(ValueError):
             bitmap[n + len(values)]
+
+    @given(hyp_collection)
+    def test_simple_rank(self, values):
+        bitmap = BitMap(values)
+        for i, value in enumerate(sorted(values)):
+            self.assertEqual(bitmap.rank(value), i+1)
+
+    @given(hyp_collection, uint18)
+    def test_general_rank(self, values, element):
+        bitmap = BitMap(values)
+        observed_rank = bitmap.rank(element)
+        expected_rank = len([n for n in set(values) if n <= element])
+        self.assertEqual(expected_rank, observed_rank)
+
+    @given(hyp_collection)
+    def test_min(self, values):
+        bitmap = BitMap(values)
+        self.assertEqual(bitmap.min(), min(values))
+
+    def test_wrong_min(self):
+        bitmap = BitMap()
+        with self.assertRaises(ValueError):
+            m = bitmap.min()
+
+    @given(hyp_collection)
+    def test_max(self, values):
+        bitmap = BitMap(values)
+        self.assertEqual(bitmap.max(), max(values))
+
+    def test_wrong_max(self):
+        bitmap = BitMap()
+        with self.assertRaises(ValueError):
+            m = bitmap.max()
 
 class BinaryOperationsTest(Util):
 

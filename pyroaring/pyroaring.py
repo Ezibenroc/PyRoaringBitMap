@@ -203,3 +203,18 @@ class BitMap:
             values = array.array('I', values)
         p = (ctypes.c_uint32 * count).from_buffer(values)
         libroaring.roaring_bitmap_add_many(self.__obj__, count, p)
+
+    def min(self):
+        if len(self) == 0:
+            raise ValueError('Empty roaring bitmap, there is no minimum.')
+        else:
+            return int(libroaring.roaring_bitmap_minimum(self.__obj__))
+
+    def max(self):
+        if len(self) == 0:
+            raise ValueError('Empty roaring bitmap, there is no maximum.')
+        else:
+            return int(libroaring.roaring_bitmap_maximum(self.__obj__))
+
+    def rank(self, value):
+        return int(libroaring.roaring_bitmap_rank(self.__obj__, value))

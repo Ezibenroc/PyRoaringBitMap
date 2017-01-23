@@ -115,3 +115,9 @@ if libroaring is not None:
     libroaring.roaring_bitmap_flip.argtypes = [bm_type, ctypes.c_uint64, ctypes.c_uint64]
     libroaring.roaring_bitmap_flip_inplace.restype = None
     libroaring.roaring_bitmap_flip_inplace.argtypes = [bm_type, ctypes.c_uint64, ctypes.c_uint64]
+    libroaring.roaring_bitmap_minimum.restype = val_type
+    libroaring.roaring_bitmap_minimum.argtypes = [bm_type]
+    libroaring.roaring_bitmap_maximum.restype = val_type
+    libroaring.roaring_bitmap_maximum.argtypes = [bm_type]
+    libroaring.roaring_bitmap_rank.restype = val_type
+    libroaring.roaring_bitmap_rank.argtypes = [bm_type, val_type]
