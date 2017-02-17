@@ -88,39 +88,18 @@ Warning: when creating a new `BitMap` instance from a Python `list`, we truncate
 
 ## Benchmark
 
-#### Utilization
+The performances of the `union` operation have been measured. Full results can be found [here](https://github.com/Ezibenroc/roaring_analysis/blob/master/python_analysis.ipynb).
 
-With `benchmark.py`, you can compare the performances of objects implementing the set interface. Currently, we compare `BitMap` with `set`.
+We compared the built-in `set` with this Python wrapper of `CRoaring` (designated as `pyroaring` in the plots) and a [Cython implementation](https://github.com/andreasvc/roaringbitmap) of Roaring bitmaps (designated as `cyroaring` in the plots).
 
-The syntax is the following:
+Three interesting plots:
 
-```bash
-./benchmark.py -l load_file.pickle -d dump_file.pickle -p plot_file.tex
-```
+![Plot of the performances for sparse data (density of 0.04)](benchmark_sparse.png)
 
-It will launch the benchmark. The program will not stop until you press `Ctrl-C` or send the signal `SIGINT`.
+![Plot of the performances for dense data (density of 0.5)](benchmark_dense.png)
 
-* Benchmark results will be loaded from the file `load_file.pickle`. It is useful to resume a previous test.
-* Benchmark results will be dumped into file `dump_file.pickle` after its execution. This file can then be loaded in a future execution with option `-l`.
-* Benchmark results will be plotted into file `plot_file.tex`. It is a standalone Latex file using `pgfplots`. It can then be compiled using the command `pdflatex plot_file.tex`.
+![Plot of the performances for very dense data (density of 0.999)](benchmark_very_dense.png)
 
-All these options are optional.
+To sum up, both Roaring bitmap implementations are several orders of magnitude faster than the built-in set, regardless of the density of the data.
 
-The benchmark will run operations of the set interface with randomly generated operands of given size. To do so, it picks randomly the right number of elements in a large enough range of possible elements. It tests for sparse operands (the range of possible elements is 16 times larger than the desired size) and dense operands (the range is 2 times larger).
-
-#### Results
-
-You can find results of the benchmark in file [plots.pdf](plots.pdf).
-
-Experimental settings:
-
-    CPU                : Intel i7-5600U
-    RAM                : 16GB
-    OS                 : GNU/Linux, Ubuntu 16.04, kernel 4.4.0
-    CRoaring version   : 0.2.8
-    PyRoaring version  : 0.0.4
-    Number of measures : 8
-
-These results show the speedup obtained by using a roaring bitmap instead of the built-in Python set. We plot the average of the ratios `set/BitMap`.
-
-All operations, except the list constructor, the equality test and the inclusion test, are faster with a roaring bitmap than with a set when there is at least 100 elements in the operand(s), regardless of their sparsity. The speedup increases with the size of the operands. The operations are much faster with dense operand(s). We can observe speedup of approximately 1000 for operations on dense operands with one million of elements.
+For sparse data, `pyroaring` is faster than `cyroaring`, for very dense data `cyroaring` is faster. Otherwise, they are similar.
