@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='pyroaring',
-    version='0.0.4',
+    version='0.0.5',
     description='Fast and lightweight set for unsigned 32 bits integers.',
     url='https://github.com/Ezibenroc/PyRoaringBitMap',
     author='Tom Cornebize',
