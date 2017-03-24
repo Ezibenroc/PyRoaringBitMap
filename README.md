@@ -61,7 +61,7 @@ sudo make install
 
 First, you can run the tests to make sure everything is ok:
 ```bash
-./test.py
+python test.py
 ```
 
 You can use a bitmap nearly as the classical Python set in your code:
