@@ -61,6 +61,7 @@ sudo make install
 
 First, you can run the tests to make sure everything is ok:
 ```bash
+pip install hypothesis --user
 python test.py
 ```
 
