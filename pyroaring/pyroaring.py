@@ -220,8 +220,8 @@ class BitMap:
         p = (ctypes.c_uint32 * count).from_buffer(values)
         libroaring.roaring_bitmap_add_many(self.__obj__, count, p)
 
-    def jaccard_index(self):
-        return float(libroaring.roaring_bitmap_jaccard_index(self.__obj__))
+    def jaccard_index(self, other):
+        return float(libroaring.roaring_bitmap_jaccard_index(self.__obj__, other.__obj__))
 
     def min(self):
         if len(self) == 0:

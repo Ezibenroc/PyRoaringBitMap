@@ -121,3 +121,15 @@ if libroaring is not None:
     libroaring.roaring_bitmap_maximum.argtypes = [bm_type]
     libroaring.roaring_bitmap_rank.restype = val_type
     libroaring.roaring_bitmap_rank.argtypes = [bm_type, val_type]
+    libroaring.roaring_bitmap_intersect.restype = ctypes.c_bool
+    libroaring.roaring_bitmap_intersect.argtypes = [bm_type, bm_type]
+    libroaring.roaring_bitmap_or_cardinality.restype = ctypes.c_uint64
+    libroaring.roaring_bitmap_or_cardinality.argtypes = [bm_type, bm_type]
+    libroaring.roaring_bitmap_and_cardinality.restype = ctypes.c_uint64
+    libroaring.roaring_bitmap_and_cardinality.argtypes = [bm_type, bm_type]
+    libroaring.roaring_bitmap_andnot_cardinality.restype = ctypes.c_uint64
+    libroaring.roaring_bitmap_andnot_cardinality.argtypes = [bm_type, bm_type]
+    libroaring.roaring_bitmap_xor_cardinality.restype = ctypes.c_uint64
+    libroaring.roaring_bitmap_xor_cardinality.argtypes = [bm_type, bm_type]
+    libroaring.roaring_bitmap_jaccard_index.restype = ctypes.c_double
+    libroaring.roaring_bitmap_jaccard_index.argtypes = [bm_type, bm_type]
