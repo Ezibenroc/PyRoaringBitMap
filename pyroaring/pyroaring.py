@@ -151,6 +151,22 @@ class BitMap:
     def __gt__(self, other):
         return bool(libroaring.roaring_bitmap_is_strict_subset(other.__obj__, self.__obj__, ))
 
+    def intersect(self, other):
+        return bool(libroaring.roaring_bitmap_intersect(other.__obj__, self.__obj__, ))
+
+    def union_cardinality(self, other):
+        return int(libroaring.roaring_bitmap_or_cardinality(other.__obj__, self.__obj__, ))
+
+    def intersection_cardinality(self, other):
+        return int(libroaring.roaring_bitmap_and_cardinality(other.__obj__, self.__obj__, ))
+
+    def difference_cardinality(self, other):
+        return int(libroaring.roaring_bitmap_andnot_cardinality(other.__obj__, self.__obj__, ))
+
+    def symmetric_difference_cardinality(self, other):
+        return int(libroaring.roaring_bitmap_xor_cardinality(other.__obj__, self.__obj__, ))
+
+
     @classmethod
     def union(cls, *bitmaps):
         size = len(bitmaps)
@@ -203,6 +219,9 @@ class BitMap:
             values = array.array('I', values)
         p = (ctypes.c_uint32 * count).from_buffer(values)
         libroaring.roaring_bitmap_add_many(self.__obj__, count, p)
+
+    def jaccard_index(self):
+        return float(libroaring.roaring_bitmap_jaccard_index(self.__obj__))
 
     def min(self):
         if len(self) == 0:
