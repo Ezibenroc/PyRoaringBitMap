@@ -152,19 +152,19 @@ class BitMap:
         return bool(libroaring.roaring_bitmap_is_strict_subset(other.__obj__, self.__obj__, ))
 
     def intersect(self, other):
-        return bool(libroaring.roaring_bitmap_intersect(other.__obj__, self.__obj__, ))
+        return bool(libroaring.roaring_bitmap_intersect(self.__obj__, other.__obj__, ))
 
     def union_cardinality(self, other):
-        return int(libroaring.roaring_bitmap_or_cardinality(other.__obj__, self.__obj__, ))
+        return int(libroaring.roaring_bitmap_or_cardinality(self.__obj__, other.__obj__, ))
 
     def intersection_cardinality(self, other):
-        return int(libroaring.roaring_bitmap_and_cardinality(other.__obj__, self.__obj__, ))
+        return int(libroaring.roaring_bitmap_and_cardinality(self.__obj__, other.__obj__, ))
 
     def difference_cardinality(self, other):
-        return int(libroaring.roaring_bitmap_andnot_cardinality(other.__obj__, self.__obj__, ))
+        return int(libroaring.roaring_bitmap_andnot_cardinality(self.__obj__, other.__obj__, ))
 
     def symmetric_difference_cardinality(self, other):
-        return int(libroaring.roaring_bitmap_xor_cardinality(other.__obj__, self.__obj__, ))
+        return int(libroaring.roaring_bitmap_xor_cardinality(self.__obj__, other.__obj__, ))
 
 
     @classmethod
