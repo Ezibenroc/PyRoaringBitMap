@@ -278,6 +278,39 @@ class ComparisonTest(Util):
     def test_gt(self, values1, values2):
         self.do_test(values1, values2, lambda x,y: x > y)
 
+    @given(hyp_collection, hyp_collection)
+    def test_intersect(self, values1, values2):
+        bm1 = BitMap(values1)
+        bm2 = BitMap(values2)
+        self.assertEqual(bm1.intersect(bm2), len(bm1&bm2) > 0)
+
+class CardinalityTest(Util):
+
+    @given(hyp_collection, hyp_collection)
+    def setUp(self, values1, values2):
+        self.bitmap1 = BitMap(values1)
+        self.bitmap2 = BitMap(values2)
+
+    def do_test_cardinality(self, real_op, estimated_op):
+        real_value = real_op(self.bitmap1, self.bitmap2)
+        estimated_value = estimated_op(self.bitmap1, self.bitmap2)
+        self.assertEqual(real_value, estimated_value)
+
+    def test_or_card(self):
+        self.do_test_cardinality(lambda x,y : len(x|y), lambda x,y: x.union_cardinality(y))
+
+    def test_and_card(self):
+        self.do_test_cardinality(lambda x,y : len(x&y), lambda x,y: x.intersection_cardinality(y))
+
+    def test_andnot_card(self):
+        self.do_test_cardinality(lambda x,y : len(x-y), lambda x,y: x.difference_cardinality(y))
+
+    def test_xor_card(self):
+        self.do_test_cardinality(lambda x,y : len(x^y), lambda x,y: x.symmetric_difference_cardinality(y))
+
+    def test_jaccard_index(self):
+        self.do_test_cardinality(lambda x,y : len(x&y)/max(1, len(x|y)), lambda x,y: x.jaccard_index(y))
+
 class ManyOperationsTest(Util):
 
     @given(hyp_many_collections)
