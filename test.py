@@ -309,7 +309,9 @@ class CardinalityTest(Util):
         self.do_test_cardinality(lambda x,y : len(x^y), lambda x,y: x.symmetric_difference_cardinality(y))
 
     def test_jaccard_index(self):
-        self.do_test_cardinality(lambda x,y : len(x&y)/max(1, len(x|y)), lambda x,y: x.jaccard_index(y))
+        real_value = len(self.bitmap1&self.bitmap2)/max(1, len(self.bitmap1|self.bitmap2))
+        estimated_value = self.bitmap1.jaccard_index(self.bitmap2)
+        self.assertAlmostEqual(real_value, estimated_value)
 
 class ManyOperationsTest(Util):
 
