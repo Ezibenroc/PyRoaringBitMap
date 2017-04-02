@@ -29,9 +29,14 @@ matrix:
       language: generic
 
 install:
-    - python -m pyroaring install --user
-    - source ~/.bashrc
-    - pip install hypothesis
+    - pip install hypothesis coveralls
 
 script:
-    - python test.py
+    - coverage run -p --source=pyroaring -m pyroaring install --user
+    - source ~/.bashrc
+    - coverage run -p --source=pyroaring test.py
+    - coverage run -p --source=pyroaring -m pyroaring uninstall --user
+    - coverage combine
+
+after_success:
+    coveralls
