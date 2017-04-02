@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/Ezibenroc/PyRoaringBitMap.svg?branch=master)](https://travis-ci.org/Ezibenroc/PyRoaringBitMap)
+[![Coverage Status](https://coveralls.io/repos/github/Ezibenroc/PyRoaringBitMap/badge.svg?branch=master)](https://coveralls.io/github/Ezibenroc/PyRoaringBitMap?branch=master)
 
 This piece of code is a wrapper for the C library [CRoaring](https://github.com/RoaringBitmap/CRoaring).
 It provides a very efficient way to store and manipulate sets of (unsigned 32 bits) integers.
