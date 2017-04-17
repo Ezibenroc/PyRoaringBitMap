@@ -33,12 +33,16 @@ class BitMap:
         elif isinstance(values, range):
             _, (start, stop, step) = values.__reduce__()
             if step < 0:
-                values = range(stop+1, start+1, -step)
+                values = range(min(values), max(values)+1, -step)
                 _, (start, stop, step) = values.__reduce__()
+            if start == stop:
+                self.__obj__ = libroaring.roaring_bitmap_create()
+                return
             if start >= stop:
                 raise ValueError('Invalid range: max value must be greater than min value.')
             self.check_value(start)
             self.check_value(stop)
+            self.check_value(step)
             self.__obj__ = libroaring.roaring_bitmap_from_range(start, stop, step)
         else:
             count = len(values)
@@ -131,13 +135,42 @@ class BitMap:
     def __isub__(self, other):
         return self.__binary_op_inplace__(other, libroaring.roaring_bitmap_andnot_inplace)
 
-    def __getitem__(self, value):
-        self.check_value(value)
+    def _shift_index(self, index):
+        size = len(self)
+        if index >= size or index < -size:
+            raise IndexError('Index out of bound')
+        return index%size
+
+    def _get_elt(self, index):
+        index = self._shift_index(index)
         elt = ctypes.pointer(val_type(-1))
-        valid = libroaring.roaring_bitmap_select(self.__obj__, value, elt)
+        valid = libroaring.roaring_bitmap_select(self.__obj__, index, elt)
         if not valid:
-            raise ValueError('Invalid rank.')
+            raise ValueError('Invalid rank')
         return int(elt.contents.value)
+
+    def _get_slice(self, sl):
+        start, stop, step = sl.indices(len(self))
+        sign = 1 if step > 0 else -1
+        if (sign > 0 and start >= stop) or (sign < 0 and start <= stop):
+            return self.__class__()
+        if abs(step) == 1:
+            first_elt = self._get_elt(start)
+            last_elt  = self._get_elt(stop-sign)
+            values = range(first_elt, last_elt+sign, step)
+            result = self.__class__(values)
+            result &= self
+            return result
+        else:
+            return self.__class__(list(self)[sl]) # very inefficient...
+
+    def __getitem__(self, value):
+        if isinstance(value, int):
+            return self._get_elt(value)
+        elif isinstance(value, slice):
+            return self._get_slice(value)
+        else:
+            return TypeError('Indices must be integers or slices, not %s' % type(value))
 
     def __le__(self, other):
         return bool(libroaring.roaring_bitmap_is_subset(self.__obj__, other.__obj__))

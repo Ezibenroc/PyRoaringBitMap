@@ -157,16 +157,32 @@ class SelectRankTest(Util):
     @given(hyp_collection)
     def test_simple_select(self, values):
         bitmap = BitMap(values)
-        for i, value in enumerate(sorted(values)):
-            self.assertEqual(bitmap[i], value)
+        values = list(bitmap) # enforce sorted order
+        for i in range(-len(values), len(values)):
+            self.assertEqual(bitmap[i], values[i])
 
     @given(hyp_collection, uint32)
     def test_wrong_selection(self, values, n):
         bitmap = BitMap(values)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(IndexError):
             bitmap[len(values)]
-        with self.assertRaises(ValueError):
+        with self.assertRaises(IndexError):
             bitmap[n + len(values)]
+        with self.assertRaises(IndexError):
+            bitmap[-len(values)-1]
+        with self.assertRaises(IndexError):
+            bitmap[-n - len(values) - 1]
+
+    slice_arg = st.integers(min_value=-2**31, max_value=2**31-1) | st.none()
+    @given(hyp_collection, slice_arg, slice_arg, slice_arg)
+    def test_slice_select(self, values, start, stop, step):
+        st.assume(step != 0)
+        bitmap = BitMap(values)
+        values = list(bitmap) # enforce sorted order
+        expected = values[start:stop:step]
+        expected.sort()
+        observed = list(bitmap[start:stop:step])
+        self.assertEqual(expected, observed)
 
     @given(hyp_collection)
     def test_simple_rank(self, values):
