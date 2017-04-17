@@ -35,11 +35,9 @@ class BitMap:
             if step < 0:
                 values = range(min(values), max(values)+1, -step)
                 _, (start, stop, step) = values.__reduce__()
-            if start == stop:
+            if start >= stop:
                 self.__obj__ = libroaring.roaring_bitmap_create()
                 return
-            if start >= stop:
-                raise ValueError('Invalid range: max value must be greater than min value.')
             self.check_value(start)
             self.check_value(stop)
             self.check_value(step)

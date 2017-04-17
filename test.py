@@ -149,8 +149,6 @@ class BasicTest(Util):
             bitmap = BitMap([3, 'bla', 3, 42])
         with self.assertRaises(ValueError):
             bitmap = BitMap(range(0, 10, 0))
-        with self.assertRaises(ValueError):
-            bitmap = BitMap(range(10, 0, 1))
 
 class SelectRankTest(Util):
 
