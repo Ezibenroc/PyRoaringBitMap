@@ -39,5 +39,6 @@ script:
     - git submodule init
     - git submodule update
     - bash CRoaring/amalgamation.sh
+    - export PYROARING_CYTHON=1
     - python setup.py build_ext -i
     - python test.py
