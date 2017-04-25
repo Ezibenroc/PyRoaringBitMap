@@ -18,15 +18,15 @@ matrix:
       dist: trusty
       sudo: required
       python: 3.5
-    - os: linux
-      dist: trusty
-      sudo: required
-      python: pypy
+#    - os: linux
+#      dist: trusty
+#      sudo: required
+#      python: pypy
 # Travis does not support yet Python installation on OSX (see https://github.com/travis-ci/travis-ci/issues/2312).
 # We will therefore only test with the preinstalled Python 2.7
-    - os: osx
-      osx_image: xcode8
-      language: generic
+#    - os: osx
+#      osx_image: xcode8
+#      language: generic
 
 install:
     - pip install hypothesis coveralls Cython
