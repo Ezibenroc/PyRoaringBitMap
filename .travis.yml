@@ -29,7 +29,7 @@ matrix:
       language: generic
 
 install:
-    - pip install hypothesis coveralls
+    - pip install hypothesis coveralls Cython
 
 script:
     - git submodule init
