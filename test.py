@@ -8,7 +8,7 @@ import sys
 import pickle
 from hypothesis import given
 import hypothesis.strategies as st
-from pyroaring import BitMap, load, dump
+from pyroaring import BitMap
 
 is_python2 = sys.version_info < (3, 0)
 
@@ -131,11 +131,11 @@ class BasicTest(Util):
 
     def wrong_op(self, op):
         bitmap = BitMap()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OverflowError):
             op(bitmap, -3)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(OverflowError):
             op(bitmap, 2**33)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             op(bitmap, 'bla')
 
     def test_wrong_add(self):
@@ -350,25 +350,19 @@ class SerializationTest(Util):
         old_bm.add(other_value)
         self.assertNotEqual(old_bm, new_bm)
 
-    @given(hyp_collection)
-    def test_load_dump(self, values):
-        filepath = 'testfile'
+    @given(hyp_collection, st.integers(min_value=2, max_value=pickle.HIGHEST_PROTOCOL))
+    def test_pickle_protocol(self, values, protocol):
         old_bm = BitMap(values)
-        with open(filepath, 'wb') as f:
-            dump(f, old_bm)
-        with open(filepath, 'rb') as f:
-            new_bm = load(f)
-        self.assertEqual(old_bm, new_bm)
-        os.remove(filepath)
-
-    @given(hyp_collection)
-    def test_pickle_protocol(self, values):
-        old_bm = BitMap(values)
-        pickled = pickle.dumps(old_bm)
+        pickled = pickle.dumps(old_bm, protocol=protocol)
         new_bm = pickle.loads(pickled)
         self.assertEqual(old_bm, new_bm)
         self.assertTrue(old_bm is not new_bm)
-        self.assertNotEqual(old_bm.__obj__, new_bm.__obj__)
+        # Checking that the C pointer are also different
+        if len(old_bm) > 0:
+            old_bm.remove(old_bm[0])
+        else:
+            old_bm.add(27)
+        self.assertNotEqual(old_bm, new_bm)
 
 class StatisticsTest(Util):
 
@@ -376,46 +370,46 @@ class StatisticsTest(Util):
     def test_basic_properties(self, values):
         bitmap = BitMap(values)
         stats = bitmap.get_statistics()
-        self.assertEqual(stats.n_values_array_containers + stats.n_values_bitset_containers
-            + stats.n_values_run_containers, len(bitmap))
-        self.assertEqual(stats.n_bytes_array_containers, 2*stats.n_values_array_containers)
-        self.assertEqual(stats.n_bytes_bitset_containers, 2**13*stats.n_bitset_containers)
+        self.assertEqual(stats['n_values_array_containers'] + stats['n_values_bitset_containers']
+            + stats['n_values_run_containers'], len(bitmap))
+        self.assertEqual(stats['n_bytes_array_containers'], 2*stats['n_values_array_containers'])
+        self.assertEqual(stats['n_bytes_bitset_containers'], 2**13*stats['n_bitset_containers'])
         if len(values) > 0:
-            self.assertEqual(stats.min_value, bitmap[0])
-            self.assertEqual(stats.max_value, bitmap[len(bitmap)-1])
-        self.assertEqual(stats.cardinality, len(bitmap))
-        self.assertEqual(stats.sum_value, sum(values))
+            self.assertEqual(stats['min_value'], bitmap[0])
+            self.assertEqual(stats['max_value'], bitmap[len(bitmap)-1])
+        self.assertEqual(stats['cardinality'], len(bitmap))
+        self.assertEqual(stats['sum_value'], sum(values))
 
     def test_implementation_properties_array(self):
         values = range(2**16-10, 2**16+10, 2)
         stats = BitMap(values).get_statistics()
-        self.assertEqual(stats.n_array_containers, 2)
-        self.assertEqual(stats.n_bitset_containers, 0)
-        self.assertEqual(stats.n_run_containers, 0)
-        self.assertEqual(stats.n_values_array_containers, len(values))
-        self.assertEqual(stats.n_values_bitset_containers, 0)
-        self.assertEqual(stats.n_values_run_containers, 0)
+        self.assertEqual(stats['n_array_containers'], 2)
+        self.assertEqual(stats['n_bitset_containers'], 0)
+        self.assertEqual(stats['n_run_containers'], 0)
+        self.assertEqual(stats['n_values_array_containers'], len(values))
+        self.assertEqual(stats['n_values_bitset_containers'], 0)
+        self.assertEqual(stats['n_values_run_containers'], 0)
 
     def test_implementation_properties_bitset(self):
         values = range(2**0, 2**17, 2)
         stats = BitMap(values).get_statistics()
-        self.assertEqual(stats.n_array_containers, 0)
-        self.assertEqual(stats.n_bitset_containers, 2)
-        self.assertEqual(stats.n_run_containers, 0)
-        self.assertEqual(stats.n_values_array_containers, 0)
-        self.assertEqual(stats.n_values_bitset_containers, len(values))
-        self.assertEqual(stats.n_values_run_containers, 0)
+        self.assertEqual(stats['n_array_containers'], 0)
+        self.assertEqual(stats['n_bitset_containers'], 2)
+        self.assertEqual(stats['n_run_containers'], 0)
+        self.assertEqual(stats['n_values_array_containers'], 0)
+        self.assertEqual(stats['n_values_bitset_containers'], len(values))
+        self.assertEqual(stats['n_values_run_containers'], 0)
 
     def test_implementation_properties_run(self):
         values = range(2**0, 2**17, 1)
         stats = BitMap(values).get_statistics()
-        self.assertEqual(stats.n_array_containers, 0)
-        self.assertEqual(stats.n_bitset_containers, 0)
-        self.assertEqual(stats.n_run_containers, 2)
-        self.assertEqual(stats.n_values_array_containers, 0)
-        self.assertEqual(stats.n_values_bitset_containers, 0)
-        self.assertEqual(stats.n_values_run_containers, len(values))
-        self.assertEqual(stats.n_bytes_run_containers, 12)
+        self.assertEqual(stats['n_array_containers'], 0)
+        self.assertEqual(stats['n_bitset_containers'], 0)
+        self.assertEqual(stats['n_run_containers'], 2)
+        self.assertEqual(stats['n_values_array_containers'], 0)
+        self.assertEqual(stats['n_values_bitset_containers'], 0)
+        self.assertEqual(stats['n_values_run_containers'], len(values))
+        self.assertEqual(stats['n_bytes_run_containers'], 12)
 
 class FlipTest(Util):
 

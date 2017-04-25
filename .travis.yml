@@ -32,11 +32,11 @@ install:
     - pip install hypothesis coveralls
 
 script:
-    - coverage run -p --source=pyroaring -m pyroaring install --user
-    - source ~/.bashrc
-    - coverage run -p --source=pyroaring test.py
-    - coverage run -p --source=pyroaring -m pyroaring uninstall --user
-    - coverage combine
+    - git submodule init
+    - git submodule update
+    - bash CRoaring/amalgamation.sh
+    - python setup.py build_ext -i
+    - coverage run --source=pyroaring test.py
 
 after_success:
     coveralls
