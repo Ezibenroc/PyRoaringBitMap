@@ -33,14 +33,11 @@ matrix:
 #      language: generic
 
 install:
-    - pip install hypothesis coveralls Cython
+    - pip install hypothesis Cython
 
 script:
     - git submodule init
     - git submodule update
     - bash CRoaring/amalgamation.sh
     - python setup.py build_ext -i
-    - coverage run --source=pyroaring test.py
-
-after_success:
-    coveralls
+    - python test.py
