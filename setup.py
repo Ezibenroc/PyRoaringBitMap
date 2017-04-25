@@ -4,11 +4,13 @@ from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
+import os
+os.environ['CC'] = 'cc'
 
 sourcefiles = ['pyroaring.pyx']
 croaring = cythonize(Extension('pyroaring',
                     sources = ['pyroaring.pyx', 'roaring.c'],
-                    extra_compile_args=['-O3', '--std=c11', '-march=native'],
+                    extra_compile_args=['-O3', '--std=c99', '-march=native'],
                     language='c++',
                     ))
 
