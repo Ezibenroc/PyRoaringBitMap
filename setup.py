@@ -6,6 +6,20 @@ import os
 import sys
 os.environ['CC'] = 'cc'
 
+def clean_description(descr): # remove the parts with the plots in the README
+    start = descr.find('Three interesting plots')
+    stop = descr.find('To sum up, both Roaring bitmap implementations')
+    assert start != -1 and stop != -1 and start < stop
+    return '%s%s' % (descr[:start], descr[stop:])
+
+try:
+    import pypandoc
+    description = pypandoc.convert('README.md', 'rst')
+    description = clean_description(description)
+except (IOError, ImportError):
+    print('Could not generate long description.')
+    description='Fast and lightweight set for unsigned 32 bits integers.'
+
 USE_CYTHON = 'PYROARING_CYTHON' in os.environ
 if USE_CYTHON:
     print('Building pyroaring from Cython sources.')
@@ -30,7 +44,7 @@ setup(
     name = 'pyroaring',
     ext_modules = pyroaring,
     version='0.0.7',
-    description='Fast and lightweight set for unsigned 32 bits integers.',
+    description=description,
     url='https://github.com/Ezibenroc/PyRoaringBitMap',
     author='Tom Cornebize',
     author_email='tom.cornebize@gmail.com',
