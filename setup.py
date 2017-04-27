@@ -14,11 +14,11 @@ def clean_description(descr): # remove the parts with the plots in the README
 
 try:
     import pypandoc
-    description = pypandoc.convert('README.md', 'rst')
-    description = clean_description(description)
-except (IOError, ImportError):
+    long_description = pypandoc.convert('README.md', 'rst')
+    long_description = clean_description(long_description)
+except (IOError, ImportError, RuntimeError):
     print('Could not generate long description.')
-    description='Fast and lightweight set for unsigned 32 bits integers.'
+    long_description=''
 
 USE_CYTHON = 'PYROARING_CYTHON' in os.environ
 if USE_CYTHON:
@@ -44,7 +44,8 @@ setup(
     name = 'pyroaring',
     ext_modules = pyroaring,
     version='0.0.7',
-    description=description,
+    description='Fast and lightweight set for unsigned 32 bits integers.',
+    long_description = long_description,
     url='https://github.com/Ezibenroc/PyRoaringBitMap',
     author='Tom Cornebize',
     author_email='tom.cornebize@gmail.com',
