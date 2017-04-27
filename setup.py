@@ -32,7 +32,7 @@ else:
 filename = 'pyroaring.%s' % ext
 pyroaring = Extension('pyroaring',
                     sources = [filename, 'roaring.c'],
-                    extra_compile_args=['-O3', '--std=c99', '-march=native'],
+                    extra_compile_args=['-O3', '--std=c99', '-march=native', '-Wno-strict-prototypes'],
                     language='c++',
                     )
 if USE_CYTHON:
