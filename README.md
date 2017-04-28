@@ -99,23 +99,24 @@ The built-in `set` is compared with this Python wrapper of `CRoaring` (designate
 
 ### Quick benchmarks for common operations
 
-The script ``quick_benchmark.sh`` measures the time of different set operations. It uses sets initialized to ``range(b, 100000000, 8)`` with ``b`` equal to 0 or 1. It is far from being exhaustive, but rather a quick overview of how the three classes compare to each other.
+The script ``quick_bench.sh`` measures the time of different set operations. It uses sets initialized to ``range(b, 100000000, 8)`` with ``b`` equal to 0 or 1. It is far from being exhaustive, but rather a quick overview of how the three classes compare to each other.
 
 | Operation           | Pyroaring | Cyroaring |      set |
-|-------------------- | --------- | --------- | -------- |
+| ------------------- | --------- | --------- | -------- |
 | Empty constructor   |  0.000134 |  0.000154 | 7.75e-05 |
 | Range constructor   |      4.51 |      4.15 |      756 |
 | List constructor    |       153 |       124 |      584 |
 | Element addition    |  7.09e-05 |  7.06e-05 |  6.5e-05 |
 | Test for membership |  3.03e-05 |  3.28e-05 |  2.6e-05 |
-| Conversion to list  |       653 |       486 |      146 |
+| Conversion to list  |       513 |       486 |      146 |
 | Equality test       |      1.47 |      1.35 |      289 |
 | Subset test         |      1.54 |      1.46 |      283 |
 | Union               |      3.18 |       3.4 |      811 |
 | Intersection        |      2.58 |      2.52 |      132 |
 | Symetric difference |      3.13 |      3.19 |      927 |
+| Pickle dump & load  |      17.4 |      17.3 | 1.29e+03 |
 | Selection           |   0.00754 |   0.00135 |       NA |
-| Slice               |       747 |  2.88e+03 |       NA |
+| Slice               |       614 |  2.88e+03 |       NA |
 
 ### Complete benchmark for the union
 
