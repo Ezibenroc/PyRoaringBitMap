@@ -109,15 +109,13 @@ cdef class BitMap:
             return croaring.roaring_bitmap_is_subset((<BitMap?>other)._c_bitmap, (<BitMap?>self)._c_bitmap)
 
     def __iter__(self):
-        cdef uint64_t size = len(self)
-        cdef uint32_t *buff
+        cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)
         try:
-            buff = <uint32_t*>malloc(size*sizeof(uint32_t))
-            croaring.roaring_bitmap_to_uint32_array(self._c_bitmap, buff)
-            for i in range(size):
-                yield buff[i]
+            while iterator.has_value:
+                yield iterator.current_value
+                croaring.roaring_advance_uint32_iterator(iterator)
         finally:
-            free(buff)
+            croaring.roaring_free_uint32_iterator(iterator)
 
     def __repr__(self):
         return str(self)

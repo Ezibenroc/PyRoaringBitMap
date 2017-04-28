@@ -1,9 +1,20 @@
-from libc.stdint cimport uint32_t, uint64_t
+from libc.stdint cimport uint8_t, int32_t, uint32_t, uint64_t
 from libcpp cimport bool
 
 cdef extern from "roaring.h":
     ctypedef struct roaring_bitmap_t:
         pass
+    ctypedef struct roaring_uint32_iterator_t:
+        const roaring_bitmap_t *parent
+        int32_t container_index
+        int32_t in_container_index
+        int32_t run_index
+        uint32_t in_run_index
+        uint32_t current_value
+        bool has_value
+        const void *container
+        uint8_t typecode
+        uint32_t highbits
     ctypedef struct roaring_statistics_t:
         uint32_t n_containers
         uint32_t n_array_containers
@@ -60,3 +71,6 @@ cdef extern from "roaring.h":
     size_t roaring_bitmap_portable_size_in_bytes(const roaring_bitmap_t *ra)
     size_t roaring_bitmap_portable_serialize(const roaring_bitmap_t *ra, char *buf)
     roaring_bitmap_t *roaring_bitmap_portable_deserialize(const char *buf)
+    roaring_uint32_iterator_t *roaring_create_iterator(const roaring_bitmap_t *ra)
+    bool roaring_advance_uint32_iterator(roaring_uint32_iterator_t *it)
+    void roaring_free_uint32_iterator(roaring_uint32_iterator_t *it)
