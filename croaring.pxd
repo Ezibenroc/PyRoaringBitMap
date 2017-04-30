@@ -2,8 +2,11 @@ from libc.stdint cimport uint8_t, int32_t, uint32_t, uint64_t
 from libcpp cimport bool
 
 cdef extern from "roaring.h":
-    ctypedef struct roaring_bitmap_t:
+    ctypedef struct roaring_array_t:
         pass
+    ctypedef struct roaring_bitmap_t:
+        roaring_array_t high_low_container
+        bool copy_on_write
     ctypedef struct roaring_uint32_iterator_t:
         const roaring_bitmap_t *parent
         int32_t container_index

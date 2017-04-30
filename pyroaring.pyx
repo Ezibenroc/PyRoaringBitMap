@@ -54,7 +54,7 @@ cdef croaring.roaring_bitmap_t *deserialize_ptr(char *buff):
 cdef class BitMap:
     cdef croaring.roaring_bitmap_t* _c_bitmap
 
-    def __cinit__(self, values=None):
+    def __cinit__(self, values=None, copy_on_write=False):
         """ Construct a BitMap object. If a list of integers is provided, the integers are truncated down to the least significant 32 bits"""
         if values is None:
             self._c_bitmap = croaring.roaring_bitmap_create()
@@ -72,6 +72,8 @@ cdef class BitMap:
         else:
             self._c_bitmap = croaring.roaring_bitmap_create()
             self.update(values)
+        if not isinstance(values, BitMap):
+            self._c_bitmap.copy_on_write = copy_on_write
 
     def __dealloc__(self):
         if self._c_bitmap is not NULL:
