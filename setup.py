@@ -2,8 +2,16 @@
 
 from distutils.core import setup
 from distutils.extension import Extension
+from distutils.sysconfig import get_config_vars
 import os
 import sys
+
+# Remove -Wstrict-prototypes option
+# See http://stackoverflow.com/a/29634231/4110059
+cfg_vars = get_config_vars()
+for key, value in cfg_vars.items():
+    if type(value) == str:
+        cfg_vars[key] = value.replace("-Wstrict-prototypes", "")
 os.environ['CC'] = 'cc'
 
 def clean_description(descr): # remove the parts with the plots in the README
@@ -31,8 +39,8 @@ else:
     ext = 'cpp'
 filename = 'pyroaring.%s' % ext
 pyroaring = Extension('pyroaring',
-                    sources = [filename, 'roaring.c'],
-                    extra_compile_args=['-O3', '--std=c99', '-march=native', '-Wno-strict-prototypes'],
+                    sources = [filename, 'roaring.cpp'],
+                    extra_compile_args=['-O3', '-march=native'],
                     language='c++',
                     )
 if USE_CYTHON:

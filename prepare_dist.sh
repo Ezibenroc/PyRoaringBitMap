@@ -1,5 +1,5 @@
 bash CRoaring/amalgamation.sh
-echo "//   Copyright 2017 The CRoaring authors
+echo "//   Copyright `date +%Y` The CRoaring authors
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -19,5 +19,7 @@ echo "//   Copyright 2017 The CRoaring authors
 cp /tmp/roaring.c /tmp/roaring.h
 cat roaring.c >> /tmp/roaring.c
 cat roaring.h >> /tmp/roaring.h
-cp -f /tmp/roaring.c roaring.c
-cp -f /tmp/roaring.h roaring.h
+rm roaring.c roaring.h
+cp -f /tmp/roaring.c roaring.cpp
+cp -f /tmp/roaring.h roaring.hh
+sed -ri "s|#include \"roaring\.h\"|#include \"roaring\.hh\"|g" roaring.cpp
