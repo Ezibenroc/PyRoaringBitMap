@@ -92,6 +92,9 @@ cdef class BitMap:
     def __contains__(self, uint32_t value):
         return croaring.roaring_bitmap_contains(self._c_bitmap, value)
 
+    def __bool__(self):
+        return not croaring.roaring_bitmap_is_empty(self._c_bitmap)
+
     def __len__(self):
         return croaring.roaring_bitmap_get_cardinality(self._c_bitmap)
 

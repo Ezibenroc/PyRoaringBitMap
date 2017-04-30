@@ -51,6 +51,7 @@ class Util(unittest.TestCase):
 
     def compare_with_set(self, bitmap, expected_set):
         self.assertEqual(len(bitmap), len(expected_set))
+        self.assertEqual(bool(bitmap), bool(expected_set))
         self.assertEqual(set(bitmap), expected_set)
         self.assertEqual(sorted(list(bitmap)), sorted(list(expected_set)))
         self.assertEqual(BitMap(expected_set), bitmap)
