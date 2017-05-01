@@ -54,7 +54,7 @@ class Util(unittest.TestCase):
         self.assertEqual(bool(bitmap), bool(expected_set))
         self.assertEqual(set(bitmap), expected_set)
         self.assertEqual(sorted(list(bitmap)), sorted(list(expected_set)))
-        self.assertEqual(BitMap(expected_set), bitmap)
+        self.assertEqual(BitMap(expected_set, copy_on_write=bitmap.copy_on_write), bitmap)
         for value in self.comparison_set:
             if value in expected_set:
                 self.assertIn(value, bitmap)
@@ -71,6 +71,7 @@ class BasicTest(Util):
     @given(hyp_collection, st.booleans())
     def test_basic(self, values, cow):
         bitmap = BitMap(copy_on_write=cow)
+        self.assertEqual(bitmap.copy_on_write, cow)
         expected_set = set()
         self.compare_with_set(bitmap, expected_set)
         values = list(values)
@@ -94,17 +95,17 @@ class BasicTest(Util):
         self.compare_with_set(bitmap, expected_set)
 
 
-    @given(hyp_collection, st.booleans(), st.booleans())
-    def test_bitmap_equality(self, values, cow1, cow2):
-        bitmap1 = BitMap(values, copy_on_write=cow1)
-        bitmap2 = BitMap(values, copy_on_write=cow2)
+    @given(hyp_collection, st.booleans())
+    def test_bitmap_equality(self, values, cow):
+        bitmap1 = BitMap(values, copy_on_write=cow)
+        bitmap2 = BitMap(values, copy_on_write=cow)
         self.assertEqual(bitmap1, bitmap2)
 
-    @given(hyp_collection, hyp_collection, st.booleans(), st.booleans())
-    def test_bitmap_unequality(self, values1, values2, cow1, cow2):
+    @given(hyp_collection, hyp_collection, st.booleans())
+    def test_bitmap_unequality(self, values1, values2, cow):
         st.assume(set(values1) != set(values2))
-        bitmap1 = BitMap(values1, copy_on_write=cow1)
-        bitmap2 = BitMap(values2, copy_on_write=cow2)
+        bitmap1 = BitMap(values1, copy_on_write=cow)
+        bitmap2 = BitMap(values2, copy_on_write=cow)
         self.assertNotEqual(bitmap1, bitmap2)
 
     @given(hyp_collection, st.booleans())
@@ -127,7 +128,7 @@ class BasicTest(Util):
         bm = BitMap(initial_values, cow)
         expected = BitMap(bm)
         bm.update(new_values)
-        expected |= BitMap(new_values)
+        expected |= BitMap(new_values, copy_on_write=cow)
         self.assertEqual(bm, expected)
 
     def wrong_op(self, op):
@@ -218,12 +219,12 @@ class SelectRankTest(Util):
 
 class BinaryOperationsTest(Util):
 
-    @given(hyp_collection, hyp_collection, st.booleans(), st.booleans())
-    def setUp(self, values1, values2, cow1, cow2):
+    @given(hyp_collection, hyp_collection, st.booleans())
+    def setUp(self, values1, values2, cow):
         self.set1 = set(values1)
         self.set2 = set(values2)
-        self.bitmap1 = BitMap(values1, cow1)
-        self.bitmap2 = BitMap(values2, cow2)
+        self.bitmap1 = BitMap(values1, cow)
+        self.bitmap2 = BitMap(values2, cow)
 
     def do_test_binary_op(self, op):
         old_bitmap1 = BitMap(self.bitmap1)
@@ -267,12 +268,12 @@ class BinaryOperationsTest(Util):
 
 class ComparisonTest(Util):
 
-    @given(hyp_collection, hyp_collection, st.booleans(), st.booleans())
-    def setUp(self, values1, values2, cow1, cow2):
+    @given(hyp_collection, hyp_collection, st.booleans())
+    def setUp(self, values1, values2, cow):
         self.set1 = set(values1)
         self.set2 = set(values2)
-        self.bitmap1 = BitMap(values1, copy_on_write=cow1)
-        self.bitmap2 = BitMap(values2, copy_on_write=cow2)
+        self.bitmap1 = BitMap(values1, copy_on_write=cow)
+        self.bitmap2 = BitMap(values2, copy_on_write=cow)
 
     def do_test(self, op):
         self.assertEqual(op(self.bitmap1, self.bitmap1),
@@ -296,18 +297,18 @@ class ComparisonTest(Util):
     def test_gt(self):
         self.do_test(lambda x,y: x > y)
 
-    @given(hyp_collection, hyp_collection, st.booleans(), st.booleans())
-    def test_intersect(self, values1, values2, cow1, cow2):
-        bm1 = BitMap(values1, copy_on_write=cow1)
-        bm2 = BitMap(values2, copy_on_write=cow2)
+    @given(hyp_collection, hyp_collection, st.booleans())
+    def test_intersect(self, values1, values2, cow):
+        bm1 = BitMap(values1, copy_on_write=cow)
+        bm2 = BitMap(values2, copy_on_write=cow)
         self.assertEqual(bm1.intersect(bm2), len(bm1&bm2) > 0)
 
 class CardinalityTest(Util):
 
-    @given(hyp_collection, hyp_collection, st.booleans(), st.booleans())
-    def setUp(self, values1, values2, cow1, cow2):
-        self.bitmap1 = BitMap(values1, copy_on_write=cow1)
-        self.bitmap2 = BitMap(values2, copy_on_write=cow2)
+    @given(hyp_collection, hyp_collection, st.booleans())
+    def setUp(self, values1, values2, cow):
+        self.bitmap1 = BitMap(values1, copy_on_write=cow)
+        self.bitmap2 = BitMap(values2, copy_on_write=cow)
 
     def do_test_cardinality(self, real_op, estimated_op):
         real_value = real_op(self.bitmap1, self.bitmap2)
@@ -333,10 +334,9 @@ class CardinalityTest(Util):
 
 class ManyOperationsTest(Util):
 
-    @given(hyp_many_collections)
-    def test_union(self, all_values):
-        cow = [random.choice([False, True]) for _ in range(len(all_values))]
-        bitmaps = [BitMap(values, copy_on_write=cow[i]) for i, values in enumerate(all_values)]
+    @given(hyp_many_collections, st.booleans())
+    def test_union(self, all_values, cow):
+        bitmaps = [BitMap(values, copy_on_write=cow) for values in all_values]
         bitmaps_copy = [BitMap(bm) for bm in bitmaps]
         result = BitMap.union(*bitmaps)
         self.assertEqual(bitmaps_copy, bitmaps)
@@ -345,9 +345,9 @@ class ManyOperationsTest(Util):
 
 class SerializationTest(Util):
 
-    @given(hyp_collection, st.booleans())
-    def test_serialization(self, values, cow):
-        old_bm = BitMap(values, copy_on_write=cow)
+    @given(hyp_collection)
+    def test_serialization(self, values):
+        old_bm = BitMap(values)
         buff = old_bm.serialize()
         new_bm = BitMap.deserialize(buff)
         self.assertEqual(old_bm, new_bm)
@@ -358,9 +358,9 @@ class SerializationTest(Util):
             old_bm.add(27)
         self.assertNotEqual(old_bm, new_bm)
 
-    @given(hyp_collection, st.booleans(), st.integers(min_value=2, max_value=pickle.HIGHEST_PROTOCOL))
-    def test_pickle_protocol(self, values, cow, protocol):
-        old_bm = BitMap(values, copy_on_write=cow)
+    @given(hyp_collection, st.integers(min_value=2, max_value=pickle.HIGHEST_PROTOCOL))
+    def test_pickle_protocol(self, values, protocol):
+        old_bm = BitMap(values)
         pickled = pickle.dumps(old_bm, protocol=protocol)
         new_bm = pickle.loads(pickled)
         self.assertEqual(old_bm, new_bm)
@@ -471,6 +471,79 @@ class FlipTest(Util):
         bm_after = BitMap(bm_before)
         bm_after.flip_inplace(start, end)
         self.check_flip(bm_before, bm_after, start, end)
+
+class IncompatibleInteraction(Util):
+
+    def incompatible_op(self, op):
+        for cow1, cow2 in [(True, False), (False, True)]:
+            bm1 = BitMap(copy_on_write=cow1)
+            bm2 = BitMap(copy_on_write=cow2)
+            with self.assertRaises(ValueError):
+                op(bm1, bm2)
+
+    def test_incompatible_or(self):
+        self.incompatible_op(lambda x,y: x|y)
+
+    def test_incompatible_and(self):
+        self.incompatible_op(lambda x,y: x&y)
+
+    def test_incompatible_xor(self):
+        self.incompatible_op(lambda x,y: x^y)
+
+    def test_incompatible_sub(self):
+        self.incompatible_op(lambda x,y: x-y)
+
+    def test_incompatible_or_inplace(self):
+        self.incompatible_op(lambda x,y: x.__ior__(y))
+
+    def test_incompatible_and_inplace(self):
+        self.incompatible_op(lambda x,y: x.__iand__(y))
+
+    def test_incompatible_xor_inplace(self):
+        self.incompatible_op(lambda x,y: x.__ixor__(y))
+
+    def test_incompatible_sub_inplace(self):
+        self.incompatible_op(lambda x,y: x.__isub__(y))
+
+    def test_incompatible_eq(self):
+        self.incompatible_op(lambda x,y: x==y)
+
+    def test_incompatible_neq(self):
+        self.incompatible_op(lambda x,y: x!=y)
+
+    def test_incompatible_le(self):
+        self.incompatible_op(lambda x,y: x<=y)
+
+    def test_incompatible_lt(self):
+        self.incompatible_op(lambda x,y: x<y)
+
+    def test_incompatible_ge(self):
+        self.incompatible_op(lambda x,y: x>=y)
+
+    def test_incompatible_gt(self):
+        self.incompatible_op(lambda x,y: x>y)
+
+    def test_incompatible_intersect(self):
+        self.incompatible_op(lambda x,y: x.intersect(y))
+
+    def test_incompatible_union(self):
+        self.incompatible_op(lambda x,y: BitMap.union(x, y))
+        self.incompatible_op(lambda x,y: BitMap.union(x, x, y, y, x, x, y, y))
+
+    def test_incompatible_or_card(self):
+        self.incompatible_op(lambda x,y: x.union_cardinality(y))
+
+    def test_incompatible_and_card(self):
+        self.incompatible_op(lambda x,y: x.intersection_cardinality(y))
+
+    def test_incompatible_xor_card(self):
+        self.incompatible_op(lambda x,y: x.symmetric_difference_cardinality(y))
+
+    def test_incompatible_sub_card(self):
+        self.incompatible_op(lambda x,y: x.difference_cardinality(y))
+
+    def test_incompatible_jaccard(self):
+        self.incompatible_op(lambda x,y: x.jaccard_index(y))
 
 if __name__ == "__main__":
     unittest.main()

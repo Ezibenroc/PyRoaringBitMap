@@ -75,9 +75,18 @@ cdef class BitMap:
         if not isinstance(values, BitMap):
             self._c_bitmap.copy_on_write = copy_on_write
 
+    @property
+    def copy_on_write(self):
+        return self._c_bitmap.copy_on_write
+
     def __dealloc__(self):
         if self._c_bitmap is not NULL:
             croaring.roaring_bitmap_free(self._c_bitmap)
+
+    def check_compatibility(self, BitMap other):
+        if self._c_bitmap.copy_on_write != other._c_bitmap.copy_on_write:
+            raise ValueError('Cannot have interactions between bitmaps with and without copy_on_write.\n')
+        pass
 
     def add(self, uint32_t value):
         croaring.roaring_bitmap_add(self._c_bitmap, value)
@@ -99,6 +108,7 @@ cdef class BitMap:
         return croaring.roaring_bitmap_get_cardinality(self._c_bitmap)
 
     def __richcmp__(self, other, int op):
+        self.check_compatibility(other)
         if op == 0: # <
             return croaring.roaring_bitmap_is_strict_subset((<BitMap?>self)._c_bitmap, (<BitMap?>other)._c_bitmap)
         elif op == 1: # <=
@@ -147,50 +157,65 @@ cdef class BitMap:
             return bitmaps[0] | bitmaps[1]
         else:
             for bm in bitmaps:
+                bitmaps[0].check_compatibility(bm)
                 buff.push_back(bm._c_bitmap)
             result = croaring.roaring_bitmap_or_many(size, &buff[0])
             return create_from_ptr(result)
 
     def __or__(self, other):
+        self.check_compatibility(other)
         return binary_or(self, <BitMap?>other)
 
     def __ior__(self, other):
+        self.check_compatibility(other)
         return binary_ior(self, <BitMap?>other)
 
     def __and__(self, other):
+        self.check_compatibility(other)
         return binary_and(self, <BitMap?>other)
 
     def __iand__(self, other):
+        self.check_compatibility(other)
         return binary_iand(self, <BitMap?>other)
 
     def __xor__(self, other):
+        self.check_compatibility(other)
         return binary_xor(self, <BitMap?>other)
 
     def __ixor__(self, other):
+        self.check_compatibility(other)
         return binary_ixor(self, <BitMap?>other)
 
     def __sub__(self, other):
+        self.check_compatibility(other)
         return binary_sub(self, <BitMap?>other)
 
     def __isub__(self, other):
+        self.check_compatibility(other)
         return binary_isub(self, <BitMap?>other)
 
     def union_cardinality(self, BitMap other):
+        self.check_compatibility(other)
         return croaring.roaring_bitmap_or_cardinality(self._c_bitmap, other._c_bitmap)
 
     def intersection_cardinality(self, BitMap other):
+        self.check_compatibility(other)
         return croaring.roaring_bitmap_and_cardinality(self._c_bitmap, other._c_bitmap)
 
     def difference_cardinality(self, BitMap other):
+        self.check_compatibility(other)
         return croaring.roaring_bitmap_andnot_cardinality(self._c_bitmap, other._c_bitmap)
 
     def symmetric_difference_cardinality(self, BitMap other):
+        self.check_compatibility(other)
         return croaring.roaring_bitmap_xor_cardinality(self._c_bitmap, other._c_bitmap)
 
     def intersect(self, BitMap other):
+        self.check_compatibility(other)
         return croaring.roaring_bitmap_intersect(self._c_bitmap, other._c_bitmap)
 
     def jaccard_index(self, BitMap other):
+        self.check_compatibility(other)
         return croaring.roaring_bitmap_jaccard_index(self._c_bitmap, other._c_bitmap)
 
     def get_statistics(self):
@@ -239,7 +264,7 @@ cdef class BitMap:
             first_elt = self._get_elt(start)
             last_elt  = self._get_elt(stop-sign)
             values = range(first_elt, last_elt+sign, step)
-            result = self.__class__(values)
+            result = self.__class__(values, copy_on_write=self.copy_on_write)
             result &= self
             return result
         else:
