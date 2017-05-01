@@ -49,6 +49,8 @@ cd PyRoaringBitMap
 
 Build pyroaring locally, e.g. to test a new feature you made.
 ```bash
+bash prepare_dist.sh
+export PYROARING_CYTHON=1
 python setup.py build_ext -i
 python test.py # run the tests, optionnal but recommended
 ```
