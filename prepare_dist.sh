@@ -20,6 +20,5 @@ cp /tmp/roaring.c /tmp/roaring.h
 cat roaring.c >> /tmp/roaring.c
 cat roaring.h >> /tmp/roaring.h
 rm roaring.c roaring.h
-cp -f /tmp/roaring.c roaring.cpp
+sed -E "s|#include \"roaring\.h\"|#include \"roaring\.hh\"|g" /tmp/roaring.c > roaring.cpp
 cp -f /tmp/roaring.h roaring.hh
-sed -ri "s|#include \"roaring\.h\"|#include \"roaring\.hh\"|g" roaring.cpp

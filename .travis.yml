@@ -28,17 +28,15 @@ matrix:
 #      python: pypy
 # Travis does not support yet Python installation on OSX (see https://github.com/travis-ci/travis-ci/issues/2312).
 # We will therefore only test with the preinstalled Python 2.7
-#    - os: osx
-#      osx_image: xcode8
-#      language: generic
+    - os: osx
+      osx_image: xcode8
+      language: generic
 
 install:
     - pip install hypothesis Cython
 
 script:
-    - git submodule init
-    - git submodule update
-    - bash CRoaring/amalgamation.sh
+    - bash prepare_dist.sh
     - export PYROARING_CYTHON=1
     - python setup.py build_ext -i
     - python test.py
