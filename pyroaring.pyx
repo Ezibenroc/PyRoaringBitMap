@@ -55,7 +55,6 @@ cdef class BitMap:
     cdef croaring.roaring_bitmap_t* _c_bitmap
 
     def __cinit__(self, values=None, copy_on_write=False):
-        """ Construct a BitMap object. If a list of integers is provided, the integers are truncated down to the least significant 32 bits"""
         if values is None:
             self._c_bitmap = croaring.roaring_bitmap_create()
         elif isinstance(values, BitMap):
@@ -75,27 +74,78 @@ cdef class BitMap:
         if not isinstance(values, BitMap):
             self._c_bitmap.copy_on_write = copy_on_write
 
+    def __init__(self, values=None, copy_on_write=False):
+        """
+        Construct a BitMap object, either empry or from an iterable.
+
+        Copy on write can be enabled with the field copy_on_write.
+
+        >>> BitMap()
+        BitMap([])
+        >>> BitMap([1, 123456789, 27])
+        BitMap([1, 27, 123456789])
+        >>> BitMap([1, 123456789, 27], copy_on_write=True)
+        BitMap([1, 27, 123456789])
+        """
+
     @property
     def copy_on_write(self):
+        """
+        True if and only if the bitmap has "copy on write" optimization enabled.
+
+        >>> BitMap(copy_on_write=False).copy_on_write
+        False
+        >>> BitMap(copy_on_write=True).copy_on_write
+        True
+        """
         return self._c_bitmap.copy_on_write
 
     def __dealloc__(self):
         if self._c_bitmap is not NULL:
             croaring.roaring_bitmap_free(self._c_bitmap)
 
-    def check_compatibility(self, BitMap other):
+    def __check_compatibility(self, BitMap other):
         if self._c_bitmap.copy_on_write != other._c_bitmap.copy_on_write:
             raise ValueError('Cannot have interactions between bitmaps with and without copy_on_write.\n')
-        pass
 
     def add(self, uint32_t value):
+        """
+        Add an element to the bitmap. This has no effect if the element is already present.
+
+        >>> bm = BitMap()
+        >>> bm.add(42)
+        >>> bm
+        BitMap([42])
+        >>> bm.add(42)
+        >>> bm
+        BitMap([42])
+        """
         croaring.roaring_bitmap_add(self._c_bitmap, value)
 
     def update(self, values): # FIXME: could be more efficient, using roaring_bitmap_add_many
+        """
+        Add all the given values to the bitmap.
+
+        >>> bm = BitMap([3, 12])
+        >>> bm.update([8, 12, 55, 18])
+        >>> bm
+        BitMap([3, 8, 12, 18, 55])
+        """
         cdef vector[uint32_t] buff = values
         croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff[0])
 
     def remove(self, uint32_t value):
+        """
+        Remove an element from the bitmap. This has no effect if the element is not present.
+
+        >>> bm = BitMap([3, 12])
+        >>> bm.remove(3)
+        >>> bm
+        BitMap([12])
+        >>> bm.remove(3)
+        >>> bm
+        BitMap([12])
+        """
         croaring.roaring_bitmap_remove(self._c_bitmap, value)
 
     def __contains__(self, uint32_t value):
@@ -108,7 +158,7 @@ cdef class BitMap:
         return croaring.roaring_bitmap_get_cardinality(self._c_bitmap)
 
     def __richcmp__(self, other, int op):
-        self.check_compatibility(other)
+        self.__check_compatibility(other)
         if op == 0: # <
             return croaring.roaring_bitmap_is_strict_subset((<BitMap?>self)._c_bitmap, (<BitMap?>other)._c_bitmap)
         elif op == 1: # <=
@@ -140,13 +190,38 @@ cdef class BitMap:
         return 'BitMap([%s])' % values
 
     def flip(self, uint64_t start, uint64_t end):
+        """
+        Compute the negation of the bitmap within the specified interval.
+
+        Areas outside the range are passed unchanged.
+
+        >>> bm = BitMap([3, 12])
+        >>> bm.flip(10, 15)
+        BitMap([3, 10, 11, 13, 14])
+        """
         return create_from_ptr(croaring.roaring_bitmap_flip(self._c_bitmap, start, end))
 
     def flip_inplace(self, uint64_t start, uint64_t end):
+        """
+        Compute (in place) the negation of the bitmap within the specified interval.
+
+        Areas outside the range are passed unchanged.
+
+        >>> bm = BitMap([3, 12])
+        >>> bm.flip_inplace(10, 15)
+        >>> bm
+        BitMap([3, 10, 11, 13, 14])
+        """
         croaring.roaring_bitmap_flip_inplace(self._c_bitmap, start, end)
 
     @classmethod
     def union(cls, *bitmaps):
+        """
+        Return the union of the bitmaps.
+
+        >>> BitMap.union(BitMap([3, 12]), BitMap([5]), BitMap([0, 10, 12]))
+        BitMap([0, 3, 5, 10, 12])
+        """
         size = len(bitmaps)
         cdef croaring.roaring_bitmap_t *result
         cdef BitMap bm
@@ -157,85 +232,191 @@ cdef class BitMap:
             return bitmaps[0] | bitmaps[1]
         else:
             for bm in bitmaps:
-                bitmaps[0].check_compatibility(bm)
+                bitmaps[0].__check_compatibility(bm)
                 buff.push_back(bm._c_bitmap)
             result = croaring.roaring_bitmap_or_many(size, &buff[0])
             return create_from_ptr(result)
 
     def __or__(self, other):
-        self.check_compatibility(other)
+        self.__check_compatibility(other)
         return binary_or(self, <BitMap?>other)
 
     def __ior__(self, other):
-        self.check_compatibility(other)
+        self.__check_compatibility(other)
         return binary_ior(self, <BitMap?>other)
 
     def __and__(self, other):
-        self.check_compatibility(other)
+        self.__check_compatibility(other)
         return binary_and(self, <BitMap?>other)
 
     def __iand__(self, other):
-        self.check_compatibility(other)
+        self.__check_compatibility(other)
         return binary_iand(self, <BitMap?>other)
 
     def __xor__(self, other):
-        self.check_compatibility(other)
+        self.__check_compatibility(other)
         return binary_xor(self, <BitMap?>other)
 
     def __ixor__(self, other):
-        self.check_compatibility(other)
+        self.__check_compatibility(other)
         return binary_ixor(self, <BitMap?>other)
 
     def __sub__(self, other):
-        self.check_compatibility(other)
+        self.__check_compatibility(other)
         return binary_sub(self, <BitMap?>other)
 
     def __isub__(self, other):
-        self.check_compatibility(other)
+        self.__check_compatibility(other)
         return binary_isub(self, <BitMap?>other)
 
     def union_cardinality(self, BitMap other):
-        self.check_compatibility(other)
+        """
+        Return the number of elements in the union of the two bitmaps.
+
+        It is equivalent to len(self | other), but faster.
+
+        >>> BitMap([3, 12]).union_cardinality(BitMap([3, 5, 8]))
+        4
+        """
+        self.__check_compatibility(other)
         return croaring.roaring_bitmap_or_cardinality(self._c_bitmap, other._c_bitmap)
 
     def intersection_cardinality(self, BitMap other):
-        self.check_compatibility(other)
+        """
+        Return the number of elements in the intersection of the two bitmaps.
+
+        It is equivalent to len(self & other), but faster.
+
+        >>> BitMap([3, 12]).intersection_cardinality(BitMap([3, 5, 8]))
+        1
+        """
+        self.__check_compatibility(other)
         return croaring.roaring_bitmap_and_cardinality(self._c_bitmap, other._c_bitmap)
 
     def difference_cardinality(self, BitMap other):
-        self.check_compatibility(other)
+        """
+        Return the number of elements in the difference of the two bitmaps.
+
+        It is equivalent to len(self - other), but faster.
+
+        >>> BitMap([3, 12]).difference_cardinality(BitMap([3, 5, 8]))
+        1
+        """
+        self.__check_compatibility(other)
         return croaring.roaring_bitmap_andnot_cardinality(self._c_bitmap, other._c_bitmap)
 
     def symmetric_difference_cardinality(self, BitMap other):
-        self.check_compatibility(other)
+        """
+        Return the number of elements in the symmetric difference of the two bitmaps.
+
+        It is equivalent to len(self ^ other), but faster.
+
+        >>> BitMap([3, 12]).symmetric_difference_cardinality(BitMap([3, 5, 8]))
+        3
+        """
+        self.__check_compatibility(other)
         return croaring.roaring_bitmap_xor_cardinality(self._c_bitmap, other._c_bitmap)
 
     def intersect(self, BitMap other):
-        self.check_compatibility(other)
+        """
+        Return True if and only if the two bitmaps have elements in common.
+
+        It is equivalent to len(self & other) > 0, but faster.
+
+        >>> BitMap([3, 12]).intersect(BitMap([3, 18]))
+        True
+        >>> BitMap([3, 12]).intersect(BitMap([5, 18]))
+        False
+        """
+        self.__check_compatibility(other)
         return croaring.roaring_bitmap_intersect(self._c_bitmap, other._c_bitmap)
 
     def jaccard_index(self, BitMap other):
-        self.check_compatibility(other)
+        """
+        Compute the Jaccard index of the two bitmaps.
+
+        It is equivalent to len(self&other)/len(self|other), but faster.
+        See https://en.wikipedia.org/wiki/Jaccard_index
+        
+        >>> BitMap([3, 10, 12]).jaccard_index(BitMap([3, 18]))
+        0.25
+        """
+        self.__check_compatibility(other)
         return croaring.roaring_bitmap_jaccard_index(self._c_bitmap, other._c_bitmap)
 
     def get_statistics(self):
+        """
+        Return relevant metrics about the bitmap.
+
+        >>> stats = BitMap(range(18, 66000, 2)).get_statistics()
+        >>> stats['cardinality']
+        32991
+        >>> stats['max_value']
+        65998
+        >>> stats['min_value']
+        18
+        >>> stats['n_array_containers']
+        1
+        >>> stats['n_bitset_containers']
+        1
+        >>> stats['n_bytes_array_containers']
+        464
+        >>> stats['n_bytes_bitset_containers']
+        8192
+        >>> stats['n_bytes_run_containers']
+        0
+        >>> stats['n_containers']
+        2
+        >>> stats['n_run_containers']
+        0
+        >>> stats['n_values_array_containers']
+        232
+        >>> stats['n_values_bitset_containers']
+        32759
+        >>> stats['n_values_run_containers']
+        0
+        >>> stats['sum_value'] 
+        1088966928
+        """
         cdef croaring.roaring_statistics_t stat
         croaring.roaring_bitmap_statistics(self._c_bitmap, &stat)
         return stat
 
     def min(self):
+        """
+        Return the minimum element of the bitmap.
+
+        It is equivalent to min(self), but faster.
+
+        >>> BitMap([3, 12]).min()
+        3
+        """
         if len(self) == 0:
             raise ValueError('Empty roaring bitmap, there is no minimum.')
         else:
             return croaring.roaring_bitmap_minimum(self._c_bitmap)
 
     def max(self):
+        """
+        Return the maximum element of the bitmap.
+
+        It is equivalent to max(self), but faster.
+
+        >>> BitMap([3, 12]).max()
+        12
+        """
         if len(self) == 0:
             raise ValueError('Empty roaring bitmap, there is no maximum.')
         else:
             return croaring.roaring_bitmap_maximum(self._c_bitmap)
 
     def rank(self, uint32_t value):
+        """
+        Return the rank of the element in the bitmap.
+
+        >>> BitMap([3, 12]).rank(12)
+        2
+        """
         return croaring.roaring_bitmap_rank(self._c_bitmap, value)
 
     cdef int64_t _shift_index(self, int64_t index) except -1:
@@ -279,6 +460,12 @@ cdef class BitMap:
             return TypeError('Indices must be integers or slices, not %s' % type(value))
 
     def serialize(self):
+        """
+        Return the serialization of the bitmap. See BitMap.deserialize for the reverse operation.
+
+        >>> BitMap.deserialize(BitMap([3, 12]).serialize())
+        BitMap([3, 12])
+        """
         cdef size_t size = croaring.roaring_bitmap_portable_size_in_bytes(self._c_bitmap)
         cdef char *buff = <char*>malloc(size)
         cdef real_size = croaring.roaring_bitmap_portable_serialize(self._c_bitmap, buff)
@@ -289,6 +476,12 @@ cdef class BitMap:
 
     @classmethod
     def deserialize(cls, char *buff):
+        """
+        Generate a bitmap from the given serialization. See BitMap.serialize for the reverse operation.
+
+        >>> BitMap.deserialize(BitMap([3, 12]).serialize())
+        BitMap([3, 12])
+        """
         return create_from_ptr(deserialize_ptr(buff))
 
     def __getstate__(self):
