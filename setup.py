@@ -12,7 +12,6 @@ cfg_vars = get_config_vars()
 for key, value in cfg_vars.items():
     if type(value) == str:
         cfg_vars[key] = value.replace("-Wstrict-prototypes", "")
-os.environ['CC'] = 'cc'
 
 def clean_description(descr): # remove the parts with the plots in the README
     start = descr.find('Three interesting plots')
