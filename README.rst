@@ -1,4 +1,5 @@
 |Build Status|
+|Documentation Status|
 
 An efficient and light-weight ordered set of 32 bits integers.
 This is a Python wrapper for the C library `CRoaring <https://github.com/RoaringBitmap/CRoaring>`__.
@@ -199,3 +200,5 @@ dense data ``cyroaring`` is faster. Otherwise, they are similar.
 
 .. |Build Status| image:: https://travis-ci.org/Ezibenroc/PyRoaringBitMap.svg?branch=master
    :target: https://travis-ci.org/Ezibenroc/PyRoaringBitMap
+.. |Documentation Status| image:: https://readthedocs.org/projects/pyroaringbitmap/badge/?version=latest
+   :target: http://pyroaringbitmap.readthedocs.io/en/latest/?badge=latest
