@@ -1,9 +1,7 @@
 |Build Status|
 
-This piece of code is a wrapper for the C library
-`CRoaring <https://github.com/RoaringBitmap/CRoaring>`__. It provides a
-very efficient way to store and manipulate sets of (unsigned 32 bits)
-integers.
+An efficient and light-weight ordered set of 32 bits integers.
+This is a Python wrapper for the C library `CRoaring <https://github.com/RoaringBitmap/CRoaring>`__.
 
 The wrapping used to be done with ``Ctypes``. We recently switched to
 ``Cython`` for the following reasons:

@@ -52,6 +52,9 @@ cdef croaring.roaring_bitmap_t *deserialize_ptr(char *buff):
     return ptr
 
 cdef class BitMap:
+    """
+    An efficient and light-weight ordered set of 32 bits integers.
+    """
     cdef croaring.roaring_bitmap_t* _c_bitmap
 
     def __cinit__(self, values=None, copy_on_write=False):
