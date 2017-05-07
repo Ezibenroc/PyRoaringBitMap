@@ -3,6 +3,7 @@
 from distutils.core import setup
 from distutils.extension import Extension
 from distutils.sysconfig import get_config_vars
+from subprocess import check_output
 import os
 import sys
 
@@ -30,6 +31,7 @@ except (IOError, ImportError, RuntimeError):
 USE_CYTHON = os.path.exists('pyroaring.pyx')
 if USE_CYTHON:
     print('Building pyroaring from Cython sources.')
+    check_output(['bash', 'prepare_dist.sh'])
     from Cython.Distutils import build_ext
     from Cython.Build import cythonize
     ext = 'pyx'
