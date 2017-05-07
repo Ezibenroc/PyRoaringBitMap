@@ -40,3 +40,4 @@ script:
     - export PYROARING_CYTHON=1
     - python setup.py build_ext -i
     - python test.py
+    - python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v
