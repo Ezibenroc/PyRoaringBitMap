@@ -137,19 +137,37 @@ cdef class BitMap:
         cdef vector[uint32_t] buff = values
         croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff[0])
 
-    def remove(self, uint32_t value):
+    def discard(self, uint32_t value):
         """
         Remove an element from the bitmap. This has no effect if the element is not present.
+
+        >>> bm = BitMap([3, 12])
+        >>> bm.discard(3)
+        >>> bm
+        BitMap([12])
+        >>> bm.discard(3)
+        >>> bm
+        BitMap([12])
+        """
+        croaring.roaring_bitmap_remove(self._c_bitmap, value)
+
+    def remove(self, uint32_t value):
+        """
+        Remove an element from the bitmap. This raises a KeyError exception if the element does not exist in the bitmap.
 
         >>> bm = BitMap([3, 12])
         >>> bm.remove(3)
         >>> bm
         BitMap([12])
         >>> bm.remove(3)
-        >>> bm
-        BitMap([12])
+        Traceback (most recent call last):
+        ...
+        KeyError: 3
         """
-        croaring.roaring_bitmap_remove(self._c_bitmap, value)
+        if value in self:
+            croaring.roaring_bitmap_remove(self._c_bitmap, value)
+        else:
+            raise KeyError(value)
 
     def __contains__(self, uint32_t value):
         return croaring.roaring_bitmap_contains(self._c_bitmap, value)

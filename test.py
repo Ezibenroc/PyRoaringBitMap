@@ -88,12 +88,14 @@ class BasicTest(Util):
         for value in values[:size//2]:
             bitmap.remove(value)
             expected_set.remove(value)
+            with self.assertRaises(KeyError):
+                bitmap.remove(value)
         self.compare_with_set(bitmap, expected_set)
         for value in values[size//2:]:
-            bitmap.remove(value)
-            expected_set.remove(value)
+            bitmap.discard(value)
+            bitmap.discard(value) # check that we can discard element not in the bitmap
+            expected_set.discard(value)
         self.compare_with_set(bitmap, expected_set)
-
 
     @given(hyp_collection, st.booleans())
     def test_bitmap_equality(self, values, cow):
