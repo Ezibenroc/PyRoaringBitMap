@@ -28,7 +28,7 @@ except (IOError, ImportError, RuntimeError):
     print('Could not generate long description.')
     long_description=''
 
-USE_CYTHON = 'PYROARING_CYTHON' in os.environ
+USE_CYTHON = os.path.exists('pyroaring.pyx')
 if USE_CYTHON:
     print('Building pyroaring from Cython sources.')
     from Cython.Distutils import build_ext
