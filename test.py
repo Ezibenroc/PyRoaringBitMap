@@ -133,6 +133,14 @@ class BasicTest(Util):
         expected |= BitMap(new_values, copy_on_write=cow)
         self.assertEqual(bm, expected)
 
+    @given(hyp_collection, hyp_collection, st.booleans())
+    def test_intersection_update(self, initial_values, new_values, cow):
+        bm = BitMap(initial_values, cow)
+        expected = BitMap(bm)
+        bm.intersection_update(new_values)
+        expected &= BitMap(new_values, copy_on_write=cow)
+        self.assertEqual(bm, expected)
+
     def wrong_op(self, op):
         bitmap = BitMap()
         with self.assertRaises(OverflowError):
@@ -336,13 +344,30 @@ class CardinalityTest(Util):
 
 class ManyOperationsTest(Util):
 
-    @given(hyp_many_collections, st.booleans())
-    def test_union(self, all_values, cow):
-        bitmaps = [BitMap(values, copy_on_write=cow) for values in all_values]
-        bitmaps_copy = [BitMap(bm) for bm in bitmaps]
-        result = BitMap.union(*bitmaps)
-        self.assertEqual(bitmaps_copy, bitmaps)
-        expected_result = functools.reduce(lambda x, y: x|y, bitmaps)
+    @given(hyp_collection, hyp_many_collections, st.booleans())
+    def setUp(self, initial_values, all_values, cow):
+        self.initial_bitmap = BitMap(initial_values, copy_on_write=cow)
+        self.all_values = all_values
+        self.all_bitmaps = [BitMap(values, copy_on_write=cow) for values in all_values]
+
+    def test_update(self):
+        self.initial_bitmap.update(*self.all_values)
+        expected_result = functools.reduce(lambda x, y: x|y, self.all_bitmaps+[self.initial_bitmap])
+        self.assertEqual(expected_result, self.initial_bitmap)
+
+    def test_intersection_update(self):
+        self.initial_bitmap.intersection_update(*self.all_values)
+        expected_result = functools.reduce(lambda x, y: x&y, self.all_bitmaps+[self.initial_bitmap])
+        self.assertEqual(expected_result, self.initial_bitmap)
+
+    def test_union(self):
+        result = BitMap.union(*self.all_bitmaps)
+        expected_result = functools.reduce(lambda x, y: x|y, self.all_bitmaps)
+        self.assertEqual(expected_result, result)
+
+    def test_intersection(self):
+        result = BitMap.intersection(*self.all_bitmaps)
+        expected_result = functools.reduce(lambda x, y: x&y, self.all_bitmaps)
         self.assertEqual(expected_result, result)
 
 class SerializationTest(Util):

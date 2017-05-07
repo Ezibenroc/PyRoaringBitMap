@@ -125,7 +125,7 @@ cdef class BitMap:
         """
         croaring.roaring_bitmap_add(self._c_bitmap, value)
 
-    def update(self, values): # FIXME: could be more efficient, using roaring_bitmap_add_many
+    def update(self, *all_values): # FIXME could be more efficient
         """
         Add all the given values to the bitmap.
 
@@ -134,8 +134,15 @@ cdef class BitMap:
         >>> bm
         BitMap([3, 8, 12, 18, 55])
         """
-        cdef vector[uint32_t] buff = values
-        croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff[0])
+        cdef vector[uint32_t] buff
+        for values in all_values:
+            if isinstance(values, BitMap):
+                self |= values
+            elif isinstance(values, range):
+                self |= BitMap(values, copy_on_write=self.copy_on_write)
+            else:
+                buff = values
+                croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff[0])
 
     def discard(self, uint32_t value):
         """
@@ -168,6 +175,22 @@ cdef class BitMap:
             croaring.roaring_bitmap_remove(self._c_bitmap, value)
         else:
             raise KeyError(value)
+
+    def intersection_update(self, *all_values): # FIXME could be more efficient
+        """
+        Update the bitmap by taking its intersection with the given values.
+
+        >>> bm = BitMap([3, 12])
+        >>> bm.intersection_update([8, 12, 55, 18])
+        >>> bm
+        BitMap([12])
+        """
+        cdef uint32_t elt
+        for values in all_values:
+            if isinstance(values, BitMap):
+                self &= values
+            else:
+                self &= BitMap(values, copy_on_write=self.copy_on_write)
 
     def __contains__(self, uint32_t value):
         return croaring.roaring_bitmap_contains(self._c_bitmap, value)
@@ -257,6 +280,24 @@ cdef class BitMap:
                 buff.push_back(bm._c_bitmap)
             result = croaring.roaring_bitmap_or_many(size, &buff[0])
             return create_from_ptr(result)
+
+    @classmethod
+    def intersection(cls, *bitmaps): # FIXME could be more efficient
+        """
+        Return the intersection of the bitmaps.
+
+        >>> BitMap.intersection(BitMap(range(0, 15)), BitMap(range(5, 20)), BitMap(range(10, 25)))
+        BitMap([10, 11, 12, 13, 14])
+        """
+        size = len(bitmaps)
+        cdef BitMap result, bm
+        if size <= 1:
+            return cls(*bitmaps)
+        else:
+            result = BitMap(bitmaps[0])
+            for bm in bitmaps[1:]:
+                result &= bm
+            return result
 
     def __or__(self, other):
         self.__check_compatibility(other)
