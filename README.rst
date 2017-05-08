@@ -69,7 +69,6 @@ Build pyroaring locally, e.g. to test a new feature you made.
 
 .. code:: bash
 
-    bash prepare_dist.sh
     python setup.py build_ext -i
     python test.py # run the tests, optionnal but recommended
 
@@ -84,7 +83,7 @@ Package pyroaring.
 .. code:: bash
 
     python setup.py sdist
-    pip install dist/pyroaring-0.0.7.tar.gz # optionnal, to install the package
+    pip install dist/pyroaring-0.1.?.tar.gz # optionnal, to install the package
 
 Utilization
 -----------
@@ -133,7 +132,8 @@ Quick benchmarks for common operations
 
 The script ``quick_bench.py`` measures the time of different set
 operations. It uses randomly generated sets of size 1e6 and density
-0.125. For each operation, the average of 30 tests is reported.
+0.125. For each operation, the average time (in seconds) of 30 tests
+is reported.
 
 The results have been obtained with:
 
@@ -200,5 +200,5 @@ dense data ``cyroaring`` is faster. Otherwise, they are similar.
 
 .. |Build Status| image:: https://travis-ci.org/Ezibenroc/PyRoaringBitMap.svg?branch=master
    :target: https://travis-ci.org/Ezibenroc/PyRoaringBitMap
-.. |Documentation Status| image:: https://readthedocs.org/projects/pyroaringbitmap/badge/?version=latest
-   :target: http://pyroaringbitmap.readthedocs.io/en/latest/?badge=latest
+.. |Documentation Status| image:: https://readthedocs.org/projects/pyroaringbitmap/badge/?version=stable
+   :target: http://pyroaringbitmap.readthedocs.io/en/stable/?badge=stable

@@ -567,7 +567,7 @@ cdef class BitMap:
         """
         Return an array.array containing the elements of the bitmap, in increasing order.
 
-        Equivalent to array.array('I', self), but more efficient.
+        It is equivalent to array.array('I', self), but more efficient.
 
         >>> BitMap([3, 12]).to_array()
         array('I', [3, 12])
