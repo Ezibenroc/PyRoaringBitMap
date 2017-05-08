@@ -4,6 +4,9 @@ from libcpp cimport bool
 from libcpp.vector cimport vector
 from libc.stdlib cimport free, malloc
 
+from cpython cimport array
+import array
+
 try:
     range = xrange
 except NameError: # python 3
@@ -58,6 +61,7 @@ cdef class BitMap:
     cdef croaring.roaring_bitmap_t* _c_bitmap
 
     def __cinit__(self, values=None, copy_on_write=False):
+        cdef unsigned[:] buff
         if values is None:
             self._c_bitmap = croaring.roaring_bitmap_create()
         elif isinstance(values, BitMap):
@@ -71,6 +75,9 @@ cdef class BitMap:
                 self._c_bitmap = croaring.roaring_bitmap_create()
             else:
                 self._c_bitmap = croaring.roaring_bitmap_from_range(start, stop, step)
+        elif isinstance(values, array.array):
+            buff = <array.array> values
+            self._c_bitmap = croaring.roaring_bitmap_of_ptr(len(values), &buff[0])
         else:
             self._c_bitmap = croaring.roaring_bitmap_create()
             self.update(values)
@@ -134,15 +141,19 @@ cdef class BitMap:
         >>> bm
         BitMap([3, 8, 12, 18, 55])
         """
-        cdef vector[uint32_t] buff
+        cdef vector[uint32_t] buff_vect
+        cdef unsigned[:] buff
         for values in all_values:
             if isinstance(values, BitMap):
                 self |= values
             elif isinstance(values, range):
                 self |= BitMap(values, copy_on_write=self.copy_on_write)
-            else:
-                buff = values
+            elif isinstance(values, array.array):
+                buff = <array.array> values
                 croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff[0])
+            else:
+                buff_vect = values
+                croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff_vect[0])
 
     def discard(self, uint32_t value):
         """
@@ -551,3 +562,19 @@ cdef class BitMap:
 
     def __setstate__(self, state):
         self._c_bitmap = deserialize_ptr(state)
+
+    def to_array(self):
+        """
+        Return an array.array containing the elements of the bitmap, in increasing order.
+
+        Equivalent to array.array('I', self), but more efficient.
+
+        >>> BitMap([3, 12]).to_array()
+        array('I', [3, 12])
+        """
+        cdef int64_t size = len(self)
+        cdef array.array result = array.array('I')
+        array.resize(result, size)
+        cdef unsigned[:] buff = result
+        croaring.roaring_bitmap_to_uint32_array(self._c_bitmap, &buff[0])
+        return result

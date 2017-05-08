@@ -8,6 +8,7 @@ import sys
 import pickle
 from hypothesis import given
 import hypothesis.strategies as st
+import array
 from pyroaring import BitMap
 
 is_python2 = sys.version_info < (3, 0)
@@ -42,7 +43,8 @@ range_power2_step = uint18.flatmap(lambda n:
 
 hyp_range = range_big_step | range_small_step | range_power2_step
 hyp_set = st.builds(set, hyp_range) # would be great to build a true random set, but it takes too long and hypothesis does a timeout...
-hyp_collection = hyp_range | hyp_set
+hyp_array = st.builds(lambda x: array.array('I', x), hyp_range)
+hyp_collection = hyp_range | hyp_set | hyp_array
 hyp_many_collections = st.lists(hyp_collection, min_size=1, max_size=20)
 
 class Util(unittest.TestCase):
@@ -161,6 +163,13 @@ class BasicTest(Util):
             bitmap = BitMap([3, 'bla', 3, 42])
         with self.assertRaises(ValueError):
             bitmap = BitMap(range(0, 10, 0))
+
+    @given(hyp_collection, st.booleans())
+    def test_to_array(self, values, cow):
+        bitmap = BitMap(values, copy_on_write=cow)
+        result = bitmap.to_array()
+        expected = array.array('I', sorted(values))
+        self.assertEqual(result, expected)
 
 class SelectRankTest(Util):
 
