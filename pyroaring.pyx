@@ -13,7 +13,7 @@ except NameError: # python 3
     pass
 
 cdef BitMap create_from_ptr(croaring.roaring_bitmap_t *r):
-    bm = <BitMap>BitMap.__new__(BitMap)
+    bm = <BitMap>BitMap.__new__(BitMap, no_init=True)
     bm._c_bitmap = r
     return bm
 
@@ -60,7 +60,10 @@ cdef class BitMap:
     """
     cdef croaring.roaring_bitmap_t* _c_bitmap
 
-    def __cinit__(self, values=None, copy_on_write=False):
+    def __cinit__(self, values=None, copy_on_write=False, no_init=False):
+        if no_init:
+            assert values is None and not copy_on_write
+            return
         cdef unsigned[:] buff
         if values is None:
             self._c_bitmap = croaring.roaring_bitmap_create()
