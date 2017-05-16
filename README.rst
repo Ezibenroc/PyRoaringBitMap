@@ -151,7 +151,7 @@ list constructor                    1.23e-01         1.55e-01    9.76e-02       
 ordered array constructor           3.69e-03         2.81e-01    8.10e-02            2.83e-01
 array constructor                   1.17e-01         4.95e-01    1.47e-01            4.97e-01
 element addition                    1.79e-07         1.77e-07    1.39e-07            9.39e-07
-element removeal                    1.81e-07         1.73e-07    1.27e-07            3.09e-07
+element removal                     1.81e-07         1.73e-07    1.27e-07            3.09e-07
 membership test                     8.99e-08         1.15e-07    9.50e-08            4.23e-07
 union                               1.80e-04         1.61e-04    1.47e-01            9.15e-01
 intersection                        8.99e-04         9.12e-04    4.61e-02            1.45e-01

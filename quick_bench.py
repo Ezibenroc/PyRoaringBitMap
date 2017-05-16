@@ -60,7 +60,7 @@ experiments = [
     ('array constructor', ('values=array.array("I", get_list())', constructor)),
     # Simple operations
     ('element addition', (simple_setup_constructor, 'x.add(val)')),
-    ('element removeal', (simple_setup_constructor, 'x.discard(val)')),
+    ('element removal', (simple_setup_constructor, 'x.discard(val)')),
     ('membership test', (simple_setup_constructor, 'val in x')),
     # Binary operations
     ('union', (double_setup_constructor, 'z=x|y')),
