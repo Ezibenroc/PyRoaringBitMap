@@ -24,6 +24,7 @@ Requirements
 -  Environment like Linux and MacOS
 -  Python 2.7, or Python 3.3 or better
 -  A recent C compiler like GCC
+-  The package manager ``pip``
 -  The Python package ``hypothesis`` (optional, for testing)
 -  The Python package ``Cython`` (optional, for compiling pyroaring from
    the sources)
@@ -31,14 +32,13 @@ Requirements
 Installation
 ------------
 
-To install pyroaring and the CRoaring library on your local account, use
-the following two lines:
+To install pyroaring on your local account, use the following command:
 
 .. code:: bash
 
     pip install pyroaring --user # installs PyRoaringBitMap
 
-To install them system-wide, use the following lines :
+For a system-wide installation, use the following command:
 
 .. code:: bash
 
@@ -47,9 +47,8 @@ To install them system-wide, use the following lines :
 Naturally, the latter may require superuser rights (consider prefixing
 the commands by ``sudo``).
 
-(If you want to use Python 3 and your system defaults on Python 2.7, you
-may need to adjust the above commands, e.g., replace ``pip`` by ``pip3``
-and python by ``python3``.)
+If you want to use Python 3 and your system defaults on Python 2.7, you
+may need to adjust the above commands, e.g., replace ``pip`` by ``pip3``.
 
 Manual compilation / installation
 ---------------------------------

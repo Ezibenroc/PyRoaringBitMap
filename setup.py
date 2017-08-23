@@ -41,7 +41,7 @@ else:
 filename = 'pyroaring.%s' % ext
 pyroaring = Extension('pyroaring',
                     sources = [filename, 'roaring.cpp'],
-                    extra_compile_args=['-O3', '-march=native'],
+                    extra_compile_args=['-O3', '-march=native', '-D__STDC_LIMIT_MACROS', '-D__STDC_CONSTANT_MACROS'],
                     language='c++',
                     )
 if USE_CYTHON:
