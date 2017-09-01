@@ -35,6 +35,13 @@ except ImportError:
     sys.stderr.write('Warning: could not import sortedcontainers\n')
     sys.stderr.write('         see https://github.com/grantjenks/sorted_containers\n')
 
+try:
+    from croaring import BitSet
+    classes['python-croaring'] = BitSet
+except ImportError:
+    sys.stderr.write('Warning: could not import croaring\n')
+    sys.stderr.write('         see https://github.com/sunzhaoping/python-croaring\n')
+
 def run_exp(stmt, setup, number):
     try:
         return timeit.timeit(stmt=stmt, setup=setup, number=number, globals=globals())/number
