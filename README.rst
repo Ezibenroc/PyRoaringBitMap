@@ -28,6 +28,7 @@ Requirements
 -  The Python package ``hypothesis`` (optional, for testing)
 -  The Python package ``Cython`` (optional, for compiling pyroaring from
    the sources)
+-  The Python package ``wheel`` (optional, to build a wheel for the library)
 
 Installation
 ------------
@@ -83,6 +84,26 @@ Package pyroaring.
 
     python setup.py sdist
     pip install dist/pyroaring-0.1.?.tar.gz # optionnal, to install the package
+
+Build a wheel.
+
+.. code:: bash
+
+    python setup.py bdist_wheel
+
+For all the above commands, two environment variables can be used to control the compilation.
+
+- ``DEBUG=1`` to build pyroaring in debug mode.
+- ``ARCHI=<cpu-type>`` to build pyroaring for the given platform. The platform may be any keyword
+  given to the ``-march`` option of gcc (see the
+  `documentation <https://gcc.gnu.org/onlinedocs/gcc-4.5.3/gcc/i386-and-x86_002d64-Options.html>`__).
+  Note that cross-compiling for a 32-bit architecture from a 64-bit architecture is not supported.
+
+Example of use:
+
+.. code:: bash
+
+    DEBUG=1 ARCHI=x86-64 python setup.py build_ext
 
 Utilization
 -----------

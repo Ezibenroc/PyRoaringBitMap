@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 
-from distutils.core import setup
-from distutils.extension import Extension
+from setuptools import setup
+from setuptools.extension import Extension
 from distutils.sysconfig import get_config_vars
 from subprocess import check_output
 import os
@@ -38,10 +38,21 @@ if USE_CYTHON:
 else:
     print('Building pyroaring from C sources.')
     ext = 'cpp'
+
+compile_args=['-D__STDC_LIMIT_MACROS', '-D__STDC_CONSTANT_MACROS']
+if 'DEBUG' in os.environ:
+    compile_args.extend(['-O0', '-g'])
+else:
+    compile_args.append('-O3')
+if 'ARCHI' in os.environ:
+    compile_args.extend(['-DDISABLE_X64', '-march=%s' % os.environ['ARCHI']])
+else:
+    compile_args.append('-march=native')
+
 filename = 'pyroaring.%s' % ext
 pyroaring = Extension('pyroaring',
                     sources = [filename, 'roaring.cpp'],
-                    extra_compile_args=['-O3', '-march=native', '-D__STDC_LIMIT_MACROS', '-D__STDC_CONSTANT_MACROS'],
+                    extra_compile_args=compile_args,
                     language='c++',
                     )
 if USE_CYTHON:
