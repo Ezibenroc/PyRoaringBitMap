@@ -42,14 +42,21 @@ except ImportError:
     sys.stderr.write('Warning: could not import croaring\n')
     sys.stderr.write('         see https://github.com/sunzhaoping/python-croaring\n')
 
+import_str = 'from __main__ import %s' % (','.join(['get_list', 'get_range', 'array', 'random', 'pickle', 'size', 'universe_size'] + [cls.__name__ for cls in classes.values() if cls is not set]))
+
 def run_exp(stmt, setup, number):
+    setup = '%s ; %s' % (import_str, setup)
     try:
-        return timeit.timeit(stmt=stmt, setup=setup, number=number, globals=globals())/number
+        return timeit.timeit(stmt=stmt, setup=setup, number=number)/number
     except Exception as e:
         return float('nan')
 
 def get_range():
-    return range(0, universe_size, int(1/density))
+    r = (0, universe_size, int(1/density))
+    try:
+        return xrange(*r)
+    except NameError:
+        return range(*r)
 
 def get_list():
     return random.sample(range(universe_size), size)
@@ -78,7 +85,7 @@ experiments = [
     ('subset test', (equal_setup_constructor, 'x<=y')),
     # Export
     ('conversion to list', (simple_setup_constructor, 'list(x)')),
-    ('pickle dump & load', (simple_setup_constructor, 'pickle.loads(pickle.dumps(x))')),
+    ('pickle dump & load', (simple_setup_constructor, 'pickle.loads(pickle.dumps(x, protocol=pickle.HIGHEST_PROTOCOL))')),
     ('"naive" conversion to array', (simple_setup_constructor, 'array.array("I", x)')),
     ('"optimized" conversion to array', (simple_setup_constructor, 'x.to_array()')),
     # Items
