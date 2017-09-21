@@ -41,7 +41,7 @@ range_power2_step = uint18.flatmap(lambda n:
                         lambda n: st.just(2**n)
                       )))
 
-hyp_range = range_big_step | range_small_step | range_power2_step
+hyp_range = range_big_step | range_small_step | range_power2_step | st.sampled_from([range(0, 0)]) # last one is an empty range
 hyp_set = st.builds(set, hyp_range) # would be great to build a true random set, but it takes too long and hypothesis does a timeout...
 hyp_array = st.builds(lambda x: array.array('I', x), hyp_range)
 hyp_collection = hyp_range | hyp_set | hyp_array
@@ -218,6 +218,7 @@ class SelectRankTest(Util):
 
     @given(hyp_collection, st.booleans())
     def test_min(self, values, cow):
+        st.assume(len(values) > 0)
         bitmap = BitMap(values, copy_on_write=cow)
         self.assertEqual(bitmap.min(), min(values))
 
@@ -228,6 +229,7 @@ class SelectRankTest(Util):
 
     @given(hyp_collection, st.booleans())
     def test_max(self, values, cow):
+        st.assume(len(values) > 0)
         bitmap = BitMap(values, copy_on_write=cow)
         self.assertEqual(bitmap.max(), max(values))
 

@@ -79,8 +79,12 @@ cdef class BitMap:
             else:
                 self._c_bitmap = croaring.roaring_bitmap_from_range(start, stop, step)
         elif isinstance(values, array.array):
-            buff = <array.array> values
-            self._c_bitmap = croaring.roaring_bitmap_of_ptr(len(values), &buff[0])
+            size = len(values)
+            if size == 0:
+                self._c_bitmap = croaring.roaring_bitmap_create()
+            else:
+                buff = <array.array> values
+                self._c_bitmap = croaring.roaring_bitmap_of_ptr(size, &buff[0])
         else:
             self._c_bitmap = croaring.roaring_bitmap_create()
             self.update(values)
@@ -151,7 +155,7 @@ cdef class BitMap:
                 self |= values
             elif isinstance(values, range):
                 self |= BitMap(values, copy_on_write=self.copy_on_write)
-            elif isinstance(values, array.array):
+            elif isinstance(values, array.array) and len(values) > 0:
                 buff = <array.array> values
                 croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff[0])
             else:
@@ -576,6 +580,8 @@ cdef class BitMap:
         array('I', [3, 12])
         """
         cdef int64_t size = len(self)
+        if size == 0:
+            return array.array('I', [])
         cdef array.array result = array.array('I')
         array.resize(result, size)
         cdef unsigned[:] buff = result
