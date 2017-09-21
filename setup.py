@@ -45,7 +45,7 @@ if 'DEBUG' in os.environ:
 else:
     compile_args.append('-O3')
 if 'ARCHI' in os.environ:
-    compile_args.extend(['-DDISABLE_X64', '-march=%s' % os.environ['ARCHI']])
+    compile_args.extend(['-march=%s' % os.environ['ARCHI']])
 else:
     compile_args.append('-march=native')
 
