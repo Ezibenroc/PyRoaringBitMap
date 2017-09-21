@@ -143,12 +143,9 @@ Benchmark
 
 ``Pyroaring`` is compared with the built-in ``set`` and other implementations:
 
-- A `Python wrapper <https://github.com/sunzhaoping/python-croaring>`__
-of CRoaring called ``python-croaring``
-- A `Cython implementation <https://github.com/andreasvc/roaringbitmap>`__
-of Roaring bitmaps called ``roaringbitmap``
-- A Python implemenntation of `ordered sets <https://github.com/grantjenks/sorted_containers>`__
-called ``sortedcontainers``
+- A `Python wrapper <https://github.com/sunzhaoping/python-croaring>`__ of CRoaring called ``python-croaring``
+- A `Cython implementation <https://github.com/andreasvc/roaringbitmap>`__ of Roaring bitmaps called ``roaringbitmap``
+- A Python implemenntation of `ordered sets <https://github.com/grantjenks/sorted_containers>`__ called ``sortedcontainers``
 
 The script ``quick_bench.py`` measures the time of different set
 operations. It uses randomly generated sets of size 1e6 and density
@@ -160,10 +157,10 @@ The results have been obtained with:
 - CPU Intel i7-7820HQ
 - CPython version 3.5.3
 - gcc version 6.3.0
-- pyroaring commit `6c86765d0357492895fee99de8841ce42340f879`
-- python-croaring commit `3aa61dde6b4a123665ca5632eb5b089ec0bc5bc4`
-- roaringbitmap commit `a32915f262eb4e39b854d942e005dc7381796808`
-- sortedcontainers commit `53fd6c54aebe5b969adc87d4b5e6331be1e32079`
+- pyroaring commit ``6c86765d0357492895fee99de8841ce42340f879``
+- python-croaring commit ``3aa61dde6b4a123665ca5632eb5b089ec0bc5bc4``
+- roaringbitmap commit ``a32915f262eb4e39b854d942e005dc7381796808``
+- sortedcontainers commit ``53fd6c54aebe5b969adc87d4b5e6331be1e32079``
 
 ===============================  ===========  =================  ===============  ==========  ==================
 operation                          pyroaring    python-croaring    roaringbitmap         set    sortedcontainers
