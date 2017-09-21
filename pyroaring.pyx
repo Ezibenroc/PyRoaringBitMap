@@ -529,7 +529,7 @@ cdef class BitMap:
             result &= self
             return result
         else:
-            return self.__class__(list(self)[sl]) # very inefficient...
+            return self.__class__(self.to_array()[sl]) # could be more efficient...
 
     def __getitem__(self, value):
         if isinstance(value, int):
