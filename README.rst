@@ -141,14 +141,14 @@ Output:
 Benchmark
 ---------
 
-The built-in ``set`` is compared with ``pyroaring``, a
-`Cython implementation <https://github.com/andreasvc/roaringbitmap>`__
-of Roaring bitmaps called ``roaringbitmap``, and a Python implemenntation
-of `ordered sets <https://github.com/grantjenks/sorted_containers>`__
-called ``sortedcontainers``.
+``Pyroaring`` is compared with the built-in ``set`` and other implementations:
 
-Quick benchmarks for common operations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- A `Python wrapper <https://github.com/sunzhaoping/python-croaring>`__
+of CRoaring called ``python-croaring``
+- A `Cython implementation <https://github.com/andreasvc/roaringbitmap>`__
+of Roaring bitmaps called ``roaringbitmap``
+- A Python implemenntation of `ordered sets <https://github.com/grantjenks/sorted_containers>`__
+called ``sortedcontainers``
 
 The script ``quick_bench.py`` measures the time of different set
 operations. It uses randomly generated sets of size 1e6 and density
@@ -157,35 +157,38 @@ is reported.
 
 The results have been obtained with:
 
-- CPython version 3.5.2
-- pyroaring commit `2ccc0bf6e428d771061499440bcde0ca0fa2a946`
-- roaringbitmap commit `95ca18f902389464d15732d35de7be868d660ed2`
-- sortedcontainers version 1.5.7
+- CPU Intel i7-7820HQ
+- CPython version 3.5.3
+- gcc version 6.3.0
+- pyroaring commit `6c86765d0357492895fee99de8841ce42340f879`
+- python-croaring commit `3aa61dde6b4a123665ca5632eb5b089ec0bc5bc4`
+- roaringbitmap commit `a32915f262eb4e39b854d942e005dc7381796808`
+- sortedcontainers commit `53fd6c54aebe5b969adc87d4b5e6331be1e32079`
 
-===============================  ===========  ===============  ==========  ==================
-operation                          pyroaring    roaringbitmap         set    sortedcontainers
-===============================  ===========  ===============  ==========  ==================
-range constructor                   1.39e-04         1.35e-04    5.41e-02            1.85e-01
-ordered list constructor            3.27e-02         1.61e-01    1.64e-01            5.09e-01
-list constructor                    1.23e-01         1.55e-01    9.76e-02            4.64e-01
-ordered array constructor           3.69e-03         2.81e-01    8.10e-02            2.83e-01
-array constructor                   1.17e-01         4.95e-01    1.47e-01            4.97e-01
-element addition                    1.79e-07         1.77e-07    1.39e-07            9.39e-07
-element removal                     1.81e-07         1.73e-07    1.27e-07            3.09e-07
-membership test                     8.99e-08         1.15e-07    9.50e-08            4.23e-07
-union                               1.80e-04         1.61e-04    1.47e-01            9.15e-01
-intersection                        8.99e-04         9.12e-04    4.61e-02            1.45e-01
-difference                          1.92e-04         1.60e-04    1.26e-01            4.24e-01
-symmetric diference                 1.81e-04         1.60e-04    1.81e-01            7.71e-01
-equality test                       7.99e-05         6.40e-05    1.93e-02            1.86e-02
-subset test                         8.22e-05         8.26e-05    1.84e-02            1.83e-02
-conversion to list                  4.39e-02         4.19e-02    5.40e-02            5.05e-02
-pickle dump & load                  6.51e-04         6.23e-04    2.42e-01            4.47e-01
-"naive" conversion to array         4.83e-02         4.65e-02    1.06e-01            1.06e-01
-"optimized" conversion to array     1.37e-03       nan         nan                 nan
-selection                           9.29e-07         5.77e-07  nan                   1.34e-05
-slice                               5.34e-02         1.42e-01  nan                   7.63e-01
-===============================  ===========  ===============  ==========  ==================
+===============================  ===========  =================  ===============  ==========  ==================
+operation                          pyroaring    python-croaring    roaringbitmap         set    sortedcontainers
+===============================  ===========  =================  ===============  ==========  ==================
+range constructor                   1.08e-04           1.14e-04         8.89e-05    4.18e-02            1.33e-01
+ordered list constructor            2.58e-02           5.25e-02         1.01e-01    1.23e-01            3.88e-01
+list constructor                    9.18e-02           1.05e-01         1.26e-01    6.80e-02            3.47e-01
+ordered array constructor           4.07e-03           5.05e-03         2.19e-01    6.30e-02            2.13e-01
+array constructor                   8.55e-02           9.11e-02         3.88e-01    1.05e-01            3.63e-01
+element addition                    1.48e-07           5.23e-07         1.45e-07    1.06e-07            9.74e-07
+element removal                     1.40e-07           5.41e-07         1.26e-07    1.02e-07            4.41e-07
+membership test                     7.39e-08           6.59e-07         8.03e-08    5.90e-08            3.74e-07
+union                               1.03e-04           1.37e-04         1.02e-04    1.03e-01            7.09e-01
+intersection                        8.44e-04           8.05e-04         7.90e-04    3.73e-02            1.20e-01
+difference                          1.02e-04           1.40e-04         9.97e-05    9.24e-02            3.16e-01
+symmetric diference                 1.02e-04           1.36e-04         9.81e-05    1.34e-01            5.94e-01
+equality test                       5.36e-05           5.62e-05         4.30e-05    1.56e-02            1.53e-02
+subset test                         6.97e-05           6.00e-05         5.91e-05    1.54e-02            1.55e-02
+conversion to list                  3.37e-02           2.12e-01         3.18e-02    3.50e-02            3.83e-02
+pickle dump & load                  2.25e-04           3.56e-04         2.47e-04    1.46e-01            3.88e-01
+"naive" conversion to array         3.35e-02           2.25e-01         3.16e-02    6.39e-02            6.10e-02
+"optimized" conversion to array     1.20e-03           2.42e-02       nan         nan                 nan
+selection                           7.69e-07           3.76e-05         1.13e-06  nan                   8.57e-06
+slice                               3.23e-03           2.35e-01         1.23e-01  nan                   5.76e-01
+===============================  ===========  =================  ===============  ==========  ==================
 
 .. |Build Status| image:: https://travis-ci.org/Ezibenroc/PyRoaringBitMap.svg?branch=master
    :target: https://travis-ci.org/Ezibenroc/PyRoaringBitMap
