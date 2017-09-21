@@ -187,37 +187,6 @@ selection                           9.29e-07         5.77e-07  nan              
 slice                               5.34e-02         1.42e-01  nan                   7.63e-01
 ===============================  ===========  ===============  ==========  ==================
 
-Complete benchmark for the union
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The performances of the ``union`` operation have been measured more
-carefully. Full results can be found
-`here <https://github.com/Ezibenroc/roaring_analysis/blob/master/python_analysis.ipynb>`__.
-
-Three interesting plots:
-
-.. figure:: benchmark_sparse.png
-   :alt: Plot of the performances for sparse data (density of 0.04)
-
-   Plot of the performances for sparse data (density of 0.04)
-
-.. figure:: benchmark_dense.png
-   :alt: Plot of the performances for dense data (density of 0.5)
-
-   Plot of the performances for dense data (density of 0.5)
-
-.. figure:: benchmark_very_dense.png
-   :alt: Plot of the performances for very dense data (density of 0.999)
-
-   Plot of the performances for very dense data (density of 0.999)
-
-To sum up, both Roaring bitmap implementations are several orders of
-magnitude faster than the built-in set, regardless of the density of the
-data.
-
-For sparse data, ``pyroaring`` is faster than ``cyroaring``, for very
-dense data ``cyroaring`` is faster. Otherwise, they are similar.
-
 .. |Build Status| image:: https://travis-ci.org/Ezibenroc/PyRoaringBitMap.svg?branch=master
    :target: https://travis-ci.org/Ezibenroc/PyRoaringBitMap
 .. |Documentation Status| image:: https://readthedocs.org/projects/pyroaringbitmap/badge/?version=stable

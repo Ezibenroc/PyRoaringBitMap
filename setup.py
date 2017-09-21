@@ -14,16 +14,9 @@ for key, value in cfg_vars.items():
     if type(value) == str:
         cfg_vars[key] = value.replace("-Wstrict-prototypes", "")
 
-def clean_description(descr): # remove the parts with the plots in the README
-    start = descr.find('Three interesting plots')
-    stop = descr.find('To sum up, both Roaring bitmap implementations')
-    assert start != -1 and stop != -1 and start < stop
-    return '%s%s' % (descr[:start], descr[stop:])
-
 try:
     with open('README.rst') as f:
         long_description = ''.join(f.readlines())
-    long_description = clean_description(long_description)
 except (IOError, ImportError, RuntimeError):
     print('Could not generate long description.')
     long_description=''
