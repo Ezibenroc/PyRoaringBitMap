@@ -22,7 +22,7 @@ Requirements
 ------------
 
 -  Environment like Linux and MacOS
--  Python 2.7, or Python 3.3 or better
+-  Python 2.7, or Python 3.4 or better
 -  A recent C compiler like GCC
 -  The package manager ``pip``
 -  The Python package ``hypothesis`` (optional, for testing)
