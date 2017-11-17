@@ -64,6 +64,7 @@ Clone this repository.
 
     git clone https://github.com/Ezibenroc/PyRoaringBitMap.git
     cd PyRoaringBitMap
+    git submodule init && git submodule update
 
 Build pyroaring locally, e.g. to test a new feature you made.
 
