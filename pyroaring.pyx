@@ -568,7 +568,10 @@ cdef class BitMap:
         return self.serialize()
 
     def __setstate__(self, state):
-        self._c_bitmap = deserialize_ptr(state)
+        try:                                            # compatibility between Python2 and Python3 (see #27)
+            self._c_bitmap = deserialize_ptr(state)
+        except TypeError:
+            self._c_bitmap = deserialize_ptr(state.encode())
 
     def to_array(self):
         """
