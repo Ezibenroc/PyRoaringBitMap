@@ -33,5 +33,5 @@ install:
 
 script:
     - python setup.py build_ext -i
-    - python test.py
+    - HYPOTHESIS_PROFILE=ci python test.py
     - python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v

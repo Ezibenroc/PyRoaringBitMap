@@ -6,7 +6,7 @@ import functools
 import os
 import sys
 import pickle
-from hypothesis import given
+from hypothesis import given, settings, unlimited, Verbosity, errors
 import hypothesis.strategies as st
 import array
 from pyroaring import BitMap
@@ -17,6 +17,15 @@ try: # Python2 compatibility
     range = xrange
 except NameError:
     pass
+
+settings.register_profile("ci", settings(max_examples=500, deadline=None))
+settings.register_profile("dev", settings(max_examples=10, deadline=2000))
+settings.register_profile("debug", settings(max_examples=10, verbosity=Verbosity.verbose, deadline=2000))
+try:
+    env = os.getenv('HYPOTHESIS_PROFILE', 'dev')
+    settings.load_profile(env)
+except errors.InvalidArgument:
+    sys.exit('Unknown hypothesis profile: %s.' % env)
 
 uint18 = st.integers(min_value=0, max_value=2**18)
 uint32 = st.integers(min_value=0, max_value=2**32-1)
