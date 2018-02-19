@@ -116,8 +116,12 @@ First, you can run the tests to make sure everything is ok:
     pip install hypothesis --user
     python test.py
 
-Note: you can define the environment variable to ``debug`` to print every values, or ``ci`` to
-perform more tests (warning: very long).
+Note: you can define the environment variable ``HYPOTHESIS_PROFILE`` to ``debug`` to print every values,
+or ``ci`` to perform more tests (warning: very long). For instance:
+
+.. code:: bash
+
+    HYPOTHESIS_PROFILE=debug ./test.py
 
 You can use a bitmap nearly as the classical Python set in your code:
 
