@@ -250,13 +250,11 @@ class SelectRankTest(Util):
 class BinaryOperationsTest(Util):
 
     @given(hyp_collection, hyp_collection, st.booleans())
-    def setUp(self, values1, values2, cow):
+    def do_test_binary_op(self, op, values1, values2, cow):
         self.set1 = set(values1)
         self.set2 = set(values2)
         self.bitmap1 = BitMap(values1, cow)
         self.bitmap2 = BitMap(values2, cow)
-
-    def do_test_binary_op(self, op):
         old_bitmap1 = BitMap(self.bitmap1)
         old_bitmap2 = BitMap(self.bitmap2)
         result_set = op(self.set1, self.set2)
@@ -277,7 +275,12 @@ class BinaryOperationsTest(Util):
     def test_sub(self):
         self.do_test_binary_op(lambda x,y : x-y)
 
-    def do_test_binary_op_inplace(self, op):
+    @given(hyp_collection, hyp_collection, st.booleans())
+    def do_test_binary_op_inplace(self, op, values1, values2, cow):
+        self.set1 = set(values1)
+        self.set2 = set(values2)
+        self.bitmap1 = BitMap(values1, cow)
+        self.bitmap2 = BitMap(values2, cow)
         old_bitmap2 = BitMap(self.bitmap2)
         op(self.set1, self.set2)
         op(self.bitmap1, self.bitmap2)
@@ -299,13 +302,11 @@ class BinaryOperationsTest(Util):
 class ComparisonTest(Util):
 
     @given(hyp_collection, hyp_collection, st.booleans())
-    def setUp(self, values1, values2, cow):
+    def do_test(self, op, values1, values2, cow):
         self.set1 = set(values1)
         self.set2 = set(values2)
         self.bitmap1 = BitMap(values1, copy_on_write=cow)
         self.bitmap2 = BitMap(values2, copy_on_write=cow)
-
-    def do_test(self, op):
         self.assertEqual(op(self.bitmap1, self.bitmap1),
                          op(self.set1, self.set1))
         self.assertEqual(op(self.bitmap1, self.bitmap2),
@@ -336,11 +337,9 @@ class ComparisonTest(Util):
 class CardinalityTest(Util):
 
     @given(hyp_collection, hyp_collection, st.booleans())
-    def setUp(self, values1, values2, cow):
+    def do_test_cardinality(self, real_op, estimated_op, values1, values2, cow):
         self.bitmap1 = BitMap(values1, copy_on_write=cow)
         self.bitmap2 = BitMap(values2, copy_on_write=cow)
-
-    def do_test_cardinality(self, real_op, estimated_op):
         real_value = real_op(self.bitmap1, self.bitmap2)
         estimated_value = estimated_op(self.bitmap1, self.bitmap2)
         self.assertEqual(real_value, estimated_value)
@@ -357,7 +356,11 @@ class CardinalityTest(Util):
     def test_xor_card(self):
         self.do_test_cardinality(lambda x,y : len(x^y), lambda x,y: x.symmetric_difference_cardinality(y))
 
-    def test_jaccard_index(self):
+    @given(hyp_collection, hyp_collection, st.booleans())
+    def test_jaccard_index(self, values1, values2, cow):
+        st.assume(len(values1) > 0 or len(values2) > 0)
+        self.bitmap1 = BitMap(values1, copy_on_write=cow)
+        self.bitmap2 = BitMap(values2, copy_on_write=cow)
         real_value = float(len(self.bitmap1&self.bitmap2))/float(max(1, len(self.bitmap1|self.bitmap2)))
         estimated_value = self.bitmap1.jaccard_index(self.bitmap2)
         self.assertAlmostEqual(real_value, estimated_value)
@@ -365,27 +368,33 @@ class CardinalityTest(Util):
 class ManyOperationsTest(Util):
 
     @given(hyp_collection, hyp_many_collections, st.booleans())
-    def setUp(self, initial_values, all_values, cow):
+    def test_update(self, initial_values, all_values, cow):
         self.initial_bitmap = BitMap(initial_values, copy_on_write=cow)
-        self.all_values = all_values
         self.all_bitmaps = [BitMap(values, copy_on_write=cow) for values in all_values]
-
-    def test_update(self):
-        self.initial_bitmap.update(*self.all_values)
+        self.initial_bitmap.update(*all_values)
         expected_result = functools.reduce(lambda x, y: x|y, self.all_bitmaps+[self.initial_bitmap])
         self.assertEqual(expected_result, self.initial_bitmap)
 
-    def test_intersection_update(self):
-        self.initial_bitmap.intersection_update(*self.all_values)
+    @given(hyp_collection, hyp_many_collections, st.booleans())
+    def test_intersection_update(self, initial_values, all_values, cow):
+        self.initial_bitmap = BitMap(initial_values, copy_on_write=cow)
+        self.all_bitmaps = [BitMap(values, copy_on_write=cow) for values in all_values]
+        self.initial_bitmap.intersection_update(*all_values)
         expected_result = functools.reduce(lambda x, y: x&y, self.all_bitmaps+[self.initial_bitmap])
         self.assertEqual(expected_result, self.initial_bitmap)
 
-    def test_union(self):
+    @given(hyp_collection, hyp_many_collections, st.booleans())
+    def test_union(self, initial_values, all_values, cow):
+        self.initial_bitmap = BitMap(initial_values, copy_on_write=cow)
+        self.all_bitmaps = [BitMap(values, copy_on_write=cow) for values in all_values]
         result = BitMap.union(*self.all_bitmaps)
         expected_result = functools.reduce(lambda x, y: x|y, self.all_bitmaps)
         self.assertEqual(expected_result, result)
 
-    def test_intersection(self):
+    @given(hyp_collection, hyp_many_collections, st.booleans())
+    def test_intersection(self, initial_values, all_values, cow):
+        self.initial_bitmap = BitMap(initial_values, copy_on_write=cow)
+        self.all_bitmaps = [BitMap(values, copy_on_write=cow) for values in all_values]
         result = BitMap.intersection(*self.all_bitmaps)
         expected_result = functools.reduce(lambda x, y: x&y, self.all_bitmaps)
         self.assertEqual(expected_result, result)
