@@ -12,40 +12,40 @@ try:
 except NameError: # python 3
     pass
 
-cdef BitMap create_from_ptr(croaring.roaring_bitmap_t *r):
-    bm = <BitMap>BitMap.__new__(BitMap, no_init=True)
+cdef AbstractBitMap create_from_ptr(croaring.roaring_bitmap_t *r):
+    bm = <AbstractBitMap>AbstractBitMap.__new__(AbstractBitMap, no_init=True)
     bm._c_bitmap = r
     return bm
 
-cdef BitMap binary_operation(BitMap left, BitMap right, (croaring.roaring_bitmap_t*)func(const croaring.roaring_bitmap_t*, const croaring.roaring_bitmap_t*)):
+cdef AbstractBitMap binary_operation(AbstractBitMap left, AbstractBitMap right, (croaring.roaring_bitmap_t*)func(const croaring.roaring_bitmap_t*, const croaring.roaring_bitmap_t*)):
     cdef croaring.roaring_bitmap_t *r = func(left._c_bitmap, right._c_bitmap)
     return create_from_ptr(r)
 
-cdef binary_or(BitMap left, BitMap right):
+cdef AbstractBitMap binary_or(AbstractBitMap left, AbstractBitMap right):
     return binary_operation(left, right, croaring.roaring_bitmap_or)
 
-cdef binary_and(BitMap left, BitMap right):
+cdef AbstractBitMap binary_and(AbstractBitMap left, AbstractBitMap right):
     return binary_operation(left, right, croaring.roaring_bitmap_and)
 
-cdef binary_xor(BitMap left, BitMap right):
+cdef AbstractBitMap binary_xor(AbstractBitMap left, AbstractBitMap right):
     return binary_operation(left, right, croaring.roaring_bitmap_xor)
 
-cdef binary_sub(BitMap left, BitMap right):
+cdef AbstractBitMap binary_sub(AbstractBitMap left, AbstractBitMap right):
     return binary_operation(left, right, croaring.roaring_bitmap_andnot)
 
-cdef binary_ior(BitMap left, BitMap right):
+cdef binary_ior(AbstractBitMap left, AbstractBitMap right):
     croaring.roaring_bitmap_or_inplace(left._c_bitmap, right._c_bitmap)
     return left
 
-cdef binary_iand(BitMap left, BitMap right):
+cdef binary_iand(AbstractBitMap left, AbstractBitMap right):
     croaring.roaring_bitmap_and_inplace(left._c_bitmap, right._c_bitmap)
     return left
 
-cdef binary_ixor(BitMap left, BitMap right):
+cdef binary_ixor(AbstractBitMap left, AbstractBitMap right):
     croaring.roaring_bitmap_xor_inplace(left._c_bitmap, right._c_bitmap)
     return left
 
-cdef binary_isub(BitMap left, BitMap right):
+cdef binary_isub(AbstractBitMap left, AbstractBitMap right):
     croaring.roaring_bitmap_andnot_inplace(left._c_bitmap, right._c_bitmap)
     return left
 
@@ -54,7 +54,7 @@ cdef croaring.roaring_bitmap_t *deserialize_ptr(char *buff):
     ptr = croaring.roaring_bitmap_portable_deserialize(buff)
     return ptr
 
-cdef class BitMap:
+cdef class AbstractBitMap:
     """
     An efficient and light-weight ordered set of 32 bits integers.
     """
@@ -67,8 +67,8 @@ cdef class BitMap:
         cdef unsigned[:] buff
         if values is None:
             self._c_bitmap = croaring.roaring_bitmap_create()
-        elif isinstance(values, BitMap):
-            self._c_bitmap = croaring.roaring_bitmap_copy((<BitMap?>values)._c_bitmap)
+        elif isinstance(values, AbstractBitMap):
+            self._c_bitmap = croaring.roaring_bitmap_copy((<AbstractBitMap?>values)._c_bitmap)
         elif isinstance(values, range):
             _, (start, stop, step) = values.__reduce__()
             if step < 0:
@@ -88,12 +88,12 @@ cdef class BitMap:
         else:
             self._c_bitmap = croaring.roaring_bitmap_create()
             self.update(values)
-        if not isinstance(values, BitMap):
+        if not isinstance(values, AbstractBitMap):
             self._c_bitmap.copy_on_write = copy_on_write
 
     def __init__(self, values=None, copy_on_write=False):
         """
-        Construct a BitMap object, either empry or from an iterable.
+        Construct a AbstractBitMap object, either empry or from an iterable.
 
         Copy on write can be enabled with the field copy_on_write.
 
@@ -121,7 +121,7 @@ cdef class BitMap:
         if self._c_bitmap is not NULL:
             croaring.roaring_bitmap_free(self._c_bitmap)
 
-    def __check_compatibility(self, BitMap other):
+    def __check_compatibility(self, AbstractBitMap other):
         if self._c_bitmap.copy_on_write != other._c_bitmap.copy_on_write:
             raise ValueError('Cannot have interactions between bitmaps with and without copy_on_write.\n')
 
@@ -151,10 +151,10 @@ cdef class BitMap:
         cdef vector[uint32_t] buff_vect
         cdef unsigned[:] buff
         for values in all_values:
-            if isinstance(values, BitMap):
+            if isinstance(values, AbstractBitMap):
                 self |= values
             elif isinstance(values, range):
-                self |= BitMap(values, copy_on_write=self.copy_on_write)
+                self |= AbstractBitMap(values, copy_on_write=self.copy_on_write)
             elif isinstance(values, array.array) and len(values) > 0:
                 buff = <array.array> values
                 croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff[0])
@@ -205,10 +205,10 @@ cdef class BitMap:
         """
         cdef uint32_t elt
         for values in all_values:
-            if isinstance(values, BitMap):
+            if isinstance(values, AbstractBitMap):
                 self &= values
             else:
-                self &= BitMap(values, copy_on_write=self.copy_on_write)
+                self &= AbstractBitMap(values, copy_on_write=self.copy_on_write)
 
     def __contains__(self, uint32_t value):
         return croaring.roaring_bitmap_contains(self._c_bitmap, value)
@@ -222,18 +222,18 @@ cdef class BitMap:
     def __richcmp__(self, other, int op):
         self.__check_compatibility(other)
         if op == 0: # <
-            return croaring.roaring_bitmap_is_strict_subset((<BitMap?>self)._c_bitmap, (<BitMap?>other)._c_bitmap)
+            return croaring.roaring_bitmap_is_strict_subset((<AbstractBitMap?>self)._c_bitmap, (<AbstractBitMap?>other)._c_bitmap)
         elif op == 1: # <=
-            return croaring.roaring_bitmap_is_subset((<BitMap?>self)._c_bitmap, (<BitMap?>other)._c_bitmap)
+            return croaring.roaring_bitmap_is_subset((<AbstractBitMap?>self)._c_bitmap, (<AbstractBitMap?>other)._c_bitmap)
         elif op == 2: # ==
-            return croaring.roaring_bitmap_equals((<BitMap?>self)._c_bitmap, (<BitMap?>other)._c_bitmap)
+            return croaring.roaring_bitmap_equals((<AbstractBitMap?>self)._c_bitmap, (<AbstractBitMap?>other)._c_bitmap)
         elif op == 3: # !=
             return not (self == other)
         elif op == 4: # >
-            return croaring.roaring_bitmap_is_strict_subset((<BitMap?>other)._c_bitmap, (<BitMap?>self)._c_bitmap)
+            return croaring.roaring_bitmap_is_strict_subset((<AbstractBitMap?>other)._c_bitmap, (<AbstractBitMap?>self)._c_bitmap)
         else:         # >=
             assert op == 5
-            return croaring.roaring_bitmap_is_subset((<BitMap?>other)._c_bitmap, (<BitMap?>self)._c_bitmap)
+            return croaring.roaring_bitmap_is_subset((<AbstractBitMap?>other)._c_bitmap, (<AbstractBitMap?>self)._c_bitmap)
 
     def __iter__(self):
         cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)
@@ -249,7 +249,7 @@ cdef class BitMap:
 
     def __str__(self):
         values = ', '.join([str(n) for n in self])
-        return 'BitMap([%s])' % values
+        return 'AbstractBitMap([%s])' % values
 
     def flip(self, uint64_t start, uint64_t end):
         """
@@ -286,7 +286,7 @@ cdef class BitMap:
         """
         size = len(bitmaps)
         cdef croaring.roaring_bitmap_t *result
-        cdef BitMap bm
+        cdef AbstractBitMap bm
         cdef vector[const croaring.roaring_bitmap_t*] buff
         if size <= 1:
             return cls(*bitmaps)
@@ -308,60 +308,60 @@ cdef class BitMap:
         BitMap([10, 11, 12, 13, 14])
         """
         size = len(bitmaps)
-        cdef BitMap result, bm
+        cdef AbstractBitMap result, bm
         if size <= 1:
             return cls(*bitmaps)
         else:
-            result = BitMap(bitmaps[0])
+            result = AbstractBitMap(bitmaps[0])
             for bm in bitmaps[1:]:
                 result &= bm
             return result
 
     def __or__(self, other):
         self.__check_compatibility(other)
-        return binary_or(self, <BitMap?>other)
+        return binary_or(self, <AbstractBitMap?>other)
 
     def __ior__(self, other):
         self.__check_compatibility(other)
-        return binary_ior(self, <BitMap?>other)
+        return binary_ior(self, <AbstractBitMap?>other)
 
     def __and__(self, other):
         self.__check_compatibility(other)
-        return binary_and(self, <BitMap?>other)
+        return binary_and(self, <AbstractBitMap?>other)
 
     def __iand__(self, other):
         self.__check_compatibility(other)
-        return binary_iand(self, <BitMap?>other)
+        return binary_iand(self, <AbstractBitMap?>other)
 
     def __xor__(self, other):
         self.__check_compatibility(other)
-        return binary_xor(self, <BitMap?>other)
+        return binary_xor(self, <AbstractBitMap?>other)
 
     def __ixor__(self, other):
         self.__check_compatibility(other)
-        return binary_ixor(self, <BitMap?>other)
+        return binary_ixor(self, <AbstractBitMap?>other)
 
     def __sub__(self, other):
         self.__check_compatibility(other)
-        return binary_sub(self, <BitMap?>other)
+        return binary_sub(self, <AbstractBitMap?>other)
 
     def __isub__(self, other):
         self.__check_compatibility(other)
-        return binary_isub(self, <BitMap?>other)
+        return binary_isub(self, <AbstractBitMap?>other)
 
-    def union_cardinality(self, BitMap other):
+    def union_cardinality(self, AbstractBitMap other):
         """
         Return the number of elements in the union of the two bitmaps.
 
         It is equivalent to len(self | other), but faster.
 
-        >>> BitMap([3, 12]).union_cardinality(BitMap([3, 5, 8]))
+        >>> BitMap([3, 12]).union_cardinality(AbstractBitMap([3, 5, 8]))
         4
         """
         self.__check_compatibility(other)
         return croaring.roaring_bitmap_or_cardinality(self._c_bitmap, other._c_bitmap)
 
-    def intersection_cardinality(self, BitMap other):
+    def intersection_cardinality(self, AbstractBitMap other):
         """
         Return the number of elements in the intersection of the two bitmaps.
 
@@ -373,7 +373,7 @@ cdef class BitMap:
         self.__check_compatibility(other)
         return croaring.roaring_bitmap_and_cardinality(self._c_bitmap, other._c_bitmap)
 
-    def difference_cardinality(self, BitMap other):
+    def difference_cardinality(self, AbstractBitMap other):
         """
         Return the number of elements in the difference of the two bitmaps.
 
@@ -385,7 +385,7 @@ cdef class BitMap:
         self.__check_compatibility(other)
         return croaring.roaring_bitmap_andnot_cardinality(self._c_bitmap, other._c_bitmap)
 
-    def symmetric_difference_cardinality(self, BitMap other):
+    def symmetric_difference_cardinality(self, AbstractBitMap other):
         """
         Return the number of elements in the symmetric difference of the two bitmaps.
 
@@ -397,7 +397,7 @@ cdef class BitMap:
         self.__check_compatibility(other)
         return croaring.roaring_bitmap_xor_cardinality(self._c_bitmap, other._c_bitmap)
 
-    def intersect(self, BitMap other):
+    def intersect(self, AbstractBitMap other):
         """
         Return True if and only if the two bitmaps have elements in common.
 
@@ -411,7 +411,7 @@ cdef class BitMap:
         self.__check_compatibility(other)
         return croaring.roaring_bitmap_intersect(self._c_bitmap, other._c_bitmap)
 
-    def jaccard_index(self, BitMap other):
+    def jaccard_index(self, AbstractBitMap other):
         """
         Compute the Jaccard index of the two bitmaps.
 
@@ -541,7 +541,7 @@ cdef class BitMap:
 
     def serialize(self):
         """
-        Return the serialization of the bitmap. See BitMap.deserialize for the reverse operation.
+        Return the serialization of the bitmap. See AbstractBitMap.deserialize for the reverse operation.
 
         >>> BitMap.deserialize(BitMap([3, 12]).serialize())
         BitMap([3, 12])
@@ -557,7 +557,7 @@ cdef class BitMap:
     @classmethod
     def deserialize(cls, char *buff):
         """
-        Generate a bitmap from the given serialization. See BitMap.serialize for the reverse operation.
+        Generate a bitmap from the given serialization. See AbstractBitMap.serialize for the reverse operation.
 
         >>> BitMap.deserialize(BitMap([3, 12]).serialize())
         BitMap([3, 12])

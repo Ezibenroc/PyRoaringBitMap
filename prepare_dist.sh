@@ -19,6 +19,6 @@ echo "//   Copyright `date +%Y` The CRoaring authors
 cp /tmp/roaring.c /tmp/roaring.h
 cat roaring.c >> /tmp/roaring.c
 cat roaring.h >> /tmp/roaring.h
-rm roaring.c roaring.h
-sed -E "s|#include \"roaring\.h\"|#include \"roaring\.hh\"|g" /tmp/roaring.c > roaring.cpp
-cp -f /tmp/roaring.h roaring.hh
+rm roaring.c roaring.h roaring.hh
+sed -E "s|#include \"roaring\.h\"|#include \"roaring\.hh\"|g" /tmp/roaring.c > pyroaring/roaring.cpp
+cp -f /tmp/roaring.h pyroaring/roaring.hh

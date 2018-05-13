@@ -21,7 +21,7 @@ except (IOError, ImportError, RuntimeError):
     print('Could not generate long description.')
     long_description=''
 
-USE_CYTHON = os.path.exists('pyroaring.pyx')
+USE_CYTHON = os.path.exists('pyroaring/pyroaring.pyx')
 if USE_CYTHON:
     print('Building pyroaring from Cython sources.')
     check_output(['bash', 'prepare_dist.sh'])
@@ -42,9 +42,9 @@ if 'ARCHI' in os.environ:
 else:
     compile_args.append('-march=native')
 
-filename = 'pyroaring.%s' % ext
-pyroaring = Extension('pyroaring',
-                    sources = [filename, 'roaring.cpp'],
+filename = 'pyroaring/pyroaring.%s' % ext
+pyroaring = Extension('*',
+                    sources = [filename, 'pyroaring/roaring.cpp'],
                     extra_compile_args=compile_args,
                     language='c++',
                     )
