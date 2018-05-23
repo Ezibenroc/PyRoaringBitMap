@@ -9,7 +9,7 @@ import pickle
 from hypothesis import given, settings, unlimited, Verbosity, errors
 import hypothesis.strategies as st
 import array
-from pyroaring import BitMap
+from pyroaring import BitMap, FrozenBitMap
 
 is_python2 = sys.version_info < (3, 0)
 
@@ -600,6 +600,36 @@ class IncompatibleInteraction(Util):
 
     def test_incompatible_jaccard(self):
         self.incompatible_op(lambda x,y: x.jaccard_index(y))
+
+class FrozenTest(unittest.TestCase):
+
+    @given(hyp_collection, hyp_collection, integer)
+    def test_immutability(self, values, other, number):
+        frozen = FrozenBitMap(values)
+        copy = FrozenBitMap(values)
+        other = BitMap(other)
+        with self.assertRaises(TypeError):
+            frozen |= other
+        with self.assertRaises(TypeError):
+            frozen &= other
+        with self.assertRaises(TypeError):
+            frozen ^= other
+        with self.assertRaises(TypeError):
+            frozen -= other
+        self.assertEqual(frozen, copy)
+        with self.assertRaises(AttributeError):
+            frozen.add(number)
+        with self.assertRaises(AttributeError):
+            frozen.update(other)
+        with self.assertRaises(AttributeError):
+            frozen.discard(number)
+        with self.assertRaises(AttributeError):
+            frozen.remove(number)
+        with self.assertRaises(AttributeError):
+            frozen.intersection_update(other)
+        with self.assertRaises(AttributeError):
+            frozen.update(number, number+10)
+        self.assertEqual(frozen, copy)
 
 if __name__ == "__main__":
     unittest.main()
