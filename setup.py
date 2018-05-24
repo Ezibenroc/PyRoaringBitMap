@@ -49,7 +49,7 @@ pyroaring = Extension('*',
                     language='c++',
                     )
 if USE_CYTHON:
-    pyroaring = cythonize(pyroaring)
+    pyroaring = cythonize(pyroaring, compiler_directives={'binding' : True})
 else:
     pyroaring = [pyroaring]
 
