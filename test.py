@@ -620,6 +620,12 @@ class IncompatibleInteraction(Util):
     def test_incompatible_jaccard(self):
         self.incompatible_op(lambda x,y: x.jaccard_index(y))
 
+class BitMapTest(unittest.TestCase):
+    def test_unashability(self):
+        bm = BitMap()
+        with self.assertRaises(TypeError):
+            hash(bm)
+
 class FrozenTest(unittest.TestCase):
 
     @given(hyp_collection, hyp_collection, integer)
@@ -649,6 +655,23 @@ class FrozenTest(unittest.TestCase):
         with self.assertRaises(AttributeError):
             frozen.update(number, number+10)
         self.assertEqual(frozen, copy)
+
+    @given(hyp_collection, hyp_collection)
+    def test_hash_uneq(self, values1, values2):
+        """This test as a non null (but extremly low) probability to fail."""
+        bitmap1 = FrozenBitMap(values1)
+        bitmap2 = FrozenBitMap(values2)
+        st.assume(bitmap1 != bitmap2)
+        self.assertNotEqual(hash(bitmap1), hash(bitmap2))
+
+    @given(hyp_collection)
+    def test_hash_uneq(self, values):
+        bitmap1 = FrozenBitMap(values)
+        bitmap2 = FrozenBitMap(values)
+        bitmap3 = FrozenBitMap(bitmap1)
+        self.assertEqual(hash(bitmap1), hash(bitmap2))
+        self.assertEqual(hash(bitmap1), hash(bitmap3))
+
 
 if __name__ == "__main__":
     unittest.main()

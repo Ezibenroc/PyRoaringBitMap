@@ -22,6 +22,7 @@ cdef class AbstractBitMap:
     An efficient and light-weight ordered set of 32 bits integers.
     """
     cdef croaring.roaring_bitmap_t* _c_bitmap
+    cdef int64_t _h_val
 
     def __cinit__(self, values=None, copy_on_write=False, no_init=False):
         if no_init:
@@ -33,6 +34,7 @@ cdef class AbstractBitMap:
             self._c_bitmap = croaring.roaring_bitmap_create()
         elif isinstance(values, AbstractBitMap):
             self._c_bitmap = croaring.roaring_bitmap_copy((<AbstractBitMap?>values)._c_bitmap)
+            self._h_val = (<AbstractBitMap?>values)._h_val
         elif isinstance(values, range):
             _, (start, stop, step) = values.__reduce__()
             if step < 0:
@@ -55,6 +57,7 @@ cdef class AbstractBitMap:
             croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff_vect[0])
         if not isinstance(values, AbstractBitMap):
             self._c_bitmap.copy_on_write = copy_on_write
+            self._h_val = 0
 
     def __init__(self, values=None, copy_on_write=False):
         """
@@ -125,6 +128,14 @@ cdef class AbstractBitMap:
         else:         # >=
             assert op == 5
             return croaring.roaring_bitmap_is_subset((<AbstractBitMap?>other)._c_bitmap, (<AbstractBitMap?>self)._c_bitmap)
+
+    cdef compute_hash(self):
+        return hash(self.serialize())
+
+    def __hash__(self):
+        if self._h_val == 0: 
+            self._h_val = self.compute_hash()
+        return self._h_val
 
     def __iter__(self):
         cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)

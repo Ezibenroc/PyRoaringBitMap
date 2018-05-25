@@ -77,4 +77,5 @@ cdef extern from "roaring.hh":
     roaring_bitmap_t *roaring_bitmap_portable_deserialize(const char *buf)
     roaring_uint32_iterator_t *roaring_create_iterator(const roaring_bitmap_t *ra)
     bool roaring_advance_uint32_iterator(roaring_uint32_iterator_t *it)
+    uint32_t roaring_read_uint32_iterator(roaring_uint32_iterator_t *it, uint32_t* buf, uint32_t count)
     void roaring_free_uint32_iterator(roaring_uint32_iterator_t *it)

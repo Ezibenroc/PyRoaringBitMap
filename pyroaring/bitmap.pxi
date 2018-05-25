@@ -1,5 +1,11 @@
 cdef class BitMap(AbstractBitMap):
 
+    cdef compute_hash(self):
+        '''Unsupported method.'''
+        # For some reason, if we directly override __hash__ (either in BitMap or in FrozenBitMap), the __richcmp__
+        # method disappears.
+        raise TypeError('Cannot compute the hash of a %s.' % self.__class__.__name__)
+
     def add(self, uint32_t value):
         """
         Add an element to the bitmap. This has no effect if the element is already present.
