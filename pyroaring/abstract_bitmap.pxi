@@ -168,8 +168,6 @@ cdef class AbstractBitMap:
         cdef vector[const croaring.roaring_bitmap_t*] buff
         if size <= 1:
             return cls(*bitmaps)
-        elif size == 2:
-            return bitmaps[0] | bitmaps[1]
         else:
             for bm in bitmaps:
                 bitmaps[0].__check_compatibility(bm)
@@ -190,10 +188,10 @@ cdef class AbstractBitMap:
         if size <= 1:
             return cls(*bitmaps)
         else:
-            result = cls(bitmaps[0])
+            result = BitMap(bitmaps[0])
             for bm in bitmaps[1:]:
                 result &= bm
-            return result
+            return cls(result)
 
     cdef binary_op(self, AbstractBitMap other, (croaring.roaring_bitmap_t*)func(const croaring.roaring_bitmap_t*, const croaring.roaring_bitmap_t*)):
         self.__check_compatibility(other)
@@ -405,8 +403,7 @@ cdef class AbstractBitMap:
             first_elt = self._get_elt(start)
             last_elt  = self._get_elt(stop-sign)
             values = range(first_elt, last_elt+sign, step)
-            result = self.__class__(values, copy_on_write=self.copy_on_write)
-            result &= self
+            result = self & self.__class__(values, copy_on_write=self.copy_on_write)
             return result
         else:
             return self.__class__(self.to_array()[sl]) # could be more efficient...
