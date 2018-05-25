@@ -12,43 +12,6 @@ try:
 except NameError: # python 3
     pass
 
-cdef AbstractBitMap create_from_ptr(croaring.roaring_bitmap_t *r):
-    bm = <AbstractBitMap>AbstractBitMap.__new__(AbstractBitMap, no_init=True)
-    bm._c_bitmap = r
-    return bm
-
-cdef AbstractBitMap binary_operation(AbstractBitMap left, AbstractBitMap right, (croaring.roaring_bitmap_t*)func(const croaring.roaring_bitmap_t*, const croaring.roaring_bitmap_t*)):
-    cdef croaring.roaring_bitmap_t *r = func(left._c_bitmap, right._c_bitmap)
-    return create_from_ptr(r)
-
-cdef AbstractBitMap binary_or(AbstractBitMap left, AbstractBitMap right):
-    return binary_operation(left, right, croaring.roaring_bitmap_or)
-
-cdef AbstractBitMap binary_and(AbstractBitMap left, AbstractBitMap right):
-    return binary_operation(left, right, croaring.roaring_bitmap_and)
-
-cdef AbstractBitMap binary_xor(AbstractBitMap left, AbstractBitMap right):
-    return binary_operation(left, right, croaring.roaring_bitmap_xor)
-
-cdef AbstractBitMap binary_sub(AbstractBitMap left, AbstractBitMap right):
-    return binary_operation(left, right, croaring.roaring_bitmap_andnot)
-
-cdef binary_ior(AbstractBitMap left, AbstractBitMap right):
-    croaring.roaring_bitmap_or_inplace(left._c_bitmap, right._c_bitmap)
-    return left
-
-cdef binary_iand(AbstractBitMap left, AbstractBitMap right):
-    croaring.roaring_bitmap_and_inplace(left._c_bitmap, right._c_bitmap)
-    return left
-
-cdef binary_ixor(AbstractBitMap left, AbstractBitMap right):
-    croaring.roaring_bitmap_xor_inplace(left._c_bitmap, right._c_bitmap)
-    return left
-
-cdef binary_isub(AbstractBitMap left, AbstractBitMap right):
-    croaring.roaring_bitmap_andnot_inplace(left._c_bitmap, right._c_bitmap)
-    return left
-
 cdef croaring.roaring_bitmap_t *deserialize_ptr(char *buff):
     cdef croaring.roaring_bitmap_t *ptr
     ptr = croaring.roaring_bitmap_portable_deserialize(buff)
@@ -106,6 +69,17 @@ cdef class AbstractBitMap:
         >>> BitMap([1, 123456789, 27], copy_on_write=True)
         BitMap([1, 27, 123456789])
         """
+
+    cdef from_ptr(self, croaring.roaring_bitmap_t *ptr):
+        """
+        Return an instance of AbstractBitMap (or one of its subclasses) initialized with the given pointer.
+
+        FIXME: this should be a classmethod, but this is (currently) impossible for cdef methods.
+        See https://groups.google.com/forum/#!topic/cython-users/FLHiLzzKqj4
+        """
+        bm = self.__class__.__new__(self.__class__, no_init=True)
+        (<AbstractBitMap>bm)._c_bitmap = ptr
+        return bm
 
     @property
     def copy_on_write(self):
@@ -178,7 +152,7 @@ cdef class AbstractBitMap:
         >>> bm.flip(10, 15)
         BitMap([3, 10, 11, 13, 14])
         """
-        return create_from_ptr(croaring.roaring_bitmap_flip(self._c_bitmap, start, end))
+        return self.from_ptr(croaring.roaring_bitmap_flip(self._c_bitmap, start, end))
 
     @classmethod
     def union(cls, *bitmaps):
@@ -201,7 +175,7 @@ cdef class AbstractBitMap:
                 bitmaps[0].__check_compatibility(bm)
                 buff.push_back(bm._c_bitmap)
             result = croaring.roaring_bitmap_or_many(size, &buff[0])
-            return create_from_ptr(result)
+            return (<AbstractBitMap>cls()).from_ptr(result) # FIXME to change when from_ptr is a classmethod
 
     @classmethod
     def intersection(cls, *bitmaps): # FIXME could be more efficient
@@ -216,42 +190,44 @@ cdef class AbstractBitMap:
         if size <= 1:
             return cls(*bitmaps)
         else:
-            result = AbstractBitMap(bitmaps[0])
+            result = cls(bitmaps[0])
             for bm in bitmaps[1:]:
                 result &= bm
             return result
 
-    def __or__(self, other):
+    cdef binary_op(self, AbstractBitMap other, (croaring.roaring_bitmap_t*)func(const croaring.roaring_bitmap_t*, const croaring.roaring_bitmap_t*)):
         self.__check_compatibility(other)
-        return binary_or(self, <AbstractBitMap?>other)
+        cdef croaring.roaring_bitmap_t *r = func(self._c_bitmap, other._c_bitmap)
+        return self.from_ptr(r)
+
+    cdef binary_iop(self, AbstractBitMap other, (void)func(croaring.roaring_bitmap_t*, const croaring.roaring_bitmap_t*)):
+        self.__check_compatibility(other)
+        func(self._c_bitmap, other._c_bitmap)
+        return self
+
+    def __or__(self, other):
+        return (<AbstractBitMap>self).binary_op(<AbstractBitMap?>other, croaring.roaring_bitmap_or)
 
     def __ior__(self, other):
-        self.__check_compatibility(other)
-        return binary_ior(self, <AbstractBitMap?>other)
+        return (<AbstractBitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_or_inplace)
 
     def __and__(self, other):
-        self.__check_compatibility(other)
-        return binary_and(self, <AbstractBitMap?>other)
+        return (<AbstractBitMap>self).binary_op(<AbstractBitMap?>other, croaring.roaring_bitmap_and)
 
     def __iand__(self, other):
-        self.__check_compatibility(other)
-        return binary_iand(self, <AbstractBitMap?>other)
+        return (<AbstractBitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_and_inplace)
 
     def __xor__(self, other):
-        self.__check_compatibility(other)
-        return binary_xor(self, <AbstractBitMap?>other)
+        return (<AbstractBitMap>self).binary_op(<AbstractBitMap?>other, croaring.roaring_bitmap_xor)
 
     def __ixor__(self, other):
-        self.__check_compatibility(other)
-        return binary_ixor(self, <AbstractBitMap?>other)
+        return (<AbstractBitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_xor_inplace)
 
     def __sub__(self, other):
-        self.__check_compatibility(other)
-        return binary_sub(self, <AbstractBitMap?>other)
+        return (<AbstractBitMap>self).binary_op(<AbstractBitMap?>other, croaring.roaring_bitmap_andnot)
 
     def __isub__(self, other):
-        self.__check_compatibility(other)
-        return binary_isub(self, <AbstractBitMap?>other)
+        return (<AbstractBitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_andnot_inplace)
 
     def union_cardinality(self, AbstractBitMap other):
         """
@@ -466,7 +442,7 @@ cdef class AbstractBitMap:
         >>> BitMap.deserialize(BitMap([3, 12]).serialize())
         BitMap([3, 12])
         """
-        return create_from_ptr(deserialize_ptr(buff))
+        return (<AbstractBitMap>cls()).from_ptr(deserialize_ptr(buff)) # FIXME to change when from_ptr is a classmethod
 
     def __getstate__(self):
         return self.serialize()

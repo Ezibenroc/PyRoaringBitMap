@@ -58,7 +58,7 @@ cdef extern from "roaring.hh":
     roaring_bitmap_t *roaring_bitmap_xor(const roaring_bitmap_t *x1, const roaring_bitmap_t *x2)
     void roaring_bitmap_xor_inplace(roaring_bitmap_t *x1, const roaring_bitmap_t *x2)
     roaring_bitmap_t *roaring_bitmap_andnot(const roaring_bitmap_t *x1, const roaring_bitmap_t *x2)
-    roaring_bitmap_t *roaring_bitmap_andnot_inplace(roaring_bitmap_t *x1, const roaring_bitmap_t *x2)
+    void roaring_bitmap_andnot_inplace(roaring_bitmap_t *x1, const roaring_bitmap_t *x2)
     uint64_t roaring_bitmap_or_cardinality(const roaring_bitmap_t *x1, const roaring_bitmap_t *x2)
     uint64_t roaring_bitmap_and_cardinality(const roaring_bitmap_t *x1, const roaring_bitmap_t *x2)
     uint64_t roaring_bitmap_andnot_cardinality(const roaring_bitmap_t *x1, const roaring_bitmap_t *x2)

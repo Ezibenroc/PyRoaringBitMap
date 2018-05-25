@@ -262,6 +262,7 @@ class BinaryOperationsTest(Util):
         self.assertEqual(self.bitmap1, old_bitmap1)
         self.assertEqual(self.bitmap2, old_bitmap2)
         self.compare_with_set(result_bitmap, result_set)
+        self.assertEqual(type(self.bitmap1), type(result_bitmap))
 
     def test_or(self):
         self.do_test_binary_op(lambda x,y : x|y)
@@ -280,10 +281,12 @@ class BinaryOperationsTest(Util):
         self.set1 = set(values1)
         self.set2 = set(values2)
         self.bitmap1 = BitMap(values1, cow)
+        original = self.bitmap1
         self.bitmap2 = BitMap(values2, cow)
         old_bitmap2 = BitMap(self.bitmap2)
         op(self.set1, self.set2)
         op(self.bitmap1, self.bitmap2)
+        self.assertIs(original, self.bitmap1)
         self.assertEqual(self.bitmap2, old_bitmap2)
         self.compare_with_set(self.bitmap1, self.set1)
 
@@ -374,6 +377,7 @@ class ManyOperationsTest(Util):
         self.initial_bitmap.update(*all_values)
         expected_result = functools.reduce(lambda x, y: x|y, self.all_bitmaps+[self.initial_bitmap])
         self.assertEqual(expected_result, self.initial_bitmap)
+        self.assertEqual(type(expected_result), type(self.initial_bitmap))
 
     @given(hyp_collection, hyp_many_collections, st.booleans())
     def test_intersection_update(self, initial_values, all_values, cow):
@@ -382,6 +386,7 @@ class ManyOperationsTest(Util):
         self.initial_bitmap.intersection_update(*all_values)
         expected_result = functools.reduce(lambda x, y: x&y, self.all_bitmaps+[self.initial_bitmap])
         self.assertEqual(expected_result, self.initial_bitmap)
+        self.assertEqual(type(expected_result), type(self.initial_bitmap))
 
     @given(hyp_collection, hyp_many_collections, st.booleans())
     def test_union(self, initial_values, all_values, cow):
@@ -390,6 +395,7 @@ class ManyOperationsTest(Util):
         result = BitMap.union(*self.all_bitmaps)
         expected_result = functools.reduce(lambda x, y: x|y, self.all_bitmaps)
         self.assertEqual(expected_result, result)
+        self.assertEqual(type(expected_result), type(result))
 
     @given(hyp_collection, hyp_many_collections, st.booleans())
     def test_intersection(self, initial_values, all_values, cow):
@@ -398,6 +404,7 @@ class ManyOperationsTest(Util):
         result = BitMap.intersection(*self.all_bitmaps)
         expected_result = functools.reduce(lambda x, y: x&y, self.all_bitmaps)
         self.assertEqual(expected_result, result)
+        self.assertEqual(type(expected_result), type(result))
 
 class SerializationTest(Util):
 
