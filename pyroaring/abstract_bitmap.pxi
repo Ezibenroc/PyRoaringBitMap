@@ -134,10 +134,8 @@ cdef class AbstractBitMap:
         cdef uint32_t i, count, max_count=256
         cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)
         cdef uint32_t *buff = <uint32_t*>malloc(max_count*4)
-        if not self:
-            return -1
         while True:
-            count = croaring.roaring_read_uint32_iterator(iterator, &buff[0], max_count)
+            count = croaring.roaring_read_uint32_iterator(iterator, buff, max_count)
             i = 0
             while i < count:
                 h_val = ((h_val << 2) + buff[i])
@@ -149,6 +147,8 @@ cdef class AbstractBitMap:
                 break
         croaring.roaring_free_uint32_iterator(iterator)
         free(buff)
+        if not self:
+            return -1
         return h_val
 
     def __hash__(self):
@@ -425,18 +425,57 @@ cdef class AbstractBitMap:
         return elt
 
     cdef _get_slice(self, sl):
+        """For a faster computation, four different methods, depending on the slice."""
         start, stop, step = sl.indices(len(self))
         sign = 1 if step > 0 else -1
         if (sign > 0 and start >= stop) or (sign < 0 and start <= stop):
             return self.__class__()
+        r = range(start, stop, step)
+        assert len(r) > 0
         if abs(step) == 1:
             first_elt = self._get_elt(start)
             last_elt  = self._get_elt(stop-sign)
             values = range(first_elt, last_elt+sign, step)
             result = self & self.__class__(values, copy_on_write=self.copy_on_write)
             return result
+        elif len(r) < len(self) / 100: # TODO find a good threshold for performance?
+            if step < 0:
+                start = r[-1]
+                stop = r[0] + 1
+                step = -step
+            else:
+                start = r[0]
+                stop = r[-1] + 1
+            return self._generic_get_slice(start, stop, step)
         else:
             return self.__class__(self.to_array()[sl]) # could be more efficient...
+
+    cdef _generic_get_slice(self, start, stop, step):
+        """Assume that start, stop and step > 0 and that the result will not be empty."""
+        cdef croaring.roaring_bitmap_t *result = croaring.roaring_bitmap_create()
+        cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)
+        cdef uint32_t  count, max_count=256
+        cdef uint32_t *buff = <uint32_t*>malloc(max_count*4)
+        cdef uint32_t i_loc=0, i_glob=start, i_buff=0
+        result.copy_on_write = self.copy_on_write
+        first_elt = self._get_elt(start)
+        valid = croaring.roaring_move_uint32_iterator_equalorlarger(iterator, first_elt)
+        assert valid
+        while True:
+            count = croaring.roaring_read_uint32_iterator(iterator, buff, max_count)
+            while i_buff < max_count and i_glob < stop:
+                buff[i_loc] = buff[i_buff]
+                i_loc += 1
+                i_buff += step
+                i_glob += step
+            croaring.roaring_bitmap_add_many(result, i_loc, buff) 
+            if count != max_count or i_glob >= stop:
+                break
+            i_loc = 0
+            i_buff = i_buff % max_count
+        croaring.roaring_free_uint32_iterator(iterator)
+        free(buff)
+        return self.from_ptr(result)
 
     def __getitem__(self, value):
         if isinstance(value, int):

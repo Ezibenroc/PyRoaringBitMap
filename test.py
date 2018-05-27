@@ -218,16 +218,33 @@ class SelectRankTest(Util):
         with self.assertRaises(IndexError):
             bitmap[-n - len(values) - 1]
 
-    slice_arg = st.integers(min_value=-2**31, max_value=2**31-1) | st.none()
-    @given(bitmap_cls, hyp_collection, slice_arg, slice_arg, slice_arg, st.booleans())
-    def test_slice_select(self, cls, values, start, stop, step, cow):
-        st.assume(step != 0)
+    def check_slice(self, cls, values, start, stop, step, cow):
         bitmap = cls(values, copy_on_write=cow)
         values = list(bitmap) # enforce sorted order
         expected = values[start:stop:step]
         expected.sort()
         observed = list(bitmap[start:stop:step])
         self.assertEqual(expected, observed)
+
+    def slice_arg(n):
+        return st.integers(min_value=-n, max_value=n)
+
+    @given(bitmap_cls, hyp_collection, slice_arg(2**12), slice_arg(2**12), slice_arg(2**5), st.booleans())
+    def test_slice_select_non_empty(self, cls, values, start, stop, step, cow):
+        st.assume(step != 0)
+        st.assume(len(range(start, stop, step)) > 0)
+        self.check_slice(cls, values, start, stop, step, cow)
+
+    @given(bitmap_cls, hyp_collection, slice_arg(2**12), slice_arg(2**12), slice_arg(2**5), st.booleans())
+    def test_slice_select_empty(self, cls, values, start, stop, step, cow):
+        st.assume(step != 0)
+        st.assume(len(range(start, stop, step)) == 0)
+        self.check_slice(cls, values, start, stop, step, cow)
+
+    @given(bitmap_cls, hyp_collection, slice_arg(2**12) | st.none(), slice_arg(2**12) | st.none(), slice_arg(2**5) | st.none(), st.booleans())
+    def test_slice_select_none(self, cls, values, start, stop, step, cow):
+        st.assume(step != 0)
+        self.check_slice(cls, values, start, stop, step, cow)
 
     @given(bitmap_cls, hyp_collection, st.booleans())
     def test_simple_rank(self, cls, values, cow):
