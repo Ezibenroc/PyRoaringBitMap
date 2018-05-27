@@ -130,7 +130,26 @@ cdef class AbstractBitMap:
             return croaring.roaring_bitmap_is_subset((<AbstractBitMap?>other)._c_bitmap, (<AbstractBitMap?>self)._c_bitmap)
 
     cdef compute_hash(self):
-        return hash(self.serialize())
+        cdef int64_t h_val = 0
+        cdef uint32_t i, count, max_count=256
+        cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)
+        cdef uint32_t *buff = <uint32_t*>malloc(max_count*4)
+        if not self:
+            return -1
+        while True:
+            count = croaring.roaring_read_uint32_iterator(iterator, &buff[0], max_count)
+            i = 0
+            while i < count:
+                h_val = ((h_val << 2) + buff[i])
+                # TODO find a good hash formula
+                # This one should be better, but is too long:
+                # h_val = ((h_val<<16) + buff[i]) % 1748104473534059
+                i += 1
+            if count != max_count:
+                break
+        croaring.roaring_free_uint32_iterator(iterator)
+        free(buff)
+        return h_val
 
     def __hash__(self):
         if self._h_val == 0: 

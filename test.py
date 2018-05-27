@@ -665,12 +665,26 @@ class FrozenTest(unittest.TestCase):
         self.assertNotEqual(hash(bitmap1), hash(bitmap2))
 
     @given(hyp_collection)
-    def test_hash_uneq(self, values):
+    def test_hash_eq(self, values):
         bitmap1 = FrozenBitMap(values)
         bitmap2 = FrozenBitMap(values)
         bitmap3 = FrozenBitMap(bitmap1)
         self.assertEqual(hash(bitmap1), hash(bitmap2))
         self.assertEqual(hash(bitmap1), hash(bitmap3))
+
+    def test_hash_eq2(self):
+        """It can happen that two bitmaps hold the same values but have a different data structure. They should still
+        have a same hash.
+        This test compares two bitmaps with the same values, one has a run container, the other has an array container."""
+        n = 100
+        bm1 = FrozenBitMap(range(n))
+        bm2 = BitMap()
+        for i in range(n):
+            bm2.add(i)
+        bm2 = FrozenBitMap(bm2)
+        self.assertEqual(bm1, bm2)
+        self.assertNotEqual(bm1.get_statistics(), bm2.get_statistics())
+        self.assertEqual(hash(bm1), hash(bm2))
 
 
 if __name__ == "__main__":
