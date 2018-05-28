@@ -90,7 +90,9 @@ experiments = [
     ('"optimized" conversion to array', (simple_setup_constructor, 'x.to_array()')),
     # Items
     ('selection', (simple_setup_constructor, 'x[int(size/2)]')),
-    ('slice', (simple_setup_constructor, 'x[int(size/4):int(3*size/4):2]')),
+    ('contiguous slice', (simple_setup_constructor, 'x[int(size/4):int(3*size/4):1]')),
+    ('slice', (simple_setup_constructor, 'x[int(size/4):int(3*size/4):3]')),
+    ('small slice', (simple_setup_constructor, 'x[int(size/1000):int(3*size/1000):3]')),
 ]
 exp_dict = dict(experiments)
 
