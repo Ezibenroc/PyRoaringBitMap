@@ -698,10 +698,42 @@ class FrozenTest(unittest.TestCase):
         bm2 = BitMap()
         for i in range(n):
             bm2.add(i)
-        bm2 = FrozenBitMap(bm2)
+        bm2 = FrozenBitMap(bm2, optimize=False)
         self.assertEqual(bm1, bm2)
         self.assertNotEqual(bm1.get_statistics(), bm2.get_statistics())
         self.assertEqual(hash(bm1), hash(bm2))
+
+class OptimizationTest(unittest.TestCase):
+
+    @given(bitmap_cls)
+    def test_run_optimize(self, cls):
+        bm1 = BitMap()
+        size = 1000
+        for i in range(size):
+            bm1.add(i)
+        bm2 = cls(bm1, optimize=False)
+        stats = bm2.get_statistics()
+        self.assertEqual(bm1.get_statistics(), stats)
+        self.assertEqual(stats['n_containers'], stats['n_array_containers'])
+        self.assertEqual(stats['n_values_array_containers'], size)
+        self.assertTrue(bm2.run_optimize())
+        stats = bm2.get_statistics()
+        self.assertEqual(stats['n_containers'], stats['n_run_containers'])
+        self.assertEqual(stats['n_values_run_containers'], size)
+        bm3 = cls(bm1) # optimize is True by default
+        self.assertEqual(stats, bm3.get_statistics())
+
+    @given(bitmap_cls)
+    def test_shrink_to_fit(self, cls):
+        bm1 = BitMap()
+        size = 1000
+        for i in range(size):
+            bm1.add(i)
+        bm2 = cls(bm1, optimize=False)
+        self.assertGreater(bm2.shrink_to_fit(), 0)
+        self.assertEqual(bm2.shrink_to_fit(), 0)
+        bm3 = cls(bm1, optimize=True)
+        self.assertEqual(bm2.shrink_to_fit(), 0)
 
 
 if __name__ == "__main__":

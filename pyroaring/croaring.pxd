@@ -42,6 +42,7 @@ cdef extern from "roaring.hh":
     roaring_bitmap_t *roaring_bitmap_copy(const roaring_bitmap_t *r)
     roaring_bitmap_t *roaring_bitmap_from_range(uint32_t min, uint32_t max, uint32_t step)
     bool roaring_bitmap_run_optimize(roaring_bitmap_t *r)
+    size_t roaring_bitmap_shrink_to_fit(roaring_bitmap_t *r)
     void roaring_bitmap_free(roaring_bitmap_t *r)
     roaring_bitmap_t *roaring_bitmap_of_ptr(size_t n_args, const uint32_t *vals)
     uint64_t roaring_bitmap_get_cardinality(const roaring_bitmap_t *r)

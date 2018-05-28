@@ -24,7 +24,7 @@ cdef class AbstractBitMap:
     cdef croaring.roaring_bitmap_t* _c_bitmap
     cdef int64_t _h_val
 
-    def __cinit__(self, values=None, copy_on_write=False, no_init=False):
+    def __cinit__(self, values=None, copy_on_write=False, optimize=True, no_init=False):
         if no_init:
             assert values is None and not copy_on_write
             return
@@ -58,8 +58,11 @@ cdef class AbstractBitMap:
         if not isinstance(values, AbstractBitMap):
             self._c_bitmap.copy_on_write = copy_on_write
             self._h_val = 0
+        if optimize:
+            self.run_optimize()
+            self.shrink_to_fit()
 
-    def __init__(self, values=None, copy_on_write=False):
+    def __init__(self, values=None, copy_on_write=False, optimize=True):
         """
         Construct a AbstractBitMap object, either empry or from an iterable.
 
@@ -95,6 +98,12 @@ cdef class AbstractBitMap:
         True
         """
         return self._c_bitmap.copy_on_write
+
+    def run_optimize(self):
+        return croaring.roaring_bitmap_run_optimize(self._c_bitmap)
+
+    def shrink_to_fit(self):
+        return croaring.roaring_bitmap_shrink_to_fit(self._c_bitmap)
 
     def __dealloc__(self):
         if self._c_bitmap is not NULL:
