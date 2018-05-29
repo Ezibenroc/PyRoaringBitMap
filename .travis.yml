@@ -40,7 +40,7 @@ script:
     - python setup.py bdist_wheel
     - pip install dist/pyroaring*.whl
     - python test.py
-    - pip uninstall pyroaring
+    - pip uninstall -y pyroaring
     - git clean -xfd
     - python setup.py sdist
     - pip install dist/pyroaring*.tar.gz
