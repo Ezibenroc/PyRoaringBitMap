@@ -6,9 +6,11 @@ import functools
 import os
 import sys
 import pickle
+import re
 from hypothesis import given, settings, unlimited, Verbosity, errors
 import hypothesis.strategies as st
 import array
+import pyroaring
 from pyroaring import BitMap, FrozenBitMap
 
 is_python2 = sys.version_info < (3, 0)
@@ -735,6 +737,17 @@ class OptimizationTest(unittest.TestCase):
         bm3 = cls(bm1, optimize=True)
         self.assertEqual(bm2.shrink_to_fit(), 0)
 
+class VersionTest(unittest.TestCase):
+    def assert_regex(self, pattern, text):
+        matches = re.findall(pattern, text)
+        if len(matches) != 1 or matches[0] != text:
+            self.fail('Regex "%s" does not match text "%s".' % (pattern, text))
+
+    def test_version(self):
+        self.assert_regex('\d+\.\d+\.\d+',      pyroaring.__version__)
+        self.assert_regex('[0-9a-fA-F]{40}',    pyroaring.__git_version__)
+        self.assert_regex('v\d+\.\d+\.\d+',     pyroaring.__croaring_version__)
+        self.assert_regex('[0-9a-fA-F]{40}',    pyroaring.__croaring_git_version__)
 
 if __name__ == "__main__":
     unittest.main()

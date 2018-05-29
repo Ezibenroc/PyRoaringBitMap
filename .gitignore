@@ -16,3 +16,4 @@ pyroaring.cpp
 MANIFEST
 docs/_build
 Pipfile.lock
+version.pxi
