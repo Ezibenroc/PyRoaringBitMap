@@ -29,9 +29,19 @@ matrix:
       language: generic
 
 install:
-    - pip install hypothesis Cython
+    - pip install hypothesis Cython wheel
 
 script:
     - python setup.py build_ext -i
     - HYPOTHESIS_PROFILE=ci python test.py
     - python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v
+    - git clean -xfd
+    # Testing several installation methods.
+    - python setup.py bdist_wheel
+    - pip install dist/pyroaring*.whl
+    - python test.py
+    - pip uninstall pyroaring
+    - git clean -xfd
+    - python setup.py sdist
+    - pip install dist/pyroaring*.tar.gz
+    - python test.py
