@@ -73,7 +73,7 @@ else:
     compile_args.append('-march=native')
 
 filename = 'pyroaring/pyroaring.%s' % ext
-pyroaring = Extension('*',
+pyroaring = Extension('pyroaring',
                     sources = [filename, 'pyroaring/roaring.cpp'],
                     extra_compile_args=compile_args,
                     language='c++',

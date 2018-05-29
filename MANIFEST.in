@@ -1,2 +1,2 @@
-include roaring.hh
+include pyroaring/roaring.hh
 include LICENSE
