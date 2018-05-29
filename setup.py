@@ -18,7 +18,11 @@ def chdir(func, directory):
     return res
 
 def run(args):
-    return subprocess.run(args, stdout=subprocess.PIPE, check=True).stdout.decode('ascii').strip()
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+    stdout, stderr = proc.communicate()
+    if proc.returncode != 0:
+        sys.exit('Error with the command %s.\n' % ' '.join(args))
+    return stdout.decode('ascii').strip()
 
 def git_version():
     return run(['git', 'rev-parse', 'HEAD'])
