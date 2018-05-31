@@ -103,7 +103,3 @@ cdef class BitMap(AbstractBitMap):
         BitMap([3, 10, 11, 13, 14])
         """
         croaring.roaring_bitmap_flip_inplace(self._c_bitmap, start, end)
-
-    def __or__(self, other):
-        bm = super().__or__(other)
-        return <BitMap>bm

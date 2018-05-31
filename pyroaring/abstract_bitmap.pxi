@@ -459,7 +459,7 @@ cdef class AbstractBitMap:
         else:
             return self.__class__(self.to_array()[sl]) # could be more efficient...
 
-    cdef _generic_get_slice(self, start, stop, step):
+    cdef _generic_get_slice(self, uint32_t start, uint32_t stop, uint32_t step):
         """Assume that start, stop and step > 0 and that the result will not be empty."""
         cdef croaring.roaring_bitmap_t *result = croaring.roaring_bitmap_create()
         cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)
