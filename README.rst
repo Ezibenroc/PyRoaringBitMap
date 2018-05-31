@@ -162,37 +162,44 @@ is reported.
 
 The results have been obtained with:
 
-- CPU Intel i7-7820HQ
+- CPU Intel Xeon CPU E5-2630 v3
 - CPython version 3.5.3
 - gcc version 6.3.0
-- pyroaring commit ``6c86765d0357492895fee99de8841ce42340f879``
-- python-croaring commit ``3aa61dde6b4a123665ca5632eb5b089ec0bc5bc4``
-- roaringbitmap commit ``a32915f262eb4e39b854d942e005dc7381796808``
-- sortedcontainers commit ``53fd6c54aebe5b969adc87d4b5e6331be1e32079``
+- Cython version 0.28.3
+-  pyroaring commit
+   `dcf448a <https://github.com/Ezibenroc/PyRoaringBitMap/tree/dcf448a166b535b35693071254d0042633671194>`__
+-  python-croaring commit
+   `3aa61dd <https://github.com/sunzhaoping/python-croaring/tree/3aa61dde6b4a123665ca5632eb5b089ec0bc5bc4>`__
+-  roaringbitmap commit
+   `502d78d <https://github.com/andreasvc/roaringbitmap/tree/502d78d2e5d65967ab61c1a759cac53ddfefd9a2>`__
+-  sortedcontainers commit
+   `7d6a28c <https://github.com/grantjenks/python-sortedcontainers/tree/7d6a28cdcba2f46eb2ef6cb1cc33cd8de0e8f27f>`__
 
 ===============================  ===========  =================  ===============  ==========  ==================
 operation                          pyroaring    python-croaring    roaringbitmap         set    sortedcontainers
 ===============================  ===========  =================  ===============  ==========  ==================
-range constructor                   1.08e-04           1.14e-04         8.89e-05    4.18e-02            1.33e-01
-ordered list constructor            2.58e-02           5.25e-02         1.01e-01    1.23e-01            3.88e-01
-list constructor                    9.18e-02           1.05e-01         1.26e-01    6.80e-02            3.47e-01
-ordered array constructor           4.07e-03           5.05e-03         2.19e-01    6.30e-02            2.13e-01
-array constructor                   8.55e-02           9.11e-02         3.88e-01    1.05e-01            3.63e-01
-element addition                    1.48e-07           5.23e-07         1.45e-07    1.06e-07            9.74e-07
-element removal                     1.40e-07           5.41e-07         1.26e-07    1.02e-07            4.41e-07
-membership test                     7.39e-08           6.59e-07         8.03e-08    5.90e-08            3.74e-07
-union                               1.03e-04           1.37e-04         1.02e-04    1.03e-01            7.09e-01
-intersection                        8.44e-04           8.05e-04         7.90e-04    3.73e-02            1.20e-01
-difference                          1.02e-04           1.40e-04         9.97e-05    9.24e-02            3.16e-01
-symmetric diference                 1.02e-04           1.36e-04         9.81e-05    1.34e-01            5.94e-01
-equality test                       5.36e-05           5.62e-05         4.30e-05    1.56e-02            1.53e-02
-subset test                         6.97e-05           6.00e-05         5.91e-05    1.54e-02            1.55e-02
-conversion to list                  3.37e-02           2.12e-01         3.18e-02    3.50e-02            3.83e-02
-pickle dump & load                  2.25e-04           3.56e-04         2.47e-04    1.46e-01            3.88e-01
-"naive" conversion to array         3.35e-02           2.25e-01         3.16e-02    6.39e-02            6.10e-02
-"optimized" conversion to array     1.20e-03           2.42e-02       nan         nan                 nan
-selection                           7.69e-07           3.76e-05         1.13e-06  nan                   8.57e-06
-slice                               3.23e-03           2.35e-01         1.23e-01  nan                   5.76e-01
+range constructor                   3.09e-04           1.48e-04         8.72e-05    7.29e-02            2.08e-01
+ordered list constructor            3.45e-02           6.93e-02         1.45e-01    1.86e-01            5.74e-01
+list constructor                    1.23e-01           1.33e-01         1.55e-01    1.12e-01            5.12e-01
+ordered array constructor           5.06e-03           6.42e-03         2.89e-01    9.82e-02            3.01e-01
+array constructor                   1.13e-01           1.18e-01         4.63e-01    1.45e-01            5.08e-01
+element addition                    3.08e-07           8.26e-07         2.21e-07    1.50e-07            1.18e-06
+element removal                     3.44e-07           8.17e-07         2.61e-07    1.78e-07            4.26e-07
+membership test                     1.24e-07           1.00e-06         1.50e-07    1.00e-07            5.72e-07
+union                               1.61e-04           1.96e-04         1.44e-04    2.15e-01            1.11e+00
+intersection                        9.08e-04           9.48e-04         9.26e-04    5.22e-02            1.65e-01
+difference                          1.57e-04           1.97e-04         1.43e-04    1.56e-01            4.84e-01
+symmetric diference                 1.62e-04           2.01e-04         1.44e-04    2.62e-01            9.13e-01
+equality test                       7.80e-05           7.82e-05         5.89e-05    1.81e-02            1.81e-02
+subset test                         7.92e-05           8.12e-05         8.22e-05    1.81e-02            1.81e-02
+conversion to list                  4.71e-02           2.78e-01         4.35e-02    5.77e-02            5.32e-02
+pickle dump & load                  4.02e-04           6.27e-04         5.08e-04    2.41e-01            5.75e-01
+"naive" conversion to array         5.12e-02           2.92e-01         4.75e-02    1.20e-01            1.18e-01
+"optimized" conversion to array     1.27e-03           3.40e-02       nan         nan                 nan
+selection                           1.77e-06           5.33e-05         1.14e-06  nan                   1.64e-05
+contiguous slice                    9.38e-05           9.51e-05         6.99e-05  nan                   2.04e-02
+slice                               2.88e-03           3.04e-01         1.00e-01  nan                   4.74e-01
+small slice                         8.93e-05           3.00e-01         3.60e-03  nan                   1.79e-02
 ===============================  ===========  =================  ===============  ==========  ==================
 
 .. |Build Status| image:: https://travis-ci.org/Ezibenroc/PyRoaringBitMap.svg?branch=master
