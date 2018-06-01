@@ -6,9 +6,13 @@ from distutils.sysconfig import get_config_vars
 import os
 import sys
 import subprocess
+import platform
 
 VERSION = '0.2.1'
 PKG_DIR = 'pyroaring'
+
+PLATFORM_WINDOWS = (platform.system() == 'Windows')
+PLATFORM_MACOSX = (platform.system() == 'Darwin')
 
 
 def chdir(func, directory):
@@ -43,10 +47,11 @@ def write_version(filename, version_dict):
 
 # Remove -Wstrict-prototypes option
 # See http://stackoverflow.com/a/29634231/4110059
-cfg_vars = get_config_vars()
-for key, value in cfg_vars.items():
-    if type(value) == str:
-        cfg_vars[key] = value.replace("-Wstrict-prototypes", "")
+if not PLATFORM_WINDOWS:
+    cfg_vars = get_config_vars()
+    for key, value in cfg_vars.items():
+        if type(value) == str:
+            cfg_vars[key] = value.replace("-Wstrict-prototypes", "")
 
 try:
     with open('README.rst') as f:
@@ -72,27 +77,25 @@ else:
     print('Building pyroaring from C sources.')
     ext = 'cpp'
 
-compile_args = ['-D__STDC_LIMIT_MACROS', '-D__STDC_CONSTANT_MACROS']
-if 'DEBUG' in os.environ:
-    compile_args.extend(['-O0', '-g'])
+if PLATFORM_WINDOWS:
+    compile_args = []
 else:
-    compile_args.append('-O3')
-if 'ARCHI' in os.environ:
-    compile_args.extend(['-march=%s' % os.environ['ARCHI']])
-else:
-    compile_args.append('-march=native')
-import platform
-# This is a hack. Cython apparently does not allow us to have 
-# C++ and C options. So we rely on the fact that people use gcc
-# on Linux and clang on macOS.
-if platform.system() != "Darwin":
-    compile_args.append('-std=c99')
+    compile_args = ['-D__STDC_LIMIT_MACROS', '-D__STDC_CONSTANT_MACROS']
+    if not PLATFORM_MACOSX:
+        compile_args.append('-std=c99')
+    if 'DEBUG' in os.environ:
+        compile_args.extend(['-O0', '-g'])
+    else:
+        compile_args.append('-O3')
+    if 'ARCHI' in os.environ:
+        compile_args.extend(['-march=%s' % os.environ['ARCHI']])
+    else:
+        compile_args.append('-march=native')
 
 filename = os.path.join(PKG_DIR, 'pyroaring.%s' % ext)
 pyroaring = Extension('pyroaring',
                       sources=[filename, os.path.join(PKG_DIR, 'roaring.c')],
                       extra_compile_args=compile_args,
-                      language='c++',
                       )
 if USE_CYTHON:
     pyroaring = cythonize(pyroaring, compiler_directives={'binding': True})
