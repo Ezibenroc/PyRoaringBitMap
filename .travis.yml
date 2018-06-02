@@ -32,6 +32,7 @@ install:
     - pip install hypothesis Cython wheel
 
 script:
+    - echo $TRAVIS_PYTHON_VERSION
     - python setup.py build_ext -i
     - HYPOTHESIS_PROFILE=ci python test.py
     - python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v
@@ -45,3 +46,19 @@ script:
     - python setup.py sdist
     - pip install dist/pyroaring*.tar.gz
     - python test.py
+
+before_deploy:
+    - python setup.py bdist_wheel
+    - python setup.py sdist
+    - ls -l dist/
+deploy:
+    provider: releases
+    api_key: $GITHUB_TOKEN
+    python: 3.6
+    file_glob: true
+    file: dist/*{tar.gz,whl}
+    skip_cleanup: true
+    on:
+        branch: master
+        tags: true
+        condition: $TRAVIS_PYTHON_VERSION == 3.6
