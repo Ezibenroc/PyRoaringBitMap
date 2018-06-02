@@ -8,7 +8,7 @@ import os
 import sys
 import subprocess
 
-VERSION = '0.1.7'
+VERSION = '0.2.0'
 
 def chdir(func, directory):
     old_dir = os.getcwd()
