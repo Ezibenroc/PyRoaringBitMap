@@ -9,6 +9,7 @@ name = "pypi"
 Cython = ">=0.21"
 hypothesis = "*"
 ipython = "*"
+twine = "*"
 
 [requires]
 python_version = "3.6"
