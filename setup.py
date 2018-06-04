@@ -11,12 +11,14 @@ import subprocess
 VERSION = '0.2.1'
 PKG_DIR = 'pyroaring'
 
+
 def chdir(func, directory):
     old_dir = os.getcwd()
     os.chdir(directory)
     res = func()
     os.chdir(old_dir)
     return res
+
 
 def run(args):
     proc = subprocess.Popen(args, stdout=subprocess.PIPE)
@@ -25,16 +27,20 @@ def run(args):
         sys.exit('Error with the command %s.\n' % ' '.join(args))
     return stdout.decode('ascii').strip()
 
+
 def git_version():
     return run(['git', 'rev-parse', 'HEAD'])
 
+
 def git_tag():
     return run(['git', 'describe', '--always', '--dirty'])
+
 
 def write_version(filename, version_dict):
     with open(filename, 'w') as f:
         for version_name in version_dict:
             f.write('%s = "%s"\n' % (version_name, version_dict[version_name]))
+
 
 # Remove -Wstrict-prototypes option
 # See http://stackoverflow.com/a/29634231/4110059
@@ -48,7 +54,7 @@ try:
         long_description = ''.join(f.readlines())
 except (IOError, ImportError, RuntimeError):
     print('Could not generate long description.')
-    long_description=''
+    long_description = ''
 
 USE_CYTHON = os.path.exists(os.path.join(PKG_DIR, 'pyroaring.pyx'))
 if USE_CYTHON:
@@ -59,16 +65,16 @@ if USE_CYTHON:
     from Cython.Build import cythonize
     ext = 'pyx'
     write_version(os.path.join(PKG_DIR, 'version.pxi'), {
-            '__version__'                   : VERSION,
-            '__git_version__'               : git_version(),
-            '__croaring_version__'          : chdir(git_tag, 'CRoaring'),
-            '__croaring_git_version__'      : chdir(git_version, 'CRoaring'),
-        })
+        '__version__': VERSION,
+        '__git_version__': git_version(),
+        '__croaring_version__': chdir(git_tag, 'CRoaring'),
+        '__croaring_git_version__': chdir(git_version, 'CRoaring'),
+    })
 else:
     print('Building pyroaring from C sources.')
     ext = 'cpp'
 
-compile_args=['-D__STDC_LIMIT_MACROS', '-D__STDC_CONSTANT_MACROS']
+compile_args = ['-D__STDC_LIMIT_MACROS', '-D__STDC_CONSTANT_MACROS']
 if 'DEBUG' in os.environ:
     compile_args.extend(['-O0', '-g'])
 else:
@@ -80,21 +86,21 @@ else:
 
 filename = os.path.join(PKG_DIR, 'pyroaring.%s' % ext)
 pyroaring = Extension('pyroaring',
-                    sources = [filename, os.path.join(PKG_DIR, 'roaring.cpp')],
-                    extra_compile_args=compile_args,
-                    language='c++',
-                    )
+                      sources=[filename, os.path.join(PKG_DIR, 'roaring.cpp')],
+                      extra_compile_args=compile_args,
+                      language='c++',
+                      )
 if USE_CYTHON:
-    pyroaring = cythonize(pyroaring, compiler_directives={'binding' : True})
+    pyroaring = cythonize(pyroaring, compiler_directives={'binding': True})
 else:
     pyroaring = [pyroaring]
 
 setup(
-    name = 'pyroaring',
-    ext_modules = pyroaring,
+    name='pyroaring',
+    ext_modules=pyroaring,
     version=VERSION,
     description='Fast and lightweight set for unsigned 32 bits integers.',
-    long_description = long_description,
+    long_description=long_description,
     url='https://github.com/Ezibenroc/PyRoaringBitMap',
     author='Tom Cornebize',
     author_email='tom.cornebize@gmail.com',

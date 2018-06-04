@@ -82,7 +82,8 @@ def amalgamate_file(file_list, output_file, license_txt=LICENSE_TXT, additional_
     regex_2 = '#include\s*<roaring/[a-zA-Z_/]+.h>\s*\n'
     regex = re.compile('(%s)|(%s)' % (regex_1, regex_2))
     with open(output_file, 'w') as output_f:
-        output_f.write('/* File automatically generated on %s. */\n\n' % datetime.date.today())
+        output_f.write('/* File automatically generated on %s. */\n\n' %
+                       datetime.date.today())
         if license_txt:
             output_f.write('/*\n%s\n*/\n\n' % license_txt)
         if additional_txt:
@@ -103,5 +104,6 @@ def amalgamate(target_dir):
     include_files = check_file_list(find_include_files())
     target_src = os.path.join(target_dir, SRC_FILE)
     target_include = os.path.join(target_dir, INCLUDE_FILE)
-    amalgamate_file(src_files, target_src, additional_txt='#include "%s"' % INCLUDE_FILE)
+    amalgamate_file(src_files, target_src,
+                    additional_txt='#include "%s"' % INCLUDE_FILE)
     amalgamate_file(include_files, target_include)
