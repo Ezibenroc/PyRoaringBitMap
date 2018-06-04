@@ -9,6 +9,7 @@ import sys
 import subprocess
 
 VERSION = '0.2.1'
+PKG_DIR = 'pyroaring'
 
 def chdir(func, directory):
     old_dir = os.getcwd()
@@ -49,14 +50,15 @@ except (IOError, ImportError, RuntimeError):
     print('Could not generate long description.')
     long_description=''
 
-USE_CYTHON = os.path.exists('pyroaring/pyroaring.pyx')
+USE_CYTHON = os.path.exists(os.path.join(PKG_DIR, 'pyroaring.pyx'))
 if USE_CYTHON:
     print('Building pyroaring from Cython sources.')
-    check_output(['bash', 'prepare_dist.sh'])
+    from amalgamation import amalgamate
+    amalgamate(PKG_DIR)
     from Cython.Distutils import build_ext
     from Cython.Build import cythonize
     ext = 'pyx'
-    write_version('pyroaring/version.pxi', {
+    write_version(os.path.join(PKG_DIR, 'version.pxi'), {
             '__version__'                   : VERSION,
             '__git_version__'               : git_version(),
             '__croaring_version__'          : chdir(git_tag, 'CRoaring'),
@@ -76,9 +78,9 @@ if 'ARCHI' in os.environ:
 else:
     compile_args.append('-march=native')
 
-filename = 'pyroaring/pyroaring.%s' % ext
+filename = os.path.join(PKG_DIR, 'pyroaring.%s' % ext)
 pyroaring = Extension('pyroaring',
-                    sources = [filename, 'pyroaring/roaring.cpp'],
+                    sources = [filename, os.path.join(PKG_DIR, 'roaring.cpp')],
                     extra_compile_args=compile_args,
                     language='c++',
                     )
