@@ -3,9 +3,7 @@
 import sys
 import timeit
 from pandas import DataFrame, Series
-import pickle
 import random
-import array
 try:
     import tabulate
     has_tabulate = True
@@ -42,7 +40,10 @@ except ImportError:
     sys.stderr.write('Warning: could not import croaring\n')
     sys.stderr.write('         see https://github.com/sunzhaoping/python-croaring\n')
 
-import_str = 'from __main__ import %s' % (','.join(['get_list', 'get_range', 'array', 'random', 'pickle', 'size', 'universe_size'] + [cls.__name__ for cls in classes.values() if cls is not set]))
+import_str = 'import array, pickle; from __main__ import %s' % (','.join(
+    ['get_list', 'get_range', 'random', 'size', 'universe_size'] +
+    [cls.__name__ for cls in classes.values() if cls is not set]))
+
 
 def run_exp(stmt, setup, number):
     setup = '%s ; %s' % (import_str, setup)
@@ -51,6 +52,7 @@ def run_exp(stmt, setup, number):
     except Exception as e:
         return float('nan')
 
+
 def get_range():
     r = (0, universe_size, int(1/density))
     try:
@@ -58,8 +60,10 @@ def get_range():
     except NameError:
         return range(*r)
 
+
 def get_list():
     return random.sample(range(universe_size), size)
+
 
 constructor = 'x={class_name}(values)'
 simple_setup_constructor = 'x={class_name}(get_list());val=random.randint(0, universe_size)'
@@ -96,12 +100,14 @@ experiments = [
 ]
 exp_dict = dict(experiments)
 
+
 def run(cls, op):
     cls_name = classes[cls].__name__
     setup = exp_dict[op][0].format(class_name=cls_name)
     stmt = exp_dict[op][1].format(class_name=cls_name)
     result = run_exp(stmt=stmt, setup=setup, number=nb_exp)
     return result
+
 
 def run_all():
     df = DataFrame({
@@ -114,8 +120,9 @@ def run_all():
         result = {'operation': op}
         for cls in random.sample(list(classes), len(classes)):
             result[cls] = run(cls, op)
-        df=df.append(result, ignore_index=True)
+        df = df.append(result, ignore_index=True)
     return df
+
 
 if __name__ == '__main__':
     df = run_all()

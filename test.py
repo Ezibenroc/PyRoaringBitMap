@@ -779,7 +779,7 @@ class OptimizationTest(unittest.TestCase):
         self.assertGreater(bm2.shrink_to_fit(), 0)
         self.assertEqual(bm2.shrink_to_fit(), 0)
         bm3 = cls(bm1, optimize=True)
-        self.assertEqual(bm2.shrink_to_fit(), 0)
+        self.assertEqual(bm3.shrink_to_fit(), 0)
 
 
 class VersionTest(unittest.TestCase):

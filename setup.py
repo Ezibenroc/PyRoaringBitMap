@@ -3,7 +3,6 @@
 from setuptools import setup
 from setuptools.extension import Extension
 from distutils.sysconfig import get_config_vars
-from subprocess import check_output
 import os
 import sys
 import subprocess
@@ -61,7 +60,6 @@ if USE_CYTHON:
     print('Building pyroaring from Cython sources.')
     from amalgamation import amalgamate
     amalgamate(PKG_DIR)
-    from Cython.Distutils import build_ext
     from Cython.Build import cythonize
     ext = 'pyx'
     write_version(os.path.join(PKG_DIR, 'version.pxi'), {
