@@ -1,7 +1,7 @@
 from libc.stdint cimport uint8_t, int32_t, uint32_t, uint64_t
 from libcpp cimport bool
 
-cdef extern from "roaring.hh":
+cdef extern from "roaring.h":
     ctypedef struct roaring_array_t:
         pass
     ctypedef struct roaring_bitmap_t:

@@ -56,7 +56,15 @@ Manual compilation / installation
 
 If you want to compile (and install) pyroaring by yourself, for instance
 to modify the Cython sources or because you do not have ``pip``, follow
-these steps. Note that the Python package ``Cython`` is required.
+these steps.
+
+Note that the Python package ``Cython`` is required. You may be able install
+it as:
+
+.. code:: bash
+
+    pip install --upgrade setuptools -user
+    pip install cython --user
 
 Clone this repository.
 
@@ -71,13 +79,28 @@ Build pyroaring locally, e.g. to test a new feature you made.
 .. code:: bash
 
     python setup.py build_ext -i
-    python test.py # run the tests, optionnal but recommended
+
+On macOS this may fail with errors because setuptools adds ``-arch x86_64 -arch i386`` to the compiler command, which may conflict with the ``-march=native`` flag. You can overwrite this behavior by setting the ARCHFLAGS flag:
+
+.. code:: bash
+
+    ARCHFLAGS="" python setup.py build_ext -i
+
+Then you can test the new code:
+
+
+.. code:: bash
+
+    pip install hypothesis --user
+    python test.py # run the tests, optional but recommended
+
+
 
 Install pyroaring (use this if you do not have ``pip``).
 
 .. code:: bash
 
-    python setup.py install # may require superuser rights, add option --user if you wish to install it on your local account 
+    python setup.py install # may require superuser rights, add option --user if you wish to install it on your local account
 
 Package pyroaring.
 

@@ -6,8 +6,8 @@ import re
 CROARING_DIR = 'CRoaring'
 SRC_DIR = os.path.join(CROARING_DIR, 'src')
 INCLUDE_DIR = os.path.join(CROARING_DIR, 'include', 'roaring')
-SRC_FILE = 'roaring.cpp'
-INCLUDE_FILE = 'roaring.hh'
+SRC_FILE = 'roaring.c'
+INCLUDE_FILE = 'roaring.h'
 
 LICENSE_TXT = '''Copyright %s The CRoaring authors
 

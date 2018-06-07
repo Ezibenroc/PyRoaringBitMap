@@ -81,10 +81,16 @@ if 'ARCHI' in os.environ:
     compile_args.extend(['-march=%s' % os.environ['ARCHI']])
 else:
     compile_args.append('-march=native')
+import platform
+# This is a hack. Cython apparently does not allow us to have 
+# C++ and C options. So we rely on the fact that people use gcc
+# on Linux and clang on macOS.
+if platform.system() != "Darwin":
+    compile_args.append('-std=c99')
 
 filename = os.path.join(PKG_DIR, 'pyroaring.%s' % ext)
 pyroaring = Extension('pyroaring',
-                      sources=[filename, os.path.join(PKG_DIR, 'roaring.cpp')],
+                      sources=[filename, os.path.join(PKG_DIR, 'roaring.c')],
                       extra_compile_args=compile_args,
                       language='c++',
                       )

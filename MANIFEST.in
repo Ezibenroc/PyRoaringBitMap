@@ -1,2 +1,2 @@
-include pyroaring/roaring.hh
+include pyroaring/roaring.h
 include LICENSE
