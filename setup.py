@@ -82,6 +82,8 @@ if 'ARCHI' in os.environ:
 else:
     compile_args.append('-march=native')
 
+compile_args.append('-std=c99')
+
 filename = os.path.join(PKG_DIR, 'pyroaring.%s' % ext)
 pyroaring = Extension('pyroaring',
                       sources=[filename, os.path.join(PKG_DIR, 'roaring.c')],
