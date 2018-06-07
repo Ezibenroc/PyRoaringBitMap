@@ -84,7 +84,7 @@ else:
 
 filename = os.path.join(PKG_DIR, 'pyroaring.%s' % ext)
 pyroaring = Extension('pyroaring',
-                      sources=[filename, os.path.join(PKG_DIR, 'roaring.cpp')],
+                      sources=[filename, os.path.join(PKG_DIR, 'roaring.c')],
                       extra_compile_args=compile_args,
                       language='c++',
                       )
