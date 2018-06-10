@@ -6,8 +6,6 @@ configuration: Release
 
 environment:
   matrix:
-    - py_version: 27
-      image: Visual Studio 2015
     - py_version: 34
     - py_version: 35
     - py_version: 36
@@ -21,24 +19,7 @@ install:
   - IF "%PLATFORM%" == "x64" ( set "PYTHON=%PYTHON%-x64" )
   - IF "%PLATFORM%" == "x64" ( set "vcvarsall_arg=amd64" ) ELSE ( set "vcvarsall_arg=x86" )
   - IF "%py_version%" == "34" ( set "DISTUTILS_USE_SDK=1" )
-  - ps: |
-      if ($Env:py_version -eq "27") {
-        Invoke-WebRequest https://download.microsoft.com/download/7/9/6/796EF2E4-801B-4FC4-AB28-B59FBF6D907B/VCForPython27.msi -OutFile vc27.msi
-        Start-Process msiexec.exe -Wait -ArgumentList '/q /i vc27.msi ALLUSERS=1'
-      }
-  - IF "%py_version%" == "27" (
-      IF "%PLATFORM%" == "x64" (
-        CALL "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 &&
-        CALL "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
-      ) ELSE (
-        CALL "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
-      ) &&
-      CALL "C:\Program Files (x86)\Common Files\Microsoft\Visual C++ for Python\9.0\vcvarsall.bat" %vcvarsall_arg% &&
-      set "VS90COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools\" &&
-      dir "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\Include"
-    ) ELSE (
-      CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %vcvarsall_arg%
-    )
+  - CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %vcvarsall_arg%
   - set "PATH=%PYTHON%\\scripts;%PYTHON%;%PATH%"
   - pip install --upgrade setuptools
   - pip install hypothesis Cython wheel
@@ -50,7 +31,6 @@ install:
 build: off
 
 test_script:
-  - dir "%VS90COMNTOOLS%"
   # Run tests (note ci profile takes a while)
   - python setup.py build_ext -i
   - set HYPOTHESIS_PROFILE=ci
