@@ -33,7 +33,7 @@ build: off
 test_script:
   # Run tests (note ci profile takes a while)
   - python setup.py build_ext -i
-  - set HYPOTHESIS_PROFILE=ci
+    #- set HYPOTHESIS_PROFILE=ci
   - python test.py
   - set HYPOTHESIS_PROFILE=dev
   - python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v
@@ -57,4 +57,11 @@ after_test:
   - dir dist
 
 artifacts:
-  - path: dist\*
+  - path: dist\*.whl
+    name: wheel
+
+deploy:
+  provider: GitHub
+  auth_token: $(GITHUB_TOKEN)
+  on:
+    appveyor_repo_tag: true        # deploy on tag push only

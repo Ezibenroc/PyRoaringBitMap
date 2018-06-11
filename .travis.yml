@@ -3,20 +3,12 @@ language: python
 matrix:
   include:
     - os: linux
-      dist: trusty
-      sudo: required
       python: 2.7
     - os: linux
-      dist: trusty
-      sudo: required
       python: 3.4
     - os: linux
-      dist: trusty
-      sudo: required
       python: 3.5
     - os: linux
-      dist: trusty
-      sudo: required
       python: 3.6
 #    - os: linux
 #      dist: trusty
@@ -25,8 +17,38 @@ matrix:
 # Travis does not support yet Python installation on OSX (see https://github.com/travis-ci/travis-ci/issues/2312).
 # We will therefore only test with the preinstalled Python 2.7
     - os: osx
-      osx_image: xcode8
       language: generic
+      env: PYTHON=2.7-dev
+    - os: osx
+      language: generic
+      env: PYTHON=3.5-dev
+    - os: osx
+      language: generic
+      env: PYTHON=3.6-dev
+
+before_install: |
+  # These steps are taken from https://pythonhosted.org/CodeChat/.travis.yml.html
+  if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+    brew update
+    # Per the `pyenv homebrew recommendations <https://github.com/yyuu/pyenv/wiki#suggested-build-environment>`_.
+    brew install openssl readline
+    # See https://docs.travis-ci.com/user/osx-ci-environment/#A-note-on-upgrading-packages.
+    # I didn't do this above because it works and I'm lazy.
+    brew outdated pyenv || brew upgrade pyenv
+    # virtualenv doesn't work without pyenv knowledge. venv in Python 3.3
+    # doesn't provide Pip by default. So, use `pyenv-virtualenv <https://github.com/yyuu/pyenv-virtualenv/blob/master/README.md>`_.
+    brew install pyenv-virtualenv
+    pyenv install $PYTHON
+    # I would expect something like ``pyenv init; pyenv local $PYTHON`` or
+    # ``pyenv shell $PYTHON`` would work, but ``pyenv init`` doesn't seem to
+    # modify the Bash environment. ??? So, I hand-set the variables instead.
+    export PYENV_VERSION=$PYTHON
+    export PATH="/Users/travis/.pyenv/shims:${PATH}"
+    pyenv-virtualenv venv
+    source venv/bin/activate
+    # A manual check that the correct version of Python is running.
+    python --version
+  fi
 
 install:
     - pip install hypothesis Cython wheel
@@ -54,11 +76,9 @@ before_deploy:
 deploy:
     provider: releases
     api_key: $GITHUB_TOKEN
-    python: 3.6
     file_glob: true
     file: dist/*{tar.gz,whl}
     skip_cleanup: true
     on:
-        branch: master
+        all_branches: true
         tags: true
-        condition: $TRAVIS_PYTHON_VERSION == 3.6
