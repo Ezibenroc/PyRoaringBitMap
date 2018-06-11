@@ -21,7 +21,7 @@ except NameError:
     pass
 
 settings.register_profile("ci", settings(
-    max_examples=500, deadline=None, timeout=unlimited))
+    max_examples=100, deadline=None, timeout=unlimited))
 settings.register_profile("dev", settings(max_examples=10, deadline=2000))
 settings.register_profile("debug", settings(
     max_examples=10, verbosity=Verbosity.verbose, deadline=2000))
