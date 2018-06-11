@@ -1,43 +1,51 @@
 |Build Status|
+|Appveyor Build|
 |Documentation Status|
 
 An efficient and light-weight ordered set of 32 bits integers.
 This is a Python wrapper for the C library `CRoaring <https://github.com/RoaringBitmap/CRoaring>`__.
 
-The wrapping used to be done with ``Ctypes``. We recently switched to
-``Cython`` for the following reasons:
+Example
+-------
 
--  Much better performances for short function calls (e.g.
-   addition/deletion of a single element).
--  Easier installation, no need to install manually the C library, it is
-   now distributed with PyRoaring.
--  Extensibility, it will be easier to write efficient codes with Cython
-   (e.g. some data structures based on roaring bitmaps).
+You can use a bitmap nearly as the classical Python set in your code:
 
-If for some reason you wish to keep using the old version, based on
-``Ctypes``, use `PyRoaring
-0.0.7 <https://github.com/Ezibenroc/PyRoaringBitMap/tree/0.0.7>`__.
+.. code:: python
 
-Requirements
-------------
+    from pyroaring import BitMap
+    bm1 = BitMap()
+    bm1.add(3)
+    bm1.add(18)
+    bm2 = BitMap([3, 27, 42])
+    print("bm1       = %s" % bm1)
+    print("bm2       = %s" % bm2)
+    print("bm1 & bm2 = %s" % (bm1&bm2))
+    print("bm1 | bm2 = %s" % (bm1|bm2))
 
--  Environment like Linux and MacOS
--  Python 2.7, or Python 3.4 or better
--  A recent C compiler like GCC
--  The package manager ``pip``
--  The Python package ``hypothesis`` (optional, for testing)
--  The Python package ``Cython`` (optional, for compiling pyroaring from
-   the sources)
--  The Python package ``wheel`` (optional, to build a wheel for the library)
+Output:
 
-Installation
-------------
+::
+
+    bm1       = BitMap([3, 18])
+    bm2       = BitMap([3, 27, 42])
+    bm1 & bm2 = BitMap([3])
+    bm1 | bm2 = BitMap([3, 18, 27, 42])
+
+Installation from Pypi
+----------------------
+
+Note: this installation method requires a recent C compiler like GCC.
+
+Supported systems:
+
+- Linux and MacOS: Python 2.7 or Python 3.4 or higher.
+- Windows: Python 3.4 or higher.
 
 To install pyroaring on your local account, use the following command:
 
 .. code:: bash
 
-    pip install pyroaring --user # installs PyRoaringBitMap
+    pip install pyroaring --user
 
 For a system-wide installation, use the following command:
 
@@ -51,6 +59,21 @@ the commands by ``sudo``).
 If you want to use Python 3 and your system defaults on Python 2.7, you
 may need to adjust the above commands, e.g., replace ``pip`` by ``pip3``.
 
+Installation from the wheels
+----------------------------
+
+Several wheels are published on GitHub for each release:
+https://github.com/Ezibenroc/PyRoaringBitMap/releases
+
+Installing from a wheel should be the easiest as no C compiler is required. However, performance may be lower. Note that
+you have to chose the right wheel, depending on your system.
+
+For instance, to install ``pyroaring`` version ``0.2.1`` for Python ``3.6`` on Linux:
+
+.. code:: bash
+
+   pip install --user https://github.com/Ezibenroc/PyRoaringBitMap/releases/download/0.2.1/pyroaring-0.2.1-cp36-cp36m-linux_x86_64.whl
+
 Manual compilation / installation
 ---------------------------------
 
@@ -58,8 +81,7 @@ If you want to compile (and install) pyroaring by yourself, for instance
 to modify the Cython sources or because you do not have ``pip``, follow
 these steps.
 
-Note that the Python package ``Cython`` is required. You may be able install
-it as:
+Note that the Python package ``Cython`` is required. You may install it as:
 
 .. code:: bash
 
@@ -129,45 +151,6 @@ Example of use:
 
     DEBUG=1 ARCHI=x86-64 python setup.py build_ext
 
-Utilization
------------
-
-First, you can run the tests to make sure everything is ok:
-
-.. code:: bash
-
-    pip install hypothesis --user
-    python test.py
-
-Note: you can define the environment variable ``HYPOTHESIS_PROFILE`` to ``debug`` to print every values,
-or ``ci`` to perform more tests (warning: very long). For instance:
-
-.. code:: bash
-
-    HYPOTHESIS_PROFILE=debug ./test.py
-
-You can use a bitmap nearly as the classical Python set in your code:
-
-.. code:: python
-
-    from pyroaring import BitMap
-    bm1 = BitMap()
-    bm1.add(3)
-    bm1.add(18)
-    bm2 = BitMap([3, 27, 42])
-    print("bm1       = %s" % bm1)
-    print("bm2       = %s" % bm2)
-    print("bm1 & bm2 = %s" % (bm1&bm2))
-    print("bm1 | bm2 = %s" % (bm1|bm2))
-
-Output:
-
-::
-
-    bm1       = BitMap([3, 18])
-    bm2       = BitMap([3, 27, 42])
-    bm1 & bm2 = BitMap([3])
-    bm1 | bm2 = BitMap([3, 18, 27, 42])
 
 Benchmark
 ---------
@@ -227,5 +210,7 @@ small slice                         8.93e-05           3.00e-01         3.60e-03
 
 .. |Build Status| image:: https://travis-ci.org/Ezibenroc/PyRoaringBitMap.svg?branch=master
    :target: https://travis-ci.org/Ezibenroc/PyRoaringBitMap
+.. |Appveyor Build| image:: https://ci.appveyor.com/api/projects/status/6hk915xgpvrwhirm?svg=true
+   :target: https://ci.appveyor.com/project/Ezibenroc/pyroaringbitmap
 .. |Documentation Status| image:: https://readthedocs.org/projects/pyroaringbitmap/badge/?version=stable
    :target: http://pyroaringbitmap.readthedocs.io/en/stable/?badge=stable
