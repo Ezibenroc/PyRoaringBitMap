@@ -35,7 +35,16 @@ cdef class BitMap(AbstractBitMap):
             if isinstance(values, AbstractBitMap):
                 self |= values
             elif isinstance(values, range):
-                self |= AbstractBitMap(values, copy_on_write=self.copy_on_write)
+                if len(values) == 0:
+                    continue
+                _, (start, stop, step) = values.__reduce__()
+                if step == -1:
+                    step = 1
+                    start, stop = stop+1, start+1
+                if step == 1:
+                    croaring.roaring_bitmap_add_range(self._c_bitmap, start, stop)
+                else:
+                    self |= AbstractBitMap(values, copy_on_write=self.copy_on_write)
             elif isinstance(values, array.array) and len(values) > 0:
                 buff = <array.array> values
                 croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff[0])
