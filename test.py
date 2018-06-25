@@ -408,7 +408,13 @@ class ComparisonTest(Util):
         self.assertTrue(cls(range(start, end)).contains_range(start+1, end))
         self.assertFalse(cls(range(start+1, end)).contains_range(start, end))
         r = range(start, end)
-        middle = r[len(r)//2]
+        try:
+            middle = r[len(r)//2]  # on 32bits systems, this call might fail when len(r) is too large
+        except OverflowError:
+            if sys.maxsize > 2**32:
+                raise
+            else:
+                return
         bm = cls(range(start, end)) - cls([middle])
         self.assertFalse(bm.contains_range(start, end))
         self.assertTrue(bm.contains_range(start, middle))
