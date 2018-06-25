@@ -138,6 +138,18 @@ cdef class AbstractBitMap:
             assert op == 5
             return croaring.roaring_bitmap_is_subset((<AbstractBitMap?>other)._c_bitmap, (<AbstractBitMap?>self)._c_bitmap)
 
+    def contains_range(self, range_start, range_end):
+        """
+        Check whether a range of values from range_start (included) to range_end (excluded) is present.
+
+        >>> bm = BitMap([5, 6, 7, 8, 9, 10])
+        >>> bm.contains_range(6, 9)
+        True
+        >>> bm.contains_range(8, 12)
+        False
+        """
+        return croaring.roaring_bitmap_contains_range(self._c_bitmap, range_start, range_end)
+
     cdef compute_hash(self):
         cdef int64_t h_val = 0
         cdef uint32_t i, count, max_count=256

@@ -393,6 +393,27 @@ class ComparisonTest(Util):
         bm2 = cls2(values2, copy_on_write=cow)
         self.assertEqual(bm1.intersect(bm2), len(bm1 & bm2) > 0)
 
+    @given(bitmap_cls, hyp_collection, st.booleans(), uint32, uint32)
+    def test_contains_range_arbitrary(self, cls, values, cow, start, end):
+        bm = cls(values)
+        expected = (cls(range(start, end)) <= bm)
+        self.assertEqual(expected, bm.contains_range(start, end))
+
+    @given(bitmap_cls, st.booleans(), uint32, uint32)
+    def test_contains_range(self, cls, cow, start, end):
+        st.assume(start < end)
+        self.assertTrue(cls(range(start, end)).contains_range(start, end))
+        self.assertTrue(cls(range(start, end)).contains_range(start, end-1))
+        self.assertFalse(cls(range(start, end-1)).contains_range(start, end))
+        self.assertTrue(cls(range(start, end)).contains_range(start+1, end))
+        self.assertFalse(cls(range(start+1, end)).contains_range(start, end))
+        r = range(start, end)
+        middle = r[len(r)//2]
+        bm = cls(range(start, end)) - cls([middle])
+        self.assertFalse(bm.contains_range(start, end))
+        self.assertTrue(bm.contains_range(start, middle))
+        self.assertTrue(bm.contains_range(middle+1, end))
+
 
 class CardinalityTest(Util):
 
