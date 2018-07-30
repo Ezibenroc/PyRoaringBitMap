@@ -437,14 +437,12 @@ class RangeTest(Util):
         # Adding the range
         bm.add_range(start, end)
         self.assertTrue(bm.contains_range(start, end))
-        self.assertEqual(bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)),
-                         len(range(start, end)))
+        self.assertEqual(bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)), end-start)
         # Empty range (again)
         original = BitMap(bm)
         bm.remove_range(end, start)
         self.assertEqual(bm, original)
-        self.assertEqual(bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)),
-                         len(range(start, end)))
+        self.assertEqual(bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)), end-start)
         # Removing the range
         bm.remove_range(start, end)
         self.assertFalse(bm.contains_range(start, end))
