@@ -20,6 +20,23 @@ cdef class BitMap(AbstractBitMap):
         """
         croaring.roaring_bitmap_add(self._c_bitmap, value)
 
+    def add_checked(self, uint32_t value):
+        """
+        Add an element to the bitmap. This raises a KeyError exception if the element is already present.
+
+        >>> bm = BitMap()
+        >>> bm.add_checked(42)
+        >>> bm
+        BitMap([42])
+        >>> bm.add_checked(42)
+        Traceback (most recent call last):
+        ...
+        KeyError: 42
+        """
+        cdef bool test = croaring.roaring_bitmap_add_checked(self._c_bitmap, value)
+        if not test:
+            raise KeyError(value)
+
     def update(self, *all_values): # FIXME could be more efficient
         """
         Add all the given values to the bitmap.
@@ -79,9 +96,8 @@ cdef class BitMap(AbstractBitMap):
         ...
         KeyError: 3
         """
-        if value in self:
-            croaring.roaring_bitmap_remove(self._c_bitmap, value)
-        else:
+        cdef bool test = croaring.roaring_bitmap_remove_checked(self._c_bitmap, value)
+        if not test:
             raise KeyError(value)
 
     def intersection_update(self, *all_values): # FIXME could be more efficient

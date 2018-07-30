@@ -127,6 +127,8 @@ class BasicTest(Util):
         self.compare_with_set(bitmap, expected_set)
         for value in values[size//2:]:
             bitmap.add(value)
+            with self.assertRaises(KeyError):
+                bitmap.add_checked(value)
             expected_set.add(value)
         self.compare_with_set(bitmap, expected_set)
         for value in values[:size//2]:
