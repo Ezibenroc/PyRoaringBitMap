@@ -59,7 +59,7 @@ cdef class BitMap(AbstractBitMap):
                     step = 1
                     start, stop = stop+1, start+1
                 if step == 1:
-                    croaring.roaring_bitmap_add_range(self._c_bitmap, start, stop)
+                    self.add_range(start, stop)
                 else:
                     self |= AbstractBitMap(values, copy_on_write=self.copy_on_write)
             elif isinstance(values, array.array) and len(values) > 0:
@@ -128,6 +128,17 @@ cdef class BitMap(AbstractBitMap):
         BitMap([3, 10, 11, 13, 14])
         """
         croaring.roaring_bitmap_flip_inplace(self._c_bitmap, start, end)
+
+    def add_range(self, uint64_t range_start, uint64_t range_end):
+        """
+        Add a range of values from range_start (included) to range_end (excluded).
+
+        >>> bm = BitMap([5, 7])
+        >>> bm.add_range(6, 9)
+        >>> bm
+        BitMap([5, 6, 7, 8])
+        """
+        croaring.roaring_bitmap_add_range(self._c_bitmap, range_start, range_end)
 
     def remove_range(self, uint64_t range_start, uint64_t range_end):
         """
