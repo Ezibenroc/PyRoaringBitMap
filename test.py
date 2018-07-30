@@ -33,6 +33,7 @@ except errors.InvalidArgument:
 
 uint18 = st.integers(min_value=0, max_value=2**18)
 uint32 = st.integers(min_value=0, max_value=2**32-1)
+uint64 = st.integers(min_value=0, max_value=2**64-1)
 integer = st.integers(min_value=0, max_value=2**31-1)
 
 range_max_size = 2**18
@@ -447,6 +448,17 @@ class RangeTest(Util):
         bm.remove_range(start, end)
         self.assertFalse(bm.contains_range(start, end))
         self.assertEqual(bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)), 0)
+
+    @given(hyp_collection, st.booleans(), uint64, uint64)
+    def test_large_values(self, values, cow, start, end):
+        st.assume(start >= 2**32 and end >= 2**32)
+        bm = BitMap(values, copy_on_write=cow)
+        original = BitMap(bm)
+        bm.add_range(start, end)
+        self.assertEqual(bm, original)
+        bm.remove_range(start, end)
+        self.assertEqual(bm, original)
+        self.assertTrue(bm.contains_range(start, end))
 
 
 class CardinalityTest(Util):

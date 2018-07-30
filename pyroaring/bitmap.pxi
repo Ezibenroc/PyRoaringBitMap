@@ -138,6 +138,10 @@ cdef class BitMap(AbstractBitMap):
         >>> bm
         BitMap([5, 6, 7, 8])
         """
+        if range_end <= range_start or range_end == 0 or range_start >= 2**32:
+            return
+        if range_end >= 2**32:
+            range_end = 2**32
         croaring.roaring_bitmap_add_range(self._c_bitmap, range_start, range_end)
 
     def remove_range(self, uint64_t range_start, uint64_t range_end):
@@ -149,4 +153,8 @@ cdef class BitMap(AbstractBitMap):
         >>> bm
         BitMap([5, 9, 10])
         """
+        if range_end <= range_start or range_end == 0 or range_start >= 2**32:
+            return
+        if range_end >= 2**32:
+            range_end = 2**32
         croaring.roaring_bitmap_remove_range(self._c_bitmap, range_start, range_end)

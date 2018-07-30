@@ -148,6 +148,10 @@ cdef class AbstractBitMap:
         >>> bm.contains_range(8, 12)
         False
         """
+        if range_end <= range_start or range_end == 0 or range_start >= 2**32:
+            return True  # empty range
+        if range_end >= 2**32:
+            range_end = 2**32
         return croaring.roaring_bitmap_contains_range(self._c_bitmap, range_start, range_end)
 
     cdef compute_hash(self):
