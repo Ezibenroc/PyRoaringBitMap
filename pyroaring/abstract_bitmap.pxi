@@ -138,7 +138,7 @@ cdef class AbstractBitMap:
             assert op == 5
             return croaring.roaring_bitmap_is_subset((<AbstractBitMap?>other)._c_bitmap, (<AbstractBitMap?>self)._c_bitmap)
 
-    def contains_range(self, range_start, range_end):
+    def contains_range(self, uint64_t range_start, uint64_t range_end):
         """
         Check whether a range of values from range_start (included) to range_end (excluded) is present.
 
