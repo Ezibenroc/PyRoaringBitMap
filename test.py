@@ -395,6 +395,8 @@ class ComparisonTest(Util):
         bm2 = cls2(values2, copy_on_write=cow)
         self.assertEqual(bm1.intersect(bm2), len(bm1 & bm2) > 0)
 
+
+class RangeTest(Util):
     @given(bitmap_cls, hyp_collection, st.booleans(), uint32, uint32)
     def test_contains_range_arbitrary(self, cls, values, cow, start, end):
         bm = cls(values)
@@ -421,6 +423,32 @@ class ComparisonTest(Util):
         self.assertFalse(bm.contains_range(start, end))
         self.assertTrue(bm.contains_range(start, middle))
         self.assertTrue(bm.contains_range(middle+1, end))
+
+    @given(hyp_collection, st.booleans(), uint32, uint32)
+    def test_add_remove_range(self, values, cow, start, end):
+        st.assume(start < end)
+        bm = BitMap(values, copy_on_write=cow)
+        # Empty range
+        original = BitMap(bm)
+        bm.update(range(end, start))
+        self.assertEqual(bm, original)
+        bm.remove_range(end, start)
+        self.assertEqual(bm, original)
+        # Adding the range
+        bm.update(range(start, end))
+        self.assertTrue(bm.contains_range(start, end))
+        self.assertEqual(bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)),
+                         len(range(start, end)))
+        # Empty range (again)
+        original = BitMap(bm)
+        bm.remove_range(end, start)
+        self.assertEqual(bm, original)
+        self.assertEqual(bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)),
+                         len(range(start, end)))
+        # Removing the range
+        bm.remove_range(start, end)
+        self.assertFalse(bm.contains_range(start, end))
+        self.assertEqual(bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)), 0)
 
 
 class CardinalityTest(Util):
