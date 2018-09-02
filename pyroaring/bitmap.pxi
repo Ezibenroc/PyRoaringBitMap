@@ -116,6 +116,37 @@ cdef class BitMap(AbstractBitMap):
             else:
                 self &= AbstractBitMap(values, copy_on_write=self.copy_on_write)
 
+    def difference_update(self, *others):
+        """
+        Remove all elements of another set from this set.
+        """
+        self.__isub__(AbstractBitMap.union(*others))
+
+    def symmetric_difference_update(self, other):
+        """
+        Update a set with the symmetric difference of itself and another.
+        """
+        union = self & other
+        self.__ior__(other)
+        self.__isub__(union)
+
+    def clear(self):
+        """Remove all elements from this set."""
+        self.__isub__(self)
+
+    def pop(self):
+        """
+        Remove and return an arbitrary set element.
+        Raises KeyError if the set is empty.
+        """
+        try:
+            value = self.min()
+        except ValueError:
+            raise KeyError('pop from an empty BitMap')
+        self.remove(value)
+        return value
+
+
     def flip_inplace(self, uint64_t start, uint64_t end):
         """
         Compute (in place) the negation of the bitmap within the specified interval.
