@@ -972,6 +972,65 @@ class PythonSetEquivalentTest(unittest.TestCase):
         self.assertEqual(s1.issubset(s2), b1.issubset(b2))
         self.assertEqual(SetClass.issubset(s1, s2), BitMapClass.issubset(b1, b2))
 
+
+    @given(bitmap_cls, small_integer_list, small_integer_list)
+    def test_le(self, BitMapClass, list1, list2):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1)
+        b2 = BitMapClass(list2)
+
+        self.assertEqual(s1.__le__(s2), b1.__le__(b2))
+        self.assertEqual(SetClass.__le__(s1, s2), BitMapClass.__le__(b1, b2))
+        self.assertEqual((s1 <= s2), (b1 <= b2))
+
+
+    @given(bitmap_cls, small_integer_list, small_integer_list)
+    def test_ge(self, BitMapClass, list1, list2):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1)
+        b2 = BitMapClass(list2)
+
+        self.assertEqual(s1.__ge__(s2), b1.__ge__(b2))
+        self.assertEqual(SetClass.__ge__(s1, s2), BitMapClass.__ge__(b1, b2))
+        self.assertEqual((s1 >= s2), (b1 >= b2))
+
+    @given(bitmap_cls, small_integer_list, small_integer_list)
+    def test_eq(self, BitMapClass, list1, list2):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1)
+        b2 = BitMapClass(list2)
+
+        self.assertEqual(s1.__eq__(s2), b1.__eq__(b2))
+        self.assertEqual(SetClass.__eq__(s1, s2), BitMapClass.__eq__(b1, b2))
+        self.assertEqual((s1 == s2), (b1 == b2))
+
+
     @given(bitmap_cls, small_integer_list, small_integer_list)
     def test_issuperset(self, BitMapClass, list1, list2):
         if BitMapClass == BitMap:
