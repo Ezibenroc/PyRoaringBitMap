@@ -882,7 +882,16 @@ class PythonSetEquivalentTest(unittest.TestCase):
 
         converted_set = SetClass(b1)
 
-        min_value, max_value = min(s1, default=0), max(s1, default=200) + 1
+        try:
+            min_value = min(s1)
+        except ValueError:
+            min_value = 0
+
+        try:
+            max_value = max(s1) + 1
+        except ValueError:
+            max_value = 200 + 1
+
         for i in range(min_value, max_value):
             self.assertEqual(i in s1, i in converted_set)
 
@@ -1030,7 +1039,11 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1 = BitMap(list1)
         b2 = b1.copy()
 
-        new_element = max(b1, default = 0) + 1 #doesn't exist in the set
+        try:
+            new_element = max(b1) + 1 #doesn't exist in the set
+        except ValueError:
+            new_element = 1
+
         b2.add(new_element)
 
         self.assertTrue(new_element in b2)
