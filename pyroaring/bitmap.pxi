@@ -126,9 +126,7 @@ cdef class BitMap(AbstractBitMap):
         """
         Update a set with the symmetric difference of itself and another.
         """
-        union = self & other
-        self.__ior__(other)
-        self.__isub__(union)
+        union = self.__ixor__(other)
 
     def clear(self):
         """Remove all elements from this set."""
