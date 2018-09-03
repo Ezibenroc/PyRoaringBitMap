@@ -132,7 +132,7 @@ cdef class BitMap(AbstractBitMap):
 
     def clear(self):
         """Remove all elements from this set."""
-        self.__isub__(self)
+        croaring.roaring_bitmap_clear(self._c_bitmap)
 
     def pop(self):
         """
