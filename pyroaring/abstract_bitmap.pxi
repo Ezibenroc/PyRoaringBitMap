@@ -219,19 +219,19 @@ cdef class AbstractBitMap:
         """
         Return True if two sets have a null intersection.
         """
-        return AbstractBitMap.intersection_cardinality(self, other) == 0
+        return self.intersection_cardinality(other) == 0
 
     def issubset(self, other):
         """
         Report whether another set contains this set.
         """
-        return AbstractBitMap.intersection_cardinality(self, other) == len(self)
+        return self <= other
 
     def issuperset(self, other):
         """
         Report whether this set contains another set.
         """
-        return AbstractBitMap.intersection_cardinality(self, other) == len(other)
+        return self >= other
 
     def difference(self, *others):
         """
@@ -241,7 +241,7 @@ cdef class AbstractBitMap:
         """
         difference = BitMap(self)
         for other in others:
-            difference.__ixor__(difference & other)
+            difference.__isub__(other)
 
         if not isinstance(self, BitMap):
             return self.__class__(difference)
@@ -254,10 +254,7 @@ cdef class AbstractBitMap:
 
         (i.e. all elements that are in exactly one of the sets.)
         """
-        return AbstractBitMap.difference(
-            AbstractBitMap.union(self, other),
-            AbstractBitMap.intersection(self, other)
-        )
+        return self.__xor__(other)
 
     def union(self, *others):
         """
