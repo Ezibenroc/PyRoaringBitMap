@@ -213,7 +213,7 @@ cdef class AbstractBitMap:
         """
         Return a copy of a set.
         """
-        return self.__class__(self, copy_on_write=self._c_bitmap.copy_on_write)
+        return self.__class__(self)
 
     def isdisjoint(self, other):
         """
