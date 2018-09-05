@@ -522,6 +522,7 @@ class ManyOperationsTest(Util):
         self.assertEqual(expected_result, self.initial_bitmap)
         self.assertEqual(type(expected_result), type(self.initial_bitmap))
 
+    @unittest.skipIf(is_python2, 'https://github.com/Ezibenroc/PyRoaringBitMap/pull/38#issuecomment-418262391')
     @given(bitmap_cls, st.data(), hyp_many_collections, st.booleans())
     def test_union(self, cls, data, all_values, cow):
         classes = [data.draw(bitmap_cls) for _ in range(len(all_values))]
@@ -532,6 +533,7 @@ class ManyOperationsTest(Util):
             lambda x, y: x | y, self.all_bitmaps)
         self.assertEqual(expected_result, result)
 
+    @unittest.skipIf(is_python2, 'https://github.com/Ezibenroc/PyRoaringBitMap/pull/38#issuecomment-418262391')
     @given(bitmap_cls, st.data(), hyp_many_collections, st.booleans())
     def test_intersection(self, cls, data, all_values, cow):
         classes = [data.draw(bitmap_cls) for _ in range(len(all_values))]
