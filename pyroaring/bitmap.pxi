@@ -119,23 +119,52 @@ cdef class BitMap(AbstractBitMap):
     def difference_update(self, *others):
         """
         Remove all elements of another set from this set.
+
+        >>> bm = BitMap([1, 2, 3, 4, 5])
+        >>> bm.difference_update(BitMap([1, 2, 10]), BitMap([3, 4, 20]))
+        >>> bm
+        BitMap([5])
         """
         self.__isub__(AbstractBitMap.union(*others))
 
     def symmetric_difference_update(self, other):
         """
         Update a set with the symmetric difference of itself and another.
+
+        >>> bm = BitMap([1, 2, 3, 4])
+        >>> bm.symmetric_difference_update(BitMap([1, 2, 10]))
+        >>> bm
+        BitMap([3, 4, 10])
+
         """
         union = self.__ixor__(other)
 
     def clear(self):
-        """Remove all elements from this set."""
+        """
+        Remove all elements from this set.
+
+        >>> bm = BitMap([1, 2, 3])
+        >>> bm.clear()
+        >>> bm
+        BitMap([])
+        """
         croaring.roaring_bitmap_clear(self._c_bitmap)
 
     def pop(self):
         """
         Remove and return an arbitrary set element.
         Raises KeyError if the set is empty.
+
+        >>> bm = BitMap([1, 2])
+        >>> a = bm.pop()
+        >>> b = bm.pop()
+        >>> bm
+        BitMap([])
+        >>> bm.pop()
+        Traceback (most recent call last):
+        ...
+        KeyError: 'pop from an empty BitMap'
+
         """
         try:
             value = self.min()

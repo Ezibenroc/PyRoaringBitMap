@@ -212,24 +212,54 @@ cdef class AbstractBitMap:
     def copy(self):
         """
         Return a copy of a set.
+
+        >>> bm = BitMap([3, 12])
+        >>> bm2 = bm.copy()
+        >>> bm == bm2
+        True
+        >>> bm.add(1)
+        >>> bm == bm2
+        False
+
         """
         return self.__class__(self)
 
     def isdisjoint(self, other):
         """
         Return True if two sets have a null intersection.
+
+        >>> BitMap([1, 2]).isdisjoint(BitMap([3, 4]))
+        True
+
+        >>> BitMap([1, 2, 3]).isdisjoint(BitMap([3, 4]))
+        False
+
         """
         return self.intersection_cardinality(other) == 0
 
     def issubset(self, other):
         """
         Report whether another set contains this set.
+
+        >>> BitMap([1, 2]).issubset(BitMap([1, 2, 3, 4]))
+        True
+
+        >>> BitMap([1, 2]).issubset(BitMap([3, 4]))
+        False
+
         """
         return self <= other
 
     def issuperset(self, other):
         """
         Report whether this set contains another set.
+
+        >>> BitMap([1, 2, 3, 4]).issuperset(BitMap([1, 2]))
+        True
+
+        >>> BitMap([1, 2]).issuperset(BitMap([3, 4]))
+        False
+
         """
         return self >= other
 
@@ -238,6 +268,10 @@ cdef class AbstractBitMap:
         Return the difference of two or more sets as a new set.
 
         (i.e. all elements that are in this set but not the others.)
+
+        >>> BitMap.difference(BitMap([1, 2, 3]), BitMap([2, 20]), BitMap([3, 30]))
+        BitMap([1])
+
         """
         difference = BitMap(self)
         for other in others:
@@ -253,6 +287,9 @@ cdef class AbstractBitMap:
         Return the symmetric difference of two sets as a new set.
 
         (i.e. all elements that are in exactly one of the sets.)
+
+        >>> BitMap([1, 2, 3]).symmetric_difference(BitMap([2, 3, 4]))
+        BitMap([1, 4])
         """
         return self.__xor__(other)
 
