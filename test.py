@@ -544,6 +544,17 @@ class ManyOperationsTest(Util):
             lambda x, y: x & y, self.all_bitmaps)
         self.assertEqual(expected_result, result)
 
+    @unittest.skipIf(is_python2, 'https://github.com/Ezibenroc/PyRoaringBitMap/pull/38#issuecomment-418262391')
+    @given(bitmap_cls, st.data(), hyp_many_collections, st.booleans())
+    def test_difference(self, cls, data, all_values, cow):
+        classes = [data.draw(bitmap_cls) for _ in range(len(all_values))]
+        self.all_bitmaps = [classes[i](values, copy_on_write=cow)
+                            for i, values in enumerate(all_values)]
+        result = cls.difference(*self.all_bitmaps)
+        expected_result = functools.reduce(
+            lambda x, y: x - y, self.all_bitmaps)
+        self.assertEqual(expected_result, result)
+
 
 class SerializationTest(Util):
 
