@@ -10,6 +10,10 @@ matrix:
       python: 3.5
     - os: linux
       python: 3.6
+    - os: linux
+      dist: xenial
+      sudo: required
+      python: 3.7
 #    - os: linux
 #      dist: trusty
 #      sudo: required
@@ -21,10 +25,13 @@ matrix:
       env: PYTHON=2.7-dev
     - os: osx
       language: generic
-      env: PYTHON=3.5-dev
+      env: PYTHON=3.5
     - os: osx
       language: generic
-      env: PYTHON=3.6-dev
+      env: PYTHON=3.6
+    - os: osx
+      language: generic
+      env: PYTHON=3.7
 
 before_install: |
   # These steps are taken from https://pythonhosted.org/CodeChat/.travis.yml.html
