@@ -42,6 +42,7 @@ cdef extern from "roaring.h":
     void roaring_bitmap_remove(roaring_bitmap_t *r, uint32_t x)
     inline void roaring_bitmap_remove_range(roaring_bitmap_t *ra, uint64_t min, uint64_t max)
     bool roaring_bitmap_remove_checked(roaring_bitmap_t *r, uint32_t x)
+    void roaring_bitmap_clear(roaring_bitmap_t *r)
     bool roaring_bitmap_contains(const roaring_bitmap_t *r, uint32_t val)
     bool roaring_bitmap_contains_range(const roaring_bitmap_t *r, uint64_t range_start, uint64_t range_end)
     roaring_bitmap_t *roaring_bitmap_copy(const roaring_bitmap_t *r)

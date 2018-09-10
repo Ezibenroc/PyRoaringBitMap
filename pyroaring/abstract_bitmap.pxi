@@ -209,8 +209,95 @@ cdef class AbstractBitMap:
         """
         return self.from_ptr(croaring.roaring_bitmap_flip(self._c_bitmap, start, end))
 
-    @classmethod
-    def union(cls, *bitmaps):
+    def copy(self):
+        """
+        Return a copy of a set.
+
+        >>> bm = BitMap([3, 12])
+        >>> bm2 = bm.copy()
+        >>> bm == bm2
+        True
+        >>> bm.add(1)
+        >>> bm == bm2
+        False
+
+        """
+        return self.__class__(self)
+
+    def isdisjoint(self, other):
+        """
+        Return True if two sets have a null intersection.
+
+        >>> BitMap([1, 2]).isdisjoint(BitMap([3, 4]))
+        True
+
+        >>> BitMap([1, 2, 3]).isdisjoint(BitMap([3, 4]))
+        False
+
+        """
+        return self.intersection_cardinality(other) == 0
+
+    def issubset(self, other):
+        """
+        Report whether another set contains this set.
+
+        >>> BitMap([1, 2]).issubset(BitMap([1, 2, 3, 4]))
+        True
+
+        >>> BitMap([1, 2]).issubset(BitMap([3, 4]))
+        False
+
+        """
+        return self <= other
+
+    def issuperset(self, other):
+        """
+        Report whether this set contains another set.
+
+        >>> BitMap([1, 2, 3, 4]).issuperset(BitMap([1, 2]))
+        True
+
+        >>> BitMap([1, 2]).issuperset(BitMap([3, 4]))
+        False
+
+        """
+        return self >= other
+
+    def difference(*bitmaps):
+        """
+        Return the difference of two or more sets as a new set.
+
+        (i.e. all elements that are in this set but not the others.)
+
+        >>> BitMap.difference(BitMap([1, 2, 3]), BitMap([2, 20]), BitMap([3, 30]))
+        BitMap([1])
+
+        """
+        size = len(bitmaps)
+        cdef AbstractBitMap result, bm
+        if size <= 1:
+            return bitmaps[0].copy()
+        elif size == 2:
+            return bitmaps[0] - bitmaps[1]
+        else:
+            result = BitMap(bitmaps[0])
+            for bm in bitmaps[1:]:
+                result -= bm
+            return bitmaps[0].__class__(result)
+
+
+    def symmetric_difference(self, other):
+        """
+        Return the symmetric difference of two sets as a new set.
+
+        (i.e. all elements that are in exactly one of the sets.)
+
+        >>> BitMap([1, 2, 3]).symmetric_difference(BitMap([2, 3, 4]))
+        BitMap([1, 4])
+        """
+        return self.__xor__(other)
+
+    def union(*bitmaps):
         """
         Return the union of the bitmaps.
 
@@ -222,16 +309,17 @@ cdef class AbstractBitMap:
         cdef AbstractBitMap bm
         cdef vector[const croaring.roaring_bitmap_t*] buff
         if size <= 1:
-            return cls(*bitmaps)
+            return bitmaps[0].copy()
+        elif size == 2:
+            return bitmaps[0] | bitmaps[1]
         else:
             for bm in bitmaps:
                 bitmaps[0].__check_compatibility(bm)
                 buff.push_back(bm._c_bitmap)
             result = croaring.roaring_bitmap_or_many(size, &buff[0])
-            return (<AbstractBitMap>cls()).from_ptr(result) # FIXME to change when from_ptr is a classmethod
+            return (<AbstractBitMap>bitmaps[0].__class__()).from_ptr(result) # FIXME to change when from_ptr is a classmethod
 
-    @classmethod
-    def intersection(cls, *bitmaps): # FIXME could be more efficient
+    def intersection(*bitmaps): # FIXME could be more efficient
         """
         Return the intersection of the bitmaps.
 
@@ -241,12 +329,14 @@ cdef class AbstractBitMap:
         size = len(bitmaps)
         cdef AbstractBitMap result, bm
         if size <= 1:
-            return cls(*bitmaps)
+            return bitmaps[0].copy()
+        elif size == 2:
+            return bitmaps[0] & bitmaps[1]
         else:
             result = BitMap(bitmaps[0])
             for bm in bitmaps[1:]:
                 result &= bm
-            return cls(result)
+            return bitmaps[0].__class__(result)
 
     cdef binary_op(self, AbstractBitMap other, (croaring.roaring_bitmap_t*)func(const croaring.roaring_bitmap_t*, const croaring.roaring_bitmap_t*)):
         self.__check_compatibility(other)

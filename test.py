@@ -522,6 +522,7 @@ class ManyOperationsTest(Util):
         self.assertEqual(expected_result, self.initial_bitmap)
         self.assertEqual(type(expected_result), type(self.initial_bitmap))
 
+    @unittest.skipIf(is_python2, 'https://github.com/Ezibenroc/PyRoaringBitMap/pull/38#issuecomment-418262391')
     @given(bitmap_cls, st.data(), hyp_many_collections, st.booleans())
     def test_union(self, cls, data, all_values, cow):
         classes = [data.draw(bitmap_cls) for _ in range(len(all_values))]
@@ -531,8 +532,8 @@ class ManyOperationsTest(Util):
         expected_result = functools.reduce(
             lambda x, y: x | y, self.all_bitmaps)
         self.assertEqual(expected_result, result)
-        self.assertIsInstance(result, cls)
 
+    @unittest.skipIf(is_python2, 'https://github.com/Ezibenroc/PyRoaringBitMap/pull/38#issuecomment-418262391')
     @given(bitmap_cls, st.data(), hyp_many_collections, st.booleans())
     def test_intersection(self, cls, data, all_values, cow):
         classes = [data.draw(bitmap_cls) for _ in range(len(all_values))]
@@ -542,7 +543,17 @@ class ManyOperationsTest(Util):
         expected_result = functools.reduce(
             lambda x, y: x & y, self.all_bitmaps)
         self.assertEqual(expected_result, result)
-        self.assertIsInstance(result, cls)
+
+    @unittest.skipIf(is_python2, 'https://github.com/Ezibenroc/PyRoaringBitMap/pull/38#issuecomment-418262391')
+    @given(bitmap_cls, st.data(), hyp_many_collections, st.booleans())
+    def test_difference(self, cls, data, all_values, cow):
+        classes = [data.draw(bitmap_cls) for _ in range(len(all_values))]
+        self.all_bitmaps = [classes[i](values, copy_on_write=cow)
+                            for i, values in enumerate(all_values)]
+        result = cls.difference(*self.all_bitmaps)
+        expected_result = functools.reduce(
+            lambda x, y: x - y, self.all_bitmaps)
+        self.assertEqual(expected_result, result)
 
 
 class SerializationTest(Util):
@@ -772,6 +783,10 @@ class FrozenTest(unittest.TestCase):
             frozen -= other
         self.assertEqual(frozen, copy)
         with self.assertRaises(AttributeError):
+            frozen.clear()
+        with self.assertRaises(AttributeError):
+            frozen.pop()
+        with self.assertRaises(AttributeError):
             frozen.add(number)
         with self.assertRaises(AttributeError):
             frozen.update(other)
@@ -781,6 +796,10 @@ class FrozenTest(unittest.TestCase):
             frozen.remove(number)
         with self.assertRaises(AttributeError):
             frozen.intersection_update(other)
+        with self.assertRaises(AttributeError):
+            frozen.difference_update(other)
+        with self.assertRaises(AttributeError):
+            frozen.symmetric_difference_update(other)
         with self.assertRaises(AttributeError):
             frozen.update(number, number+10)
         self.assertEqual(frozen, copy)
@@ -847,6 +866,494 @@ class OptimizationTest(unittest.TestCase):
         self.assertEqual(bm2.shrink_to_fit(), 0)
         bm3 = cls(bm1, optimize=True)
         self.assertEqual(bm3.shrink_to_fit(), 0)
+
+small_integer = st.integers(min_value=0, max_value=200)
+small_integer_list = st.lists(min_size=0, max_size=2000, elements=small_integer)
+class PythonSetEquivalentTest(unittest.TestCase):
+    """
+    The main goal of this class is to make sure the BitMap api is a superset of the python builtin set api.
+    """
+
+    @given(bitmap_cls, small_integer_list, st.booleans())
+    def test_convert_to_set(self, BitMapClass, list1, cow):
+        """
+        Most of the tests depend on a working implementation for converting from BitMap to python set.
+        This test sanity checks it.
+
+        This test should be modified or removed if you want to run PythonSetEquivalentTest with integers drawn from
+        a larger set than `small_integer`. It will become prohibitively time-consuming.
+        """
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        b1 = BitMapClass(list1, copy_on_write=cow)
+
+        converted_set = SetClass(b1)
+
+        try:
+            min_value = min(s1)
+        except ValueError:
+            min_value = 0
+
+        try:
+            max_value = max(s1) + 1
+        except ValueError:
+            max_value = 200 + 1
+
+        for i in range(min_value, max_value):
+            self.assertEqual(i in s1, i in converted_set)
+
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
+    def test_difference(self, BitMapClass, list1, list2, cow):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+
+        self.assertEqual(s1.difference(s2), set(b1.difference(b2)))
+        self.assertEqual(SetClass.difference(s1, s2), set(BitMapClass.difference(b1, b2)))
+        self.assertEqual((s1 - s2), set(b1 - b2))
+        self.assertEqual(b1 - b2, b1.difference(b2))
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
+    def test_symmetric_difference(self, BitMapClass, list1, list2, cow):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+
+        self.assertEqual(s1.symmetric_difference(s2), set(b1.symmetric_difference(b2)))
+        self.assertEqual(SetClass.symmetric_difference(s1, s2), set(BitMapClass.symmetric_difference(b1, b2)))
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
+    def test_union(self, BitMapClass, list1, list2, cow):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+
+        self.assertEqual(s1.union(s2), set(b1.union(b2)))
+        self.assertEqual(SetClass.union(s1, s2), set(BitMapClass.union(b1, b2)))
+        self.assertEqual((s1 | s2), set(b1 | b2))
+        self.assertEqual(b1 | b2, b1.union(b2))
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
+    def test_issubset(self, BitMapClass, list1, list2, cow):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+
+        self.assertEqual(s1.issubset(s2), b1.issubset(b2))
+        self.assertEqual(SetClass.issubset(s1, s2), BitMapClass.issubset(b1, b2))
+
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
+    def test_le(self, BitMapClass, list1, list2, cow):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+
+        self.assertEqual(s1.__le__(s2), b1.__le__(b2))
+        self.assertEqual(SetClass.__le__(s1, s2), BitMapClass.__le__(b1, b2))
+        self.assertEqual((s1 <= s2), (b1 <= b2))
+
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
+    def test_ge(self, BitMapClass, list1, list2, cow):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+
+        self.assertEqual(s1.__ge__(s2), b1.__ge__(b2))
+        self.assertEqual(SetClass.__ge__(s1, s2), BitMapClass.__ge__(b1, b2))
+        self.assertEqual((s1 >= s2), (b1 >= b2))
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
+    def test_eq(self, BitMapClass, list1, list2, cow):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+
+        self.assertEqual(s1.__eq__(s2), b1.__eq__(b2))
+        self.assertEqual(SetClass.__eq__(s1, s2), BitMapClass.__eq__(b1, b2))
+        self.assertEqual((s1 == s2), (b1 == b2))
+
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
+    def test_issuperset(self, BitMapClass, list1, list2, cow):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+
+        self.assertEqual(s1.issuperset(s2), b1.issuperset(b2))
+        self.assertEqual(SetClass.issuperset(s1, s2), BitMapClass.issuperset(b1, b2))
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
+    def test_isdisjoint(self, BitMapClass, list1, list2, cow):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+
+        self.assertEqual(s1.isdisjoint(s2), b1.isdisjoint(b2))
+        self.assertEqual(SetClass.isdisjoint(s1, s2), BitMapClass.isdisjoint(b1, b2))
+
+
+    @given(small_integer_list,  st.booleans())
+    def test_clear(self, list1, cow):
+        b1 = BitMap(list1, copy_on_write=cow)
+        b1.clear()
+        self.assertEqual(len(b1), 0)
+
+    @given(small_integer_list, st.booleans())
+    def test_pop(self, list1, cow):
+        b1 = BitMap(list1, copy_on_write=cow)
+        starting_length = len(b1)
+        if starting_length >= 1:
+            popped_element = b1.pop()
+            self.assertEqual(len(b1), starting_length - 1) #length decreased by one
+            self.assertFalse(popped_element in b1) #and element isn't in the BitMap anymore
+        else:
+            with self.assertRaises(KeyError):
+                b1.pop()
+
+    @given(bitmap_cls, small_integer_list, st.booleans())
+    def test_copy(self, BitMapClass, list1, cow):
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = b1.copy()
+        self.assertEqual(b2, b1)
+
+
+    @given(small_integer_list, st.booleans())
+    def test_copy_writable(self, list1, cow):
+        b1 = BitMap(list1, copy_on_write=cow)
+        b2 = b1.copy()
+
+        try:
+            new_element = max(b1) + 1 #doesn't exist in the set
+        except ValueError:
+            new_element = 1
+
+        b2.add(new_element)
+
+        self.assertTrue(new_element in b2)
+        self.assertTrue(new_element not in b1)
+
+    @given(small_integer_list, small_integer_list, st.booleans())
+    def test_difference_update(self, list1, list2, cow):
+        s1 = set(list1)
+        s2 = set(list2)
+        s1.difference_update(s2)
+
+        b1 = BitMap(list1, copy_on_write=cow)
+        b2 = BitMap(list2, copy_on_write=cow)
+        b1.difference_update(b2)
+
+        self.assertEqual(s1, set(b1))
+
+    @given(small_integer_list, small_integer_list, st.booleans())
+    def test_symmetric_difference_update(self, list1, list2, cow):
+        s1 = set(list1)
+        s2 = set(list2)
+        s1.symmetric_difference_update(s2)
+
+        b1 = BitMap(list1, copy_on_write=cow)
+        b2 = BitMap(list2, copy_on_write=cow)
+        b1.symmetric_difference_update(b2)
+
+        self.assertEqual(s1, set(b1))
+
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
+    def test_dunder(self, BitMapClass, list1, list2, cow):
+        """
+        Tests for &|^-
+        """
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+
+        self.assertEqual(s1.__and__(s2), SetClass(b1.__and__(b2)))
+        self.assertEqual(s1.__or__(s2), SetClass(b1.__or__(b2)))
+        self.assertEqual(s1.__xor__(s2), SetClass(b1.__xor__(b2)))
+        self.assertEqual(s1.__sub__(s2), SetClass(b1.__sub__(b2)))
+
+    @given(small_integer_list, small_integer, st.booleans())
+    def test_add(self, list1, value, cow):
+        s1 = set(list1)
+        b1 = BitMap(list1, copy_on_write=cow)
+        self.assertEqual(s1, set(b1))
+
+        s1.add(value)
+        b1.add(value)
+        self.assertEqual(s1, set(b1))
+
+    @given(small_integer_list, small_integer, st.booleans())
+    def test_discard(self, list1, value, cow):
+        s1 = set(list1)
+        b1 = BitMap(list1, copy_on_write=cow)
+        self.assertEqual(s1, set(b1))
+
+        s1.discard(value)
+        b1.discard(value)
+        self.assertEqual(s1, set(b1))
+
+    @given(small_integer_list, small_integer, st.booleans())
+    def test_remove(self, list1, value, cow):
+        s1 = set(list1)
+        b1 = BitMap(list1, copy_on_write=cow)
+        self.assertEqual(s1, set(b1))
+
+        s1_raised = False
+        b1_raised = False
+        try:
+            s1.remove(value)
+        except KeyError:
+            s1_raised = True
+
+        try:
+            b1.remove(value)
+        except KeyError:
+            b1_raised = True
+
+        self.assertEqual(s1, set(b1))
+        self.assertEqual(s1_raised, b1_raised) #Either both raised exception or neither did
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, small_integer_list, st.booleans())
+    def test_nary_union(self, BitMapClass, list1, list2, list3, cow):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+        s3 = SetClass(list3)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+        b3 = BitMapClass(list3, copy_on_write=cow)
+
+        self.assertEqual(SetClass.union(s1, s2, s3), SetClass(BitMapClass.union(b1, b2, b3)))
+        self.assertEqual(s1.union(s2, s3), SetClass(b1.union(b2, b3)))
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, small_integer_list, st.booleans())
+    def test_nary_difference(self, BitMapClass, list1, list2, list3, cow):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+        s3 = SetClass(list3)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+        b3 = BitMapClass(list3, copy_on_write=cow)
+
+        self.assertEqual(SetClass.difference(s1, s2, s3), SetClass(BitMapClass.difference(b1, b2, b3)))
+        self.assertEqual(s1.difference(s2, s3), SetClass(b1.difference(b2, b3)))
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, small_integer_list, st.booleans())
+    def test_nary_intersection(self, BitMapClass, list1, list2, list3, cow):
+        if BitMapClass == BitMap:
+            SetClass = set
+        elif BitMapClass == FrozenBitMap:
+            SetClass = frozenset
+        else:
+            raise AssertionError()
+
+        s1 = SetClass(list1)
+        s2 = SetClass(list2)
+        s3 = SetClass(list3)
+
+        b1 = BitMapClass(list1, copy_on_write=cow)
+        b2 = BitMapClass(list2, copy_on_write=cow)
+        b3 = BitMapClass(list3, copy_on_write=cow)
+
+        self.assertEqual(SetClass.intersection(s1, s2, s3), SetClass(BitMapClass.intersection(b1, b2, b3)))
+        self.assertEqual(s1.intersection(s2, s3), SetClass(b1.intersection(b2, b3)))
+
+    @given(small_integer_list, small_integer_list, small_integer_list, st.booleans())
+    def test_nary_intersection_update(self, list1, list2, list3, cow):
+        s1 = set(list1)
+        s2 = set(list2)
+        s3 = set(list3)
+
+        b1 = BitMap(list1, copy_on_write=cow)
+        b2 = BitMap(list2, copy_on_write=cow)
+        b3 = BitMap(list3, copy_on_write=cow)
+
+        set.intersection_update(s1, s2, s3)
+        BitMap.intersection_update(b1, b2, b3)
+        self.assertEqual(s1, set(b1))
+
+
+        s1 = set(list1)
+        s2 = set(list2)
+        s3 = set(list3)
+
+        b1 = BitMap(list1, copy_on_write=cow)
+        b2 = BitMap(list2, copy_on_write=cow)
+        b3 = BitMap(list3, copy_on_write=cow)
+
+        s1.intersection_update(s2, s3)
+        b1.intersection_update(b2, b3)
+
+        self.assertEqual(s1, set(b1))
+
+
+    @given(small_integer_list, small_integer_list, small_integer_list, st.booleans())
+    def test_nary_difference_update(self, list1, list2, list3, cow):
+        s1 = set(list1)
+        s2 = set(list2)
+        s3 = set(list3)
+
+        b1 = BitMap(list1, copy_on_write=cow)
+        b2 = BitMap(list2, copy_on_write=cow)
+        b3 = BitMap(list3, copy_on_write=cow)
+
+        set.difference_update(s1, s2, s3)
+        BitMap.difference_update(b1, b2, b3)
+        self.assertEqual(s1, set(b1))
+
+
+        s1 = set(list1)
+        s2 = set(list2)
+        s3 = set(list3)
+
+        b1 = BitMap(list1, copy_on_write=cow)
+        b2 = BitMap(list2, copy_on_write=cow)
+        b3 = BitMap(list3, copy_on_write=cow)
+
+        s1.difference_update(s2, s3)
+        b1.difference_update(b2, b3)
+
+        self.assertEqual(s1, set(b1))
+
+    @given(small_integer_list, small_integer_list, small_integer_list, st.booleans())
+    def test_nary_update(self, list1, list2, list3, cow):
+        s1 = set(list1)
+        s2 = set(list2)
+        s3 = set(list3)
+
+        b1 = BitMap(list1, copy_on_write=cow)
+        b2 = BitMap(list2, copy_on_write=cow)
+        b3 = BitMap(list3, copy_on_write=cow)
+
+        set.update(s1, s2, s3)
+        BitMap.update(b1, b2, b3)
+        self.assertEqual(s1, set(b1))
+
+
+        s1 = set(list1)
+        s2 = set(list2)
+        s3 = set(list3)
+
+        b1 = BitMap(list1, copy_on_write=cow)
+        b2 = BitMap(list2, copy_on_write=cow)
+        b3 = BitMap(list3, copy_on_write=cow)
+
+        s1.update(s2, s3)
+        b1.update(b2, b3)
+
+        self.assertEqual(s1, set(b1))
 
 
 class VersionTest(unittest.TestCase):
