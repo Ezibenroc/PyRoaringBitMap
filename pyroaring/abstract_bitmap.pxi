@@ -276,9 +276,9 @@ cdef class AbstractBitMap:
         size = len(bitmaps)
         cdef AbstractBitMap result, bm
         if size <= 1:
-            return bitmaps[0].__class__(*bitmaps)
+            return bitmaps[0].copy()
         elif size == 2:
-            return (<AbstractBitMap>bitmaps[0]).binary_op(<AbstractBitMap?>bitmaps[1], croaring.roaring_bitmap_andnot)
+            return bitmaps[0] - bitmaps[1]
         else:
             result = BitMap(bitmaps[0])
             for bm in bitmaps[1:]:
@@ -309,9 +309,9 @@ cdef class AbstractBitMap:
         cdef AbstractBitMap bm
         cdef vector[const croaring.roaring_bitmap_t*] buff
         if size <= 1:
-            return bitmaps[0].__class__(*bitmaps)
+            return bitmaps[0].copy()
         elif size == 2:
-            return (<AbstractBitMap>bitmaps[0]).binary_op(<AbstractBitMap?>bitmaps[1], croaring.roaring_bitmap_or)
+            return bitmaps[0] | bitmaps[1]
         else:
             for bm in bitmaps:
                 bitmaps[0].__check_compatibility(bm)
@@ -329,9 +329,9 @@ cdef class AbstractBitMap:
         size = len(bitmaps)
         cdef AbstractBitMap result, bm
         if size <= 1:
-            return bitmaps[0].__class__(*bitmaps)
+            return bitmaps[0].copy()
         elif size == 2:
-            return (<AbstractBitMap>bitmaps[0]).binary_op(<AbstractBitMap?>bitmaps[1], croaring.roaring_bitmap_and)
+            return bitmaps[0] & bitmaps[1]
         else:
             result = BitMap(bitmaps[0])
             for bm in bitmaps[1:]:

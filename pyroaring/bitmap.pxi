@@ -137,7 +137,7 @@ cdef class BitMap(AbstractBitMap):
         BitMap([3, 4, 10])
 
         """
-        union = self.__ixor__(other)
+        self.__ixor__(other)
 
     def clear(self):
         """
