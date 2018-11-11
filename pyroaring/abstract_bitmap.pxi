@@ -634,6 +634,12 @@ cdef class AbstractBitMap:
         except TypeError:
             self._c_bitmap = deserialize_ptr(state.encode())
 
+
+    def __sizeof__(self):
+        cdef size_t size = croaring.roaring_bitmap_portable_size_in_bytes(self._c_bitmap)
+        return size
+
+
     def to_array(self):
         """
         Return an array.array containing the elements of the bitmap, in increasing order.
