@@ -497,6 +497,16 @@ class CardinalityTest(Util):
         estimated_value = self.bitmap1.jaccard_index(self.bitmap2)
         self.assertAlmostEqual(real_value, estimated_value)
 
+    @given(bitmap_cls, hyp_collection, uint32, uint32)
+    def test_range_cardinality(self, cls, values, a, b):
+        bm = cls(values)
+        start, end = sorted([a, b])
+
+        #make an intersection with the relevant range to test against
+        test_bm = bm.intersection(BitMap(range(start, end)))
+
+        self.assertEqual(len(test_bm), bm.range_cardinality(start, end))
+
 
 class ManyOperationsTest(Util):
 

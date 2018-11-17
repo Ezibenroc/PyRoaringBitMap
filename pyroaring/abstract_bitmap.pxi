@@ -154,6 +154,20 @@ cdef class AbstractBitMap:
             range_end = 2**32
         return croaring.roaring_bitmap_contains_range(self._c_bitmap, range_start, range_end)
 
+    def range_cardinality(self, uint64_t range_start, uint64_t range_end):
+        """
+        Return cardinality from range_start (included) to range_end (excluded).
+
+        >>> bm = BitMap(range(10))
+        >>> bm.range_cardinality(0, 10)
+        10
+        >>> bm.range_cardinality(10, 100)
+        0
+        """
+        if range_end < range_start:
+            raise AssertionError('range_end must not be lower than range_start')
+        return croaring.roaring_bitmap_range_cardinality(self._c_bitmap, range_start, range_end)
+
     cdef compute_hash(self):
         cdef int64_t h_val = 0
         cdef uint32_t i, count, max_count=256
