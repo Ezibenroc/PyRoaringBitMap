@@ -52,6 +52,7 @@ cdef extern from "roaring.h":
     void roaring_bitmap_free(roaring_bitmap_t *r)
     roaring_bitmap_t *roaring_bitmap_of_ptr(size_t n_args, const uint32_t *vals)
     uint64_t roaring_bitmap_get_cardinality(const roaring_bitmap_t *r)
+    uint64_t roaring_bitmap_range_cardinality(const roaring_bitmap_t *r, uint64_t range_start, uint64_t range_end)
     bool roaring_bitmap_is_empty(const roaring_bitmap_t *ra)
     bool roaring_bitmap_equals(const roaring_bitmap_t *r1, const roaring_bitmap_t *r2)
     bool roaring_bitmap_is_strict_subset(const roaring_bitmap_t *r1, const roaring_bitmap_t *r2)
