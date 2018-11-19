@@ -1381,13 +1381,13 @@ class StringTest(unittest.TestCase):
         large_ints = [int(i) for i in large.split()]
 
         for i in small_ints:
-            self.assertTrue(i in bm)
+            self.assertIn(i, bm)
 
         for i in large_ints:
-            self.assertTrue(i in bm)
+            self.assertIn(i, bm)
 
-        self.assertTrue(min(small_ints) == min(bm))
-        self.assertTrue(max(large_ints) == max(bm))
+        self.assertEqual(min(small_ints), min(bm))
+        self.assertEqual(max(large_ints), max(bm))
 
 
 class VersionTest(unittest.TestCase):
