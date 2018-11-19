@@ -213,7 +213,7 @@ cdef class AbstractBitMap:
 
         num_columns = table_max_width // column_width
 
-        num_rows = len(self) / num_columns
+        num_rows = len(self) / float(num_columns)
         if not num_rows.is_integer():
             num_rows += 1
         num_rows = int(num_rows)
