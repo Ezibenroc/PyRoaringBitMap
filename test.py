@@ -7,7 +7,7 @@ import os
 import sys
 import pickle
 import re
-from hypothesis import given, settings, unlimited, Verbosity, errors
+from hypothesis import given, settings, unlimited, Verbosity, errors, HealthCheck
 import hypothesis.strategies as st
 import array
 import pyroaring
@@ -1364,6 +1364,40 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1.update(b2, b3)
 
         self.assertEqual(s1, set(b1))
+
+small_list_of_uin32 = st.lists(min_size=0, max_size=400, elements=uint32)
+large_list_of_uin32 = st.lists(min_size=600, max_size=1000, elements=uint32, unique=True)
+class StringTest(unittest.TestCase):
+
+    @given(bitmap_cls, small_list_of_uin32)
+    def test_small_list(self, cls, collection):
+        #test that repr for a small bitmap is equal to the original bitmap
+        bm = cls(collection)
+        self.assertEqual(bm, eval(repr(bm)))
+
+    @settings(suppress_health_check=HealthCheck.all(), max_shrinks=0)
+    @given(bitmap_cls, large_list_of_uin32)
+    def test_large_list(self, cls, collection):
+        # test that for a large bitmap the both the start and the end of the bitmap get printed
+
+        bm = cls(collection)
+        s = repr(bm)
+        nondigits = set(s) - set('0123456789\n.')
+        for i in nondigits:
+            s = s.replace(i, ' ')
+
+        small, large = s.split('...')
+        small_ints = [int(i) for i in small.split()]
+        large_ints = [int(i) for i in large.split()]
+
+        for i in small_ints:
+            self.assertIn(i, bm)
+
+        for i in large_ints:
+            self.assertIn(i, bm)
+
+        self.assertEqual(min(small_ints), min(bm))
+        self.assertEqual(max(large_ints), max(bm))
 
 
 class VersionTest(unittest.TestCase):

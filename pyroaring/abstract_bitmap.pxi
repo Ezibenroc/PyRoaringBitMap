@@ -208,8 +208,57 @@ cdef class AbstractBitMap:
         return str(self)
 
     def __str__(self):
-        values = ', '.join([str(n) for n in self])
-        return '%s([%s])' % (self.__class__.__name__, values)
+        skip_rows = len(self) > 500 #this is the cutoff number for the truncating to kick in.
+        table_max_width = 80  # this isn't the length of the entire output, it's only for the numeric part
+        num_lines_if_skipping = 5  # the number of lines to show in the beginning and the end when output is being truncated
+
+        head = self.__class__.__name__ + '(['
+        row_start_buffer = ' ' * len(head)
+        tail = '])'
+
+        try:
+            maxval = self.max()
+        except ValueError:
+            # empty bitmap
+            return head + tail
+
+        element_max_length = len(str(maxval))
+        column_width = element_max_length + 2
+
+        num_columns = table_max_width // column_width
+
+        num_rows = len(self) / float(num_columns)
+        if not num_rows.is_integer():
+            num_rows += 1
+        num_rows = int(num_rows)
+        rows = []
+        row_idx = 0
+        skipped = False
+        while row_idx < num_rows:
+            row_ints = self[row_idx * num_columns:(row_idx + 1) * num_columns]
+
+            line = []
+            for i in row_ints:
+                s = str(i)
+                if num_rows == 1:
+                    # no padding if all numbers fit on a single line
+                    line.append(s)
+                else:
+                    line.append(' ' * (element_max_length - len(s)) + s)
+
+            if row_idx == 0:
+                prefix = head
+            else:
+                prefix = row_start_buffer
+            rows.append(prefix + ', '.join(line) + ',')
+            row_idx += 1
+            if skip_rows and not skipped and row_idx >= num_lines_if_skipping:
+                rows.append((' ' * ((table_max_width + len(head)) // 2)) + '...')
+                skipped = True
+                row_idx = num_rows - num_lines_if_skipping
+
+        rows[-1] = rows[-1].rstrip(',')  # remove trailing comma from the last line
+        return '\n'.join(rows) + tail
 
     def flip(self, uint64_t start, uint64_t end):
         """
