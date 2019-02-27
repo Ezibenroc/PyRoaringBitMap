@@ -23,7 +23,8 @@ install:
   - CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %vcvarsall_arg%
   - set "PATH=%PYTHON%\\scripts;%PYTHON%;%PATH%"
   - pip install --upgrade setuptools
-  - pip install hypothesis Cython wheel
+  - pip install "hypothesis < 3.60"
+  - pip install Cython wheel
   - git config core.symlinks true
   - git reset --hard
   - git submodule init

@@ -7,7 +7,7 @@ name = "pypi"
 
 [dev-packages]
 Cython = ">=0.21"
-hypothesis = "*"
+hypothesis = "<3.60"
 ipython = "*"
 twine = "*"
 
