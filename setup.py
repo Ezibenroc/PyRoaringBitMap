@@ -80,7 +80,7 @@ else:
 if PLATFORM_WINDOWS:
     compile_args = []
 else:
-    compile_args = ['-D__STDC_LIMIT_MACROS', '-D__STDC_CONSTANT_MACROS']
+    compile_args = ['-D__STDC_LIMIT_MACROS', '-D__STDC_CONSTANT_MACROS', '-D _GLIBCXX_ASSERTIONS']
     if PLATFORM_MACOSX:
         compile_args.append('-mmacosx-version-min=10.14')
     else:

@@ -66,8 +66,14 @@ cdef class BitMap(AbstractBitMap):
                 buff = <array.array> values
                 croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff[0])
             else:
-                buff_vect = values
-                croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff_vect[0])
+                try:
+                    size = len(values)
+                except TypeError:  # object has no length, creating a list
+                    values = list(values)
+                    size = len(values)
+                if size > 0:
+                    buff_vect = values
+                    croaring.roaring_bitmap_add_many(self._c_bitmap, size, &buff_vect[0])
 
     def discard(self, uint32_t value):
         """

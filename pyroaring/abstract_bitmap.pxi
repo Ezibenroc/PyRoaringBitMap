@@ -52,9 +52,15 @@ cdef class AbstractBitMap:
                 buff = <array.array> values
                 self._c_bitmap = croaring.roaring_bitmap_of_ptr(size, &buff[0])
         else:
+            try:
+                size = len(values)
+            except TypeError:  # object has no length, creating a list
+                values = list(values)
+                size = len(values)
             self._c_bitmap = croaring.roaring_bitmap_create()
-            buff_vect = values
-            croaring.roaring_bitmap_add_many(self._c_bitmap, len(values), &buff_vect[0])
+            if size > 0:
+                buff_vect = values
+                croaring.roaring_bitmap_add_many(self._c_bitmap, size, &buff_vect[0])
         if not isinstance(values, AbstractBitMap):
             self._c_bitmap.copy_on_write = copy_on_write
             self._h_val = 0
