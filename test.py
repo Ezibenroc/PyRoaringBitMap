@@ -217,6 +217,14 @@ class BasicTest(Util):
         expected = array.array('I', sorted(values))
         self.assertEqual(result, expected)
 
+    @given(bitmap_cls, st.booleans(), st.integers(min_value=0, max_value=100))
+    def test_constructor_generator(self, cls, cow, size):
+        def generator(n):
+            for i in range(n):
+                yield i
+        bitmap = cls(generator(size), copy_on_write=cow)
+        self.assertEqual(bitmap, cls(range(size), copy_on_write=cow))
+
 
 class SelectRankTest(Util):
 
