@@ -62,7 +62,7 @@ cdef class AbstractBitMap:
                 buff_vect = values
                 croaring.roaring_bitmap_add_many(self._c_bitmap, size, &buff_vect[0])
         if not isinstance(values, AbstractBitMap):
-            self._c_bitmap.copy_on_write = copy_on_write
+            croaring.roaring_bitmap_set_copy_on_write(self._c_bitmap, copy_on_write)
             self._h_val = 0
         if optimize:
             self.run_optimize()
@@ -103,7 +103,7 @@ cdef class AbstractBitMap:
         >>> BitMap(copy_on_write=True).copy_on_write
         True
         """
-        return self._c_bitmap.copy_on_write
+        return croaring.roaring_bitmap_get_copy_on_write(self._c_bitmap)
 
     def run_optimize(self):
         return croaring.roaring_bitmap_run_optimize(self._c_bitmap)
@@ -116,7 +116,7 @@ cdef class AbstractBitMap:
             croaring.roaring_bitmap_free(self._c_bitmap)
 
     def __check_compatibility(self, AbstractBitMap other):
-        if self._c_bitmap.copy_on_write != other._c_bitmap.copy_on_write:
+        if self.copy_on_write != other.copy_on_write:
             raise ValueError('Cannot have interactions between bitmaps with and without copy_on_write.\n')
 
     def __contains__(self, uint32_t value):
@@ -641,7 +641,7 @@ cdef class AbstractBitMap:
         cdef uint32_t  count, max_count=256
         cdef uint32_t *buff = <uint32_t*>malloc(max_count*4)
         cdef uint32_t i_loc=0, i_glob=start, i_buff=0
-        result.copy_on_write = self.copy_on_write
+        croaring.roaring_bitmap_set_copy_on_write(result, self.copy_on_write)
         first_elt = self._get_elt(start)
         valid = croaring.roaring_move_uint32_iterator_equalorlarger(iterator, first_elt)
         assert valid

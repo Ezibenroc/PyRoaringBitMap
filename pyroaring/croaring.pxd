@@ -6,7 +6,6 @@ cdef extern from "roaring.h":
         pass
     ctypedef struct roaring_bitmap_t:
         roaring_array_t high_low_container
-        bool copy_on_write
     ctypedef struct roaring_uint32_iterator_t:
         const roaring_bitmap_t *parent
         int32_t container_index
@@ -35,6 +34,8 @@ cdef extern from "roaring.h":
         uint64_t cardinality
 
     roaring_bitmap_t *roaring_bitmap_create()
+    bool roaring_bitmap_get_copy_on_write(const roaring_bitmap_t* r)
+    void roaring_bitmap_set_copy_on_write(roaring_bitmap_t* r, bool cow)
     void roaring_bitmap_add(roaring_bitmap_t *r, uint32_t x)
     bool roaring_bitmap_add_checked(roaring_bitmap_t *r, uint32_t x)
     void roaring_bitmap_add_many(roaring_bitmap_t *r, size_t n_args, const uint32_t *vals)
