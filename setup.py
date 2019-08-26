@@ -90,7 +90,8 @@ else:
     else:
         compile_args.append('-O3')
     if 'ARCHI' in os.environ:
-        compile_args.extend(['-march=%s' % os.environ['ARCHI']])
+        if os.environ['ARCHI'] != "generic":
+            compile_args.extend(['-march=%s' % os.environ['ARCHI']])
     else:
         compile_args.append('-march=native')
 
