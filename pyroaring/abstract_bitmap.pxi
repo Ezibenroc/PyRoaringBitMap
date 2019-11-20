@@ -201,6 +201,25 @@ cdef class AbstractBitMap:
             self._h_val = self.compute_hash()
         return self._h_val
 
+    def iter_equal_or_larger(self, uint32_t val):
+        """
+        Iterate over items in the bitmap equal or larger than a given value.
+
+        >>> bm = BitMap([1, 2, 4])
+        >>> list(bm.iter_equal_or_larger(2))
+        [2, 4]
+        """
+        cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)
+        valid = croaring.roaring_move_uint32_iterator_equalorlarger(iterator, val)
+        if not valid:
+            return
+        try:
+            while iterator.has_value:
+                yield iterator.current_value
+                croaring.roaring_advance_uint32_iterator(iterator)
+        finally:
+            croaring.roaring_free_uint32_iterator(iterator)
+
     def __iter__(self):
         cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)
         try:
@@ -590,6 +609,25 @@ cdef class AbstractBitMap:
         2
         """
         return croaring.roaring_bitmap_rank(self._c_bitmap, value)
+
+    def next_set_bit(self, uint32_t value):
+        """
+        Return the next set bit larger or equal to the given value.
+
+        >>> BitMap([1, 2, 4]).next_set_bit(1)
+        1
+
+        >>> BitMap([1, 2, 4]).next_set_bit(3)
+        4
+
+        >>> BitMap([1, 2, 4]).next_set_bit(5)
+        Traceback (most recent call last):
+        ValueError: No value larger or equal to specified value.
+        """
+        try:
+            return next(self.iter_equal_or_larger(value))
+        except StopIteration:
+            raise ValueError('No value larger or equal to specified value.')
 
     cdef int64_t _shift_index(self, int64_t index) except -1:
         cdef int64_t size = len(self)

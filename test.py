@@ -312,6 +312,23 @@ class SelectRankTest(Util):
         with self.assertRaises(ValueError):
             m = bitmap.max()
 
+    @given(bitmap_cls, hyp_collection, uint32, st.booleans())
+    def test_next_set_bit(self, cls, values, other_value, cow):
+        st.assume(len(values) > 0)
+        bitmap = cls(values, copy_on_write=cow)
+        try:
+            expected = next(i for i in values if i >= other_value)
+            self.assertEqual(bitmap.next_set_bit(other_value), expected)
+        except StopIteration:
+            with self.assertRaises(ValueError):
+                b = bitmap.next_set_bit(other_value)
+
+    @given(bitmap_cls)
+    def test_wrong_next_set_bit(self, cls):
+        bitmap = cls()
+        with self.assertRaises(ValueError):
+            b = bitmap.next_set_bit(0)
+
 
 class BinaryOperationsTest(Util):
 
@@ -778,6 +795,16 @@ class IncompatibleInteraction(Util):
 
 
 class BitMapTest(unittest.TestCase):
+    @given(hyp_collection, uint32)
+    def test_iter_equal_or_larger(self, values, other_value):
+        bm = BitMap(values)
+        bm_iter = bm.iter_equal_or_larger(other_value)
+        expected = [i for i in values if i >= other_value]
+        expected.sort()
+
+        observed = list(bm_iter)
+        self.assertEqual(expected, observed)
+
     def test_unashability(self):
         bm = BitMap()
         with self.assertRaises(TypeError):
