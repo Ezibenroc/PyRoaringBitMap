@@ -74,6 +74,17 @@ For instance, to install ``pyroaring`` version ``0.2.1`` for Python ``3.6`` on L
 
    pip install --user https://github.com/Ezibenroc/PyRoaringBitMap/releases/download/0.2.1/pyroaring-0.2.1-cp36-cp36m-linux_x86_64.whl
 
+Installation from conda-forge
+-----------------------------
+
+Conda users can install the package from `conda-forge`:
+
+.. code:: bash
+
+   conda install -c conda-forge pyroaring
+
+(Supports Python 3.6 or higher; Mac/Linux/Windows)
+
 Manual compilation / installation
 ---------------------------------
 
