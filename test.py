@@ -13,6 +13,9 @@ import array
 import pyroaring
 from pyroaring import BitMap, FrozenBitMap
 
+import hypothesis
+print(hypothesis.__version__)
+
 is_python2 = sys.version_info < (3, 0)
 
 try:  # Python2 compatibility
@@ -1410,7 +1413,7 @@ class StringTest(unittest.TestCase):
         bm = cls(collection)
         self.assertEqual(bm, eval(repr(bm)))
 
-    @settings(suppress_health_check=HealthCheck.all(), max_shrinks=0)
+    @settings(suppress_health_check=HealthCheck.all())
     @given(bitmap_cls, large_list_of_uin32)
     def test_large_list(self, cls, collection):
         # test that for a large bitmap the both the start and the end of the bitmap get printed
