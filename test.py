@@ -114,7 +114,7 @@ class Util(unittest.TestCase):
 class BasicTest(Util):
 
     @given(hyp_collection, st.booleans())
-    @settings()
+    @settings(deadline=None)
     def test_basic(self, values, cow):
         bitmap = BitMap(copy_on_write=cow)
         self.assertEqual(bitmap.copy_on_write, cow)
