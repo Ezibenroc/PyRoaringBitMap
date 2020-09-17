@@ -6,10 +6,10 @@ configuration: Release
 
 environment:
   matrix:
-    - py_version: 34
     - py_version: 35
     - py_version: 36
     - py_version: 37
+    - py_version: 38
 
 platform:
   - x86

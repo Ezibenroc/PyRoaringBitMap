@@ -36,10 +36,8 @@ Installation from Pypi
 
 Note: this installation method requires a recent C compiler like GCC.
 
-Supported systems:
-
-- Linux and MacOS: Python 2.7 or Python 3.4 or higher.
-- Windows: Python 3.4 or higher.
+Supported systems: Linux, MacOS or Windows, Python 3.5 or higher. Note that pyroaring might still work with older Python
+versions, but they are not tested anymore.
 
 To install pyroaring on your local account, use the following command:
 
