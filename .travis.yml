@@ -34,7 +34,7 @@ before_install: |
 
 install:
     - python --version
-    - pip install 'hypothesis < 3.60' Cython wheel
+    - pip install 'hypothesis < 5.29' Cython wheel
 
 script:
     - echo $TRAVIS_PYTHON_VERSION
