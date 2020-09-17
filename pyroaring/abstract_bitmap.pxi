@@ -183,7 +183,7 @@ cdef class AbstractBitMap:
             count = croaring.roaring_read_uint32_iterator(iterator, buff, max_count)
             i = 0
             while i < count:
-                h_val = ((h_val << 2) + buff[i])
+                h_val = (h_val << 2) + buff[i] + 1
                 # TODO find a good hash formula
                 # This one should be better, but is too long:
                 # h_val = ((h_val<<16) + buff[i]) % 1748104473534059
