@@ -29,6 +29,7 @@ install:
   - git reset --hard
   - git submodule init
   - git submodule update
+  - pip freeze
 
 build: off
 

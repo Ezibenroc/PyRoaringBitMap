@@ -35,6 +35,7 @@ before_install: |
 install:
     - python --version
     - pip install 'hypothesis < 5.29' Cython wheel
+    - pip freeze
 
 script:
     - echo $TRAVIS_PYTHON_VERSION
