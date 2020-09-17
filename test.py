@@ -7,7 +7,7 @@ import os
 import sys
 import pickle
 import re
-from hypothesis import given, settings, unlimited, Verbosity, errors, HealthCheck
+from hypothesis import given, settings, Verbosity, errors, HealthCheck
 import hypothesis.strategies as st
 import array
 import pyroaring
@@ -21,7 +21,7 @@ except NameError:
     pass
 
 settings.register_profile("ci", settings(
-    max_examples=100, deadline=None, timeout=unlimited))
+    max_examples=100, deadline=None))
 settings.register_profile("dev", settings(max_examples=10, deadline=None))
 settings.register_profile("debug", settings(
     max_examples=10, verbosity=Verbosity.verbose, deadline=None))
