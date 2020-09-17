@@ -7,7 +7,7 @@ import os
 import sys
 import pickle
 import re
-from hypothesis import given, settings, Verbosity, errors, HealthCheck
+from hypothesis import given, settings, Verbosity, errors, HealthCheck, assume
 import hypothesis.strategies as st
 import array
 import pyroaring
@@ -116,7 +116,7 @@ class Util(unittest.TestCase):
 class BasicTest(Util):
 
     @given(hyp_collection, st.booleans())
-    @settings(deadline=None)
+    @settings()
     def test_basic(self, values, cow):
         bitmap = BitMap(copy_on_write=cow)
         self.assertEqual(bitmap.copy_on_write, cow)
@@ -156,7 +156,7 @@ class BasicTest(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection, st.booleans())
     def test_bitmap_unequality(self, cls1, cls2, values1, values2, cow):
-        st.assume(set(values1) != set(values2))
+        assume(set(values1) != set(values2))
         bitmap1 = cls1(values1, copy_on_write=cow)
         bitmap2 = cls2(values2, copy_on_write=cow)
         self.assertNotEqual(bitmap1, bitmap2)
@@ -263,19 +263,19 @@ class SelectRankTest(Util):
 
     @given(bitmap_cls, hyp_collection, slice_arg(2**12), slice_arg(2**12), slice_arg(2**5), st.booleans())
     def test_slice_select_non_empty(self, cls, values, start, stop, step, cow):
-        st.assume(step != 0)
-        st.assume(len(range(start, stop, step)) > 0)
+        assume(step != 0)
+        assume(len(range(start, stop, step)) > 0)
         self.check_slice(cls, values, start, stop, step, cow)
 
     @given(bitmap_cls, hyp_collection, slice_arg(2**12), slice_arg(2**12), slice_arg(2**5), st.booleans())
     def test_slice_select_empty(self, cls, values, start, stop, step, cow):
-        st.assume(step != 0)
-        st.assume(len(range(start, stop, step)) == 0)
+        assume(step != 0)
+        assume(len(range(start, stop, step)) == 0)
         self.check_slice(cls, values, start, stop, step, cow)
 
     @given(bitmap_cls, hyp_collection, slice_arg(2**12) | st.none(), slice_arg(2**12) | st.none(), slice_arg(2**5) | st.none(), st.booleans())
     def test_slice_select_none(self, cls, values, start, stop, step, cow):
-        st.assume(step != 0)
+        assume(step != 0)
         self.check_slice(cls, values, start, stop, step, cow)
 
     @given(bitmap_cls, hyp_collection, st.booleans())
@@ -293,7 +293,7 @@ class SelectRankTest(Util):
 
     @given(bitmap_cls, hyp_collection, st.booleans())
     def test_min(self, cls, values, cow):
-        st.assume(len(values) > 0)
+        assume(len(values) > 0)
         bitmap = cls(values, copy_on_write=cow)
         self.assertEqual(bitmap.min(), min(values))
 
@@ -305,7 +305,7 @@ class SelectRankTest(Util):
 
     @given(bitmap_cls, hyp_collection, st.booleans())
     def test_max(self, cls, values, cow):
-        st.assume(len(values) > 0)
+        assume(len(values) > 0)
         bitmap = cls(values, copy_on_write=cow)
         self.assertEqual(bitmap.max(), max(values))
 
@@ -317,7 +317,7 @@ class SelectRankTest(Util):
 
     @given(bitmap_cls, hyp_collection, uint32, st.booleans())
     def test_next_set_bit(self, cls, values, other_value, cow):
-        st.assume(len(values) > 0)
+        assume(len(values) > 0)
         bitmap = cls(values, copy_on_write=cow)
         try:
             expected = next(i for i in values if i >= other_value)
@@ -434,7 +434,7 @@ class RangeTest(Util):
 
     @given(bitmap_cls, st.booleans(), uint32, uint32)
     def test_contains_range(self, cls, cow, start, end):
-        st.assume(start < end)
+        assume(start < end)
         self.assertTrue(cls(range(start, end)).contains_range(start, end))
         self.assertTrue(cls(range(start, end)).contains_range(start, end-1))
         self.assertFalse(cls(range(start, end-1)).contains_range(start, end))
@@ -455,7 +455,7 @@ class RangeTest(Util):
 
     @given(hyp_collection, st.booleans(), uint32, uint32)
     def test_add_remove_range(self, values, cow, start, end):
-        st.assume(start < end)
+        assume(start < end)
         bm = BitMap(values, copy_on_write=cow)
         # Empty range
         original = BitMap(bm)
@@ -479,7 +479,7 @@ class RangeTest(Util):
 
     @given(hyp_collection, st.booleans(), uint64, uint64)
     def test_large_values(self, values, cow, start, end):
-        st.assume(start >= 2**32 and end >= 2**32)
+        assume(start >= 2**32 and end >= 2**32)
         bm = BitMap(values, copy_on_write=cow)
         original = BitMap(bm)
         bm.add_range(start, end)
@@ -517,7 +517,7 @@ class CardinalityTest(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection, st.booleans())
     def test_jaccard_index(self, cls1, cls2, values1, values2, cow):
-        st.assume(len(values1) > 0 or len(values2) > 0)
+        assume(len(values1) > 0 or len(values2) > 0)
         self.bitmap1 = cls1(values1, copy_on_write=cow)
         self.bitmap2 = cls2(values2, copy_on_write=cow)
         real_value = float(len(self.bitmap1 & self.bitmap2)) / \
@@ -689,7 +689,7 @@ class FlipTest(Util):
 
     @given(bitmap_cls, hyp_collection, integer, integer, st.booleans())
     def test_flip_empty(self, cls, values, start, end, cow):
-        st.assume(start >= end)
+        assume(start >= end)
         bm_before = cls(values, copy_on_write=cow)
         bm_copy = cls(bm_before)
         bm_after = bm_before.flip(start, end)
@@ -698,7 +698,7 @@ class FlipTest(Util):
 
     @given(bitmap_cls, hyp_collection, integer, integer, st.booleans())
     def test_flip(self, cls, values, start, end, cow):
-        st.assume(start < end)
+        assume(start < end)
         bm_before = cls(values, copy_on_write=cow)
         bm_copy = cls(bm_before)
         bm_after = bm_before.flip(start, end)
@@ -707,7 +707,7 @@ class FlipTest(Util):
 
     @given(hyp_collection, integer, integer, st.booleans())
     def test_flip_inplace_empty(self, values, start, end, cow):
-        st.assume(start >= end)
+        assume(start >= end)
         bm_before = BitMap(values, copy_on_write=cow)
         bm_after = BitMap(bm_before)
         bm_after.flip_inplace(start, end)
@@ -715,7 +715,7 @@ class FlipTest(Util):
 
     @given(hyp_collection, integer, integer, st.booleans())
     def test_flip_inplace(self, values, start, end, cow):
-        st.assume(start < end)
+        assume(start < end)
         bm_before = BitMap(values, copy_on_write=cow)
         bm_after = BitMap(bm_before)
         bm_after.flip_inplace(start, end)
@@ -857,7 +857,7 @@ class FrozenTest(unittest.TestCase):
         """This test as a non null (but extremly low) probability to fail."""
         bitmap1 = FrozenBitMap(values1)
         bitmap2 = FrozenBitMap(values2)
-        st.assume(bitmap1 != bitmap2)
+        assume(bitmap1 != bitmap2)
         self.assertNotEqual(hash(bitmap1), hash(bitmap2))
 
     @given(hyp_collection)
