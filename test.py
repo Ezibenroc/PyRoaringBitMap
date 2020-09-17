@@ -13,9 +13,6 @@ import array
 import pyroaring
 from pyroaring import BitMap, FrozenBitMap
 
-import hypothesis
-print(hypothesis.__version__)
-
 is_python2 = sys.version_info < (3, 0)
 
 try:  # Python2 compatibility
