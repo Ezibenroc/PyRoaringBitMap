@@ -320,7 +320,7 @@ class SelectRankTest(Util):
         assume(len(values) > 0)
         bitmap = cls(values, copy_on_write=cow)
         try:
-            expected = next(i for i in values if i >= other_value)
+            expected = next(i for i in sorted(values) if i >= other_value)
             self.assertEqual(bitmap.next_set_bit(other_value), expected)
         except StopIteration:
             with self.assertRaises(ValueError):
