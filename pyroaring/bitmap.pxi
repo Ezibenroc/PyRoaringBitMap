@@ -144,6 +144,21 @@ cdef class BitMap(AbstractBitMap):
 
         """
         self.__ixor__(other)
+        
+    def overwrite(self, AbstractBitMap other):
+        """
+        Clear the bitmap and overwrite it with another.
+
+        >>> bm = BitMap([3, 12])
+        >>> bm_other = BitMap([4, 14])
+        >>> bm.overwrite(other)
+        >>> bm_other.remove(4)
+        >>> bm
+        BitMap([4, 14])
+        >>> bm_other
+        BitMap([14])
+        """
+        roaring_bitmap_overwrite(self._c_bitmap, other._c_bitmap)
 
     def clear(self):
         """
