@@ -855,7 +855,12 @@ class FrozenTest(unittest.TestCase):
         bitmap1 = FrozenBitMap(values1)
         bitmap2 = FrozenBitMap(values2)
         assume(bitmap1 != bitmap2)
-        self.assertNotEqual(hash(bitmap1), hash(bitmap2))
+        h1 = hash(bitmap1)
+        h2 = hash(bitmap2)
+        hd = hash(bitmap1 ^ bitmap2)
+        hashes = [h1, h2, hd]
+        nb_collisions = len(hashes) - len(set(hashes))
+        self.assertGreaterEqual(1, nb_collisions)
 
     @given(hyp_collection)
     def test_hash_eq(self, values):
