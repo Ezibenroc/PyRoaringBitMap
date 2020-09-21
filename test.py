@@ -847,6 +847,8 @@ class FrozenTest(unittest.TestCase):
             frozen.symmetric_difference_update(other)
         with self.assertRaises(AttributeError):
             frozen.update(number, number+10)
+        with self.assertRaises(AttributeError):
+            frozen.overwrite(other)
         self.assertEqual(frozen, copy)
 
     @given(hyp_collection, hyp_collection)
@@ -1170,6 +1172,20 @@ class PythonSetEquivalentTest(unittest.TestCase):
 
         self.assertTrue(new_element in b2)
         self.assertTrue(new_element not in b1)
+
+    @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
+    def test_overwrite(self, BitMapClass, list1, list2, cow):
+        assume(set(list1) != set(list2))
+        b1 = BitMap(list1, copy_on_write=cow)
+        orig1 = b1.copy()
+        b2 = BitMapClass(list2, copy_on_write=cow)
+        orig2 = b2.copy()
+        b1.overwrite(b2)
+        self.assertEqual(b1, b2)       # the two bitmaps are now equal
+        self.assertNotEqual(b1, orig1) # the first bitmap has been modified
+        self.assertEqual(b2, orig2)    # the second bitmap was left untouched
+        with self.assertRaises(ValueError):
+            b1.overwrite(b1)
 
     @given(small_integer_list, small_integer_list, st.booleans())
     def test_difference_update(self, list1, list2, cow):

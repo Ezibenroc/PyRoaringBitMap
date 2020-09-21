@@ -158,6 +158,8 @@ cdef class BitMap(AbstractBitMap):
         >>> bm_other
         BitMap([14])
         """
+        if self._c_bitmap == other._c_bitmap:
+            raise ValueError('Cannot overwrite itself')
         croaring.roaring_bitmap_overwrite(self._c_bitmap, other._c_bitmap)
 
     def clear(self):
