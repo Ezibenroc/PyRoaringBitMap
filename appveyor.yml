@@ -10,6 +10,7 @@ environment:
     - py_version: 36
     - py_version: 37
     - py_version: 38
+    - py_version: 39
 
 platform:
   - x86
