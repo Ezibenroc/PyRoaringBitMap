@@ -161,6 +161,20 @@ Example of use:
     DEBUG=1 ARCHI=x86-64 python setup.py build_ext
 
 
+Optimizing the builds for your machine (x64)
+---------
+
+For recent Intel and AMD (x64) processors under Linux, you may get better performance by requesting that
+CRoaring be built for your machine, specifically, when building from source.
+Be mindful that when doing so, the generated binary may only run on your machine.
+
+
+.. code:: bash
+
+    ARCHI=native pip install pyroaring  --no-binary :all:
+
+This approach may not work under macOS.
+
 Benchmark
 ---------
 

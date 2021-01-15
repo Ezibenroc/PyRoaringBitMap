@@ -92,8 +92,13 @@ else:
     if 'ARCHI' in os.environ:
         if os.environ['ARCHI'] != "generic":
             compile_args.extend(['-march=%s' % os.environ['ARCHI']])
-    else:
-        compile_args.append('-march=native')
+    # The '-march=native' flag is not universally allowed. In particular, it
+    # will systematically fail on aarch64 systems (like the new Apple M1 systems). It
+    # also creates troubles under macOS with pip installs and requires ugly workarounds.
+    # The best way to handle people who want to use -march=native is to ask them
+    # to pass ARCHI=native to their build process.
+    #else:
+    #    compile_args.append('-march=native')
 
 filename = os.path.join(PKG_DIR, 'pyroaring.%s' % ext)
 pyroaring = Extension('pyroaring',
