@@ -24,7 +24,8 @@ install:
   - set "PATH=%PYTHON%\\scripts;%PYTHON%;%PATH%"
   - pip install --upgrade setuptools
   - pip install "hypothesis < 5.29"
-  - pip install 'Cython>=0.29.21' wheel
+  - pip install "cython>0.29.20"
+  - pip install wheel
   - git config core.symlinks true
   - git reset --hard
   - git submodule init
