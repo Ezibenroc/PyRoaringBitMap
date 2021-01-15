@@ -162,7 +162,7 @@ Example of use:
 
 
 Optimizing the builds for your machine (x64)
----------
+--------------------------------------------
 
 For recent Intel and AMD (x64) processors under Linux, you may get better performance by requesting that
 CRoaring be built for your machine, specifically, when building from source.

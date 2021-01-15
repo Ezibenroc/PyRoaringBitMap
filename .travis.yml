@@ -35,7 +35,7 @@ before_install: |
 
 install:
     - python --version
-    - pip install 'hypothesis < 5.29' 'Cython>=0.29.21' wheel
+    - pip install 'hypothesis < 5.29' 'Cython>=0.29.21' wheel twine
     - pip freeze
 
 script:
@@ -48,11 +48,13 @@ script:
     - python setup.py bdist_wheel
     - pip install dist/pyroaring*.whl
     - python test.py
+    - twine check dist/*
     - pip uninstall -y pyroaring
     - git clean -xfd
     - python setup.py sdist
     - pip install dist/pyroaring*.tar.gz
     - python test.py
+    - twine check dist/*
 
 before_deploy:
     - python setup.py bdist_wheel
