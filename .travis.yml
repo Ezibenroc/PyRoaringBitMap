@@ -35,6 +35,9 @@ before_install: |
 
 install:
     - python --version
+    - pip --version
+    - pip install --upgrade pip
+    - pip --version
     - pip install --upgrade --upgrade-strategy eager 'hypothesis < 5.29' 'Cython>=0.29.21' wheel twine
     - pip freeze
 
