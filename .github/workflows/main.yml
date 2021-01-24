@@ -1,0 +1,61 @@
+name: Pyroaring
+
+on: [push]
+
+jobs:
+    build:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ubuntu-latest, macos-latest, windows-latest]
+                python-version: [3.5, 3.6, 3.7, 3.8, 3.9]
+        steps:
+            - name: Set up the repository
+              uses: actions/checkout@v2
+              with:
+                  submodules: recursive
+                  fetch-depth: 0
+            - name: Set up Python ${{ matrix.python-version }}
+              uses: actions/setup-python@v2
+              with:
+                  python-version: ${{ matrix.python-version }}
+            - name: Install dependencies
+              run: |
+                python --version
+                pip install --upgrade pip
+                pip --version
+                pip install --upgrade --upgrade-strategy eager 'hypothesis < 5.29' 'Cython>=0.29.21' wheel twine
+                pip freeze
+            - name: Local build (Linux & Mac)
+              if: runner.os != 'Windows'
+              run: |
+                python setup.py build_ext -i
+                HYPOTHESIS_PROFILE=ci python test.py
+                python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v
+                git clean -xfd
+            - name: Local build (Windows)
+              if: runner.os == 'Windows'
+              run: |
+                python setup.py build_ext -i
+                set HYPOTHESIS_PROFILE=ci
+                python test.py
+                python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v
+                git clean -xfd
+            - name: Wheel build
+              run: |
+                python setup.py bdist_wheel
+                pip install dist/pyroaring*.whl
+                python test.py
+                python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v
+                twine check dist/*
+                pip uninstall -y pyroaring
+                git clean -xfd
+            - name: Legacy build
+              run: |
+                python setup.py sdist
+                pip install dist/pyroaring*.tar.gz
+                python test.py
+                python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v
+                twine check dist/*
+                pip uninstall -y pyroaring
+                git clean -xfd
