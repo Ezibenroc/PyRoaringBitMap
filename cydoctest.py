@@ -14,6 +14,7 @@ Further options can be passed to testmod() as desired, e.g.
 verbose=True.)
 """
 
+import sys
 import doctest
 import inspect
 
@@ -54,4 +55,6 @@ def testmod(m=None, *args, **kwargs):
     All other arguments are passed directly to doctest.testmod().
     """
     fix_module_doctest(m)
-    doctest.testmod(m, *args, **kwargs)
+    result = doctest.testmod(m, *args, **kwargs)
+    if result.failed > 0:
+        sys.exit('%d test(s) failed' % result.failed)
