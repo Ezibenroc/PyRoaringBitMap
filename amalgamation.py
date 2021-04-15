@@ -37,13 +37,18 @@ def find_src_files(src_dir=SRC_DIR):
     return src_files
 
 
-def find_include_files(include_dir=INCLUDE_DIR):
+def find_include_files(file_list, include_dir):
+    include_files = [os.path.join(INCLUDE_DIR, f) for f in file_list]
+    return include_files
+
+
+def find_include_private_files(include_dir=INCLUDE_DIR):
     include_files = [
-        'roaring_version.h',
+        'isadetection.h',
         'portability.h',
         'containers/perfparameters.h',
+        'containers/container_defs.h',
         'array_util.h',
-        'roaring_types.h',
         'utilasm.h',
         'bitset_util.h',
         'containers/array.h',
@@ -60,10 +65,17 @@ def find_include_files(include_dir=INCLUDE_DIR):
         'containers/containers.h',
         'roaring_array.h',
         'misc/configreport.h',
+    ]
+    return find_include_files(include_files, include_dir)
+
+
+def find_include_public_files(include_dir=INCLUDE_DIR):
+    include_files = [
+        'roaring_version.h',
+        'roaring_types.h',
         'roaring.h',
     ]
-    include_files = [os.path.join(INCLUDE_DIR, f) for f in include_files]
-    return include_files
+    return find_include_files(include_files, include_dir)
 
 
 def check_file_list(file_list):
@@ -78,8 +90,8 @@ def check_file_list(file_list):
 
 
 def amalgamate_file(file_list, output_file, license_txt=LICENSE_TXT, additional_txt=None):
-    regex_1 = '#include\s*"[a-zA-Z_/]+.h"\s*\n'
-    regex_2 = '#include\s*<roaring/[a-zA-Z_/]+.h>\s*\n'
+    regex_1 = '#include\s*"[a-zA-Z_/]+.h"\s*'
+    regex_2 = '#include\s*<roaring/[a-zA-Z_/]+.h>\s*'
     regex = re.compile('(%s)|(%s)' % (regex_1, regex_2))
     with open(output_file, 'w') as output_f:
         output_f.write('/* File automatically generated on %s. */\n\n' %
@@ -100,10 +112,11 @@ def amalgamate_file(file_list, output_file, license_txt=LICENSE_TXT, additional_
 
 
 def amalgamate(target_dir):
-    src_files = check_file_list(find_src_files())
-    include_files = check_file_list(find_include_files())
+    src_files = check_file_list(['custom_roaring.c'] + find_src_files())
+    include_public_files = check_file_list(find_include_public_files() + ['custom_roaring.h'])
+    include_private_files = check_file_list(find_include_private_files())
     target_src = os.path.join(target_dir, SRC_FILE)
     target_include = os.path.join(target_dir, INCLUDE_FILE)
-    amalgamate_file(src_files, target_src,
+    amalgamate_file(include_private_files + src_files, target_src,
                     additional_txt='#include "%s"' % INCLUDE_FILE)
-    amalgamate_file(include_files, target_include)
+    amalgamate_file(include_public_files, target_include)

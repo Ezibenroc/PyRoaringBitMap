@@ -30,6 +30,7 @@ jobs:
               if: runner.os != 'Windows'
               run: |
                 python setup.py build_ext -i
+                python -c 'import pyroaring; pyroaring.print_platform()'
                 HYPOTHESIS_PROFILE=ci python test.py
                 python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v
                 git clean -xfd
@@ -37,6 +38,7 @@ jobs:
               if: runner.os == 'Windows'
               run: |
                 python setup.py build_ext -i
+                python -c 'import pyroaring; pyroaring.print_platform()'
                 set HYPOTHESIS_PROFILE=ci
                 python test.py
                 python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v
@@ -45,6 +47,7 @@ jobs:
               run: |
                 python setup.py bdist_wheel
                 pip install dist/pyroaring*.whl
+                python -c 'import pyroaring; pyroaring.print_platform()'
                 python test.py
                 python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v
                 twine check dist/*
@@ -54,6 +57,7 @@ jobs:
               run: |
                 python setup.py sdist
                 pip install dist/pyroaring*.tar.gz
+                python -c 'import pyroaring; pyroaring.print_platform()'
                 python test.py
                 python -c "import cydoctest, pyroaring; cydoctest.testmod(pyroaring)" -v
                 twine check dist/*
