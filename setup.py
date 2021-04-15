@@ -8,7 +8,7 @@ import sys
 import subprocess
 import platform
 
-VERSION = '0.2.11-dev2'
+VERSION = '0.3.0'
 PKG_DIR = 'pyroaring'
 
 PLATFORM_WINDOWS = (platform.system() == 'Windows')

@@ -1,5 +1,3 @@
-|Build Status|
-|Appveyor Build|
 |Documentation Status|
 
 An efficient and light-weight ordered set of 32 bits integers.
@@ -34,8 +32,6 @@ Output:
 Installation from Pypi
 ----------------------
 
-Note: this installation method requires a recent C compiler like GCC.
-
 Supported systems: Linux, MacOS or Windows, Python 3.5 or higher. Note that pyroaring might still work with older Python
 versions, but they are not tested anymore.
 
@@ -56,21 +52,6 @@ the commands by ``sudo``).
 
 If you want to use Python 3 and your system defaults on Python 2.7, you
 may need to adjust the above commands, e.g., replace ``pip`` by ``pip3``.
-
-Installation from the wheels
-----------------------------
-
-Several wheels are published on GitHub for each release:
-https://github.com/Ezibenroc/PyRoaringBitMap/releases
-
-Installing from a wheel should be the easiest as no C compiler is required. However, performance may be lower. Note that
-you have to chose the right wheel, depending on your system.
-
-For instance, to install ``pyroaring`` version ``0.2.1`` for Python ``3.6`` on Linux:
-
-.. code:: bash
-
-   pip install --user https://github.com/Ezibenroc/PyRoaringBitMap/releases/download/0.2.1/pyroaring-0.2.1-cp36-cp36m-linux_x86_64.whl
 
 Installation from conda-forge
 -----------------------------
@@ -231,9 +212,5 @@ slice                               2.88e-03           3.04e-01         1.00e-01
 small slice                         8.93e-05           3.00e-01         3.60e-03  nan                   1.79e-02
 ===============================  ===========  =================  ===============  ==========  ==================
 
-.. |Build Status| image:: https://travis-ci.org/Ezibenroc/PyRoaringBitMap.svg?branch=master
-   :target: https://travis-ci.org/Ezibenroc/PyRoaringBitMap
-.. |Appveyor Build| image:: https://ci.appveyor.com/api/projects/status/6hk915xgpvrwhirm?svg=true
-   :target: https://ci.appveyor.com/project/Ezibenroc/pyroaringbitmap
 .. |Documentation Status| image:: https://readthedocs.org/projects/pyroaringbitmap/badge/?version=stable
    :target: http://pyroaringbitmap.readthedocs.io/en/stable/?badge=stable
