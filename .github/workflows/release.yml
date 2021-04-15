@@ -18,10 +18,10 @@ jobs:
           with:
               submodules: recursive
               fetch-depth: 0
-        - name: Set up Python
-          uses: actions/setup-python@v1
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v2
           with:
-              python-version: 3.7
+              python-version: ${{ matrix.python-version }}
         - name: Install dependencies
           run: |
             pip install --upgrade pip
@@ -39,11 +39,12 @@ jobs:
               file_glob: true
               tag: ${{ github.ref }}
         - name: Publish on Pypi
-          uses: pypa/gh-action-pypi-publish@v1.4.2
-          with:
-            user: __token__
-            password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-            repository_url: https://test.pypi.org/legacy/
+          env:
+            TWINE_USERNAME:   __token__
+            TWINE_PASSWORD:   ${{ secrets.TEST_PYPI_API_TOKEN }}
+            TWINE_REPOSITORY: testpypi
+          run: |
+            twine upload dist/*
     wheel_linux:
         name: Linux wheels
         runs-on: ubuntu-latest
@@ -67,16 +68,17 @@ jobs:
           uses: svenstaro/upload-release-action@v2
           with:
               repo_token: ${{ secrets.GITHUB_TOKEN }}
-              file: dist/*
+              file: dist/*-manylinux*.whl
               overwrite: true
               file_glob: true
               tag: ${{ github.ref }}
         - name: Publish on Pypi
-          uses: pypa/gh-action-pypi-publish@v1.4.2
-          with:
-            user: __token__
-            password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-            repository_url: https://test.pypi.org/legacy/
+          env:
+            TWINE_USERNAME:   __token__
+            TWINE_PASSWORD:   ${{ secrets.TEST_PYPI_API_TOKEN }}
+            TWINE_REPOSITORY: testpypi
+          run: |
+            twine upload dist/*-manylinux*.whl
     sdist:
         name: Source release
         runs-on: ubuntu-latest
@@ -87,7 +89,7 @@ jobs:
               submodules: recursive
               fetch-depth: 0
         - name: Set up Python
-          uses: actions/setup-python@v1
+          uses: actions/setup-python@v2
           with:
               python-version: 3.7
         - name: Install dependencies
@@ -107,8 +109,9 @@ jobs:
               file_glob: true
               tag: ${{ github.ref }}
         - name: Publish on Pypi
-          uses: pypa/gh-action-pypi-publish@v1.4.2
-          with:
-            user: __token__
-            password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-            repository_url: https://test.pypi.org/legacy/
+          env:
+            TWINE_USERNAME:   __token__
+            TWINE_PASSWORD:   ${{ secrets.TEST_PYPI_API_TOKEN }}
+            TWINE_REPOSITORY: testpypi
+          run: |
+            twine upload dist/*
