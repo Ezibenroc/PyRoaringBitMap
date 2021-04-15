@@ -5,6 +5,78 @@ on:
         tags: ['*']
 
 jobs:
+    wheel_non_linux:
+        name: Windows & OSX wheels
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [macos-latest, windows-latest]
+                python-version: [3.5, 3.6, 3.7, 3.8, 3.9]
+        steps:
+        - name: Set up the repository
+          uses: actions/checkout@v2
+          with:
+              submodules: recursive
+              fetch-depth: 0
+        - name: Set up Python
+          uses: actions/setup-python@v1
+          with:
+              python-version: 3.7
+        - name: Install dependencies
+          run: |
+            pip install --upgrade pip
+            pip install --upgrade --upgrade-strategy eager 'Cython>=0.29.21' wheel twine
+            pip freeze
+        - name: Build the package
+          run: |
+              python setup.py bdist_wheel
+        - name: Publish on Github
+          uses: svenstaro/upload-release-action@v2
+          with:
+              repo_token: ${{ secrets.GITHUB_TOKEN }}
+              file: dist/*
+              overwrite: true
+              file_glob: true
+              tag: ${{ github.ref }}
+        - name: Publish on Pypi
+          uses: pypa/gh-action-pypi-publish@v1.4.2
+          with:
+            user: __token__
+            password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+            repository_url: https://test.pypi.org/legacy/
+    wheel_linux:
+        name: Linux wheels
+        runs-on: ubuntu-latest
+        steps:
+        - name: Set up the repository
+          uses: actions/checkout@v2
+          with:
+              submodules: recursive
+              fetch-depth: 0
+        - name: Build manylinux2014
+          uses: RalfG/python-wheels-manylinux-build@v0.3-manylinux2014_x86_64
+          with:
+            python-versions: 'cp35-cp35m cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
+            build-requirements: 'cython'
+        - name: Install dependencies
+          run: |
+            pip install --upgrade pip
+            pip install --upgrade twine
+            pip freeze
+        - name: Publish on Github
+          uses: svenstaro/upload-release-action@v2
+          with:
+              repo_token: ${{ secrets.GITHUB_TOKEN }}
+              file: dist/*
+              overwrite: true
+              file_glob: true
+              tag: ${{ github.ref }}
+        - name: Publish on Pypi
+          uses: pypa/gh-action-pypi-publish@v1.4.2
+          with:
+            user: __token__
+            password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+            repository_url: https://test.pypi.org/legacy/
     sdist:
         name: Source release
         runs-on: ubuntu-latest
