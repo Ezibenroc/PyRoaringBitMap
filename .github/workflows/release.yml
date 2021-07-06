@@ -41,8 +41,7 @@ jobs:
         - name: Publish on Pypi
           env:
             TWINE_USERNAME:   __token__
-            TWINE_PASSWORD:   ${{ secrets.TEST_PYPI_API_TOKEN }}
-            TWINE_REPOSITORY: testpypi
+            TWINE_PASSWORD:   ${{ secrets.PYPI_API_TOKEN }}
           run: |
             twine upload dist/*
     wheel_linux:
@@ -75,8 +74,7 @@ jobs:
         - name: Publish on Pypi
           env:
             TWINE_USERNAME:   __token__
-            TWINE_PASSWORD:   ${{ secrets.TEST_PYPI_API_TOKEN }}
-            TWINE_REPOSITORY: testpypi
+            TWINE_PASSWORD:   ${{ secrets.PYPI_API_TOKEN }}
           run: |
             twine upload dist/*-manylinux*.whl
     sdist:
@@ -111,7 +109,6 @@ jobs:
         - name: Publish on Pypi
           env:
             TWINE_USERNAME:   __token__
-            TWINE_PASSWORD:   ${{ secrets.TEST_PYPI_API_TOKEN }}
-            TWINE_REPOSITORY: testpypi
+            TWINE_PASSWORD:   ${{ secrets.PYPI_API_TOKEN }}
           run: |
             twine upload dist/*
