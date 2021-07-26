@@ -1,10 +1,9 @@
-name: Release
+name: Test release
 
 on:
     push:
         tags:
-            - '*'
-            - '!*.dev*'  # ignoring dev tags, these are test releases
+            - '*.dev*'  # only running on dev tags, these are test releases
 
 jobs:
     wheel_non_linux:
@@ -40,10 +39,12 @@ jobs:
               overwrite: true
               file_glob: true
               tag: ${{ github.ref }}
+              prerelease: true
         - name: Publish on Pypi
           env:
             TWINE_USERNAME:   __token__
-            TWINE_PASSWORD:   ${{ secrets.PYPI_API_TOKEN }}
+            TWINE_PASSWORD:   ${{ secrets.TEST_PYPI_API_TOKEN }}
+            TWINE_REPOSITORY: testpypi
           run: |
             twine upload dist/*
     wheel_linux:
@@ -73,10 +74,12 @@ jobs:
               overwrite: true
               file_glob: true
               tag: ${{ github.ref }}
+              prerelease: true
         - name: Publish on Pypi
           env:
             TWINE_USERNAME:   __token__
-            TWINE_PASSWORD:   ${{ secrets.PYPI_API_TOKEN }}
+            TWINE_PASSWORD:   ${{ secrets.TEST_PYPI_API_TOKEN }}
+            TWINE_REPOSITORY: testpypi
           run: |
             twine upload dist/*-manylinux*.whl
     sdist:
@@ -108,9 +111,11 @@ jobs:
               overwrite: true
               file_glob: true
               tag: ${{ github.ref }}
+              prerelease: true
         - name: Publish on Pypi
           env:
             TWINE_USERNAME:   __token__
-            TWINE_PASSWORD:   ${{ secrets.PYPI_API_TOKEN }}
+            TWINE_PASSWORD:   ${{ secrets.TEST_PYPI_API_TOKEN }}
+            TWINE_REPOSITORY: testpypi
           run: |
             twine upload dist/*
