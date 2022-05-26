@@ -74,6 +74,7 @@ def find_include_public_files(include_dir=INCLUDE_DIR):
         'roaring_version.h',
         'roaring_types.h',
         'roaring.h',
+        'memory.h'
     ]
     return find_include_files(include_files, include_dir)
 

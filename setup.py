@@ -36,7 +36,7 @@ def git_version():
 
 
 def git_tag():
-    return run(['git', 'describe', '--always', '--dirty'])
+    return run(['git', 'describe', '--tags', '--always', '--dirty'])
 
 
 def write_version(filename, version_dict):
