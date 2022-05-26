@@ -16,7 +16,7 @@ jobs:
                 python-version: [3.6, 3.7, 3.8, 3.9]
         steps:
         - name: Set up the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
               submodules: recursive
               fetch-depth: 0
@@ -51,7 +51,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
         - name: Set up the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
               submodules: recursive
               fetch-depth: 0
@@ -84,7 +84,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
         - name: Set up the repository
-          uses: actions/checkout@v2
+          uses: actions/checkout@v3
           with:
               submodules: recursive
               fetch-depth: 0
