@@ -36,6 +36,7 @@ uint32 = st.integers(min_value=0, max_value=2**32-1)
 uint64 = st.integers(min_value=0, max_value=2**64-1)
 large_uint64 = st.integers(min_value=2**32, max_value=2**64-1)
 integer = st.integers(min_value=0, max_value=2**31-1)
+int64 = st.integers(min_value=-2**63, max_value=2**63-1)
 
 range_max_size = 2**18
 
@@ -717,6 +718,17 @@ class FlipTest(Util):
         bm_after = BitMap(bm_before)
         bm_after.flip_inplace(start, end)
         self.check_flip(bm_before, bm_after, start, end)
+
+
+class ShiftTest(Util):
+    @given(bitmap_cls, hyp_collection, int64, st.booleans())
+    def test_shift(self, cls, values, offset, cow):
+        bm_before = cls(values, copy_on_write=cow)
+        bm_copy = cls(bm_before)
+        bm_after = bm_before.shift(offset)
+        self.assertEqual(bm_before, bm_copy)
+        expected = cls([val+offset for val in values if val+offset in range(0, 2**32)], copy_on_write=cow)
+        self.assertEqual(bm_after, expected)
 
 
 class IncompatibleInteraction(Util):

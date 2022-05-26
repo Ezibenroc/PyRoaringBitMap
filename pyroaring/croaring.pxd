@@ -1,4 +1,4 @@
-from libc.stdint cimport uint8_t, int32_t, uint32_t, uint64_t
+from libc.stdint cimport uint8_t, int32_t, uint32_t, uint64_t, int64_t
 from libcpp cimport bool
 
 cdef extern from "roaring.h":
@@ -80,6 +80,7 @@ cdef extern from "roaring.h":
     uint64_t roaring_bitmap_rank(const roaring_bitmap_t *r, uint32_t x)
     roaring_bitmap_t *roaring_bitmap_flip(const roaring_bitmap_t *x1, uint64_t range_start, uint64_t range_end)
     void roaring_bitmap_flip_inplace(roaring_bitmap_t *x1, uint64_t range_start, uint64_t range_end)
+    roaring_bitmap_t *roaring_bitmap_add_offset(const roaring_bitmap_t *bm, int64_t offset)
     bool roaring_bitmap_select(const roaring_bitmap_t *r, uint32_t rank, uint32_t *element)
     void roaring_bitmap_statistics(const roaring_bitmap_t *r, roaring_statistics_t *stat)
     size_t roaring_bitmap_portable_size_in_bytes(const roaring_bitmap_t *ra)

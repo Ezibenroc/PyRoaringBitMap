@@ -300,6 +300,18 @@ cdef class AbstractBitMap:
         """
         return self.from_ptr(croaring.roaring_bitmap_flip(self._c_bitmap, start, end))
 
+    def shift(self, int64_t offset):
+        """
+        Add the value 'offset' to each and every value of the bitmap.
+
+        If offset + element is outside of the range [0,2^32), that the element will be dropped.
+
+        >>> bm = BitMap([3, 12])
+        >>> bm.shift(21)
+        BitMap([24, 33])
+        """
+        return self.from_ptr(croaring.roaring_bitmap_add_offset(self._c_bitmap, offset))
+
     def copy(self):
         """
         Return a copy of a set.
