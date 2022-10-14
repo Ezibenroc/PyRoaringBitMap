@@ -1,7 +1,7 @@
 from libc.stdint cimport uint8_t, int32_t, uint32_t, uint64_t, int64_t
 from libcpp cimport bool
 
-cdef extern from "roaring.h":
+cdef extern from "roaring/roaring.h":
     ctypedef struct roaring_array_t:
         pass
     ctypedef struct roaring_bitmap_t:
@@ -91,4 +91,67 @@ cdef extern from "roaring.h":
     uint32_t roaring_read_uint32_iterator(roaring_uint32_iterator_t *it, uint32_t* buf, uint32_t count)
     bool roaring_move_uint32_iterator_equalorlarger(roaring_uint32_iterator_t *it, uint32_t val)
     void roaring_free_uint32_iterator(roaring_uint32_iterator_t *it)
-    void print_platform_information()
+
+cdef extern from "roaring/misc/configreport.h" namespace "roaring::misc":
+    void tellmeall();
+
+cdef extern from "roaring64map.hh" namespace "roaring":
+    cdef cppclass Roaring64Map:
+        Roaring64Map() except +
+        Roaring64Map(size_t, uint32_t*) except +
+        Roaring64Map(size_t, uint64_t *) except +
+        Roaring64Map(roaring_bitmap_t *) except +
+        Roaring64Map(Roaring64Map&) except +
+
+        void add(uint64_t)
+        bool addChecked(uint64_t)
+        void remove(uint64_t)
+        bool removeChecked(uint64_t)
+        void clear()
+        uint64_t maximum()
+        uint64_t minimum()
+        bool contains(uint64_t)
+
+        # Roaring64Map &operator&=(Roaring64Map &)
+        # Roaring64Map &operator-=(Roaring64Map &)
+        # Roaring64Map &operator|=(Roaring64Map &)
+        # Roaring64Map &operator^=(Roaring64Map &)
+        bool operator==(Roaring64Map&)
+
+        Roaring64Map operator&(Roaring64Map &o)
+        Roaring64Map operator-(Roaring64Map &o)
+        Roaring64Map operator|(Roaring64Map &o)
+        Roaring64Map operator^(Roaring64Map &o)
+
+        void swap(Roaring64Map&)
+        uint64_t cardinality()
+        bool isEmpty()
+        bool isFull()
+        bool isSubset(Roaring64Map&)
+        bool isStrictSubset(Roaring64Map&)
+        void flip(uint64_t, uint64_t)
+
+        bool removeRunCompression()
+        bool runOptimize()
+        size_t shrinkToFit()
+
+        bool select(uint64_t, uint64_t*)
+        uint64_t rank(uint64_t)
+
+        size_t write(char *, bool)
+        @staticmethod
+        Roaring64Map readSafe(char *buf, size_t maxbytes) except +
+        size_t getSizeInBytes(bool)
+
+        void writeFrozen(char *buf)
+        @staticmethod
+        Roaring64Map frozenView(char *buf)
+        size_t getFrozenSizeInBytes()
+
+        void setCopyOnWrite(bool val)
+        bool getCopyOnWrite()
+
+        @staticmethod
+        Roaring64Map fastunion(size_t, Roaring64Map **)
+
+        # TODO iterators

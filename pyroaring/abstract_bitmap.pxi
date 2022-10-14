@@ -13,7 +13,7 @@ except NameError: # python 3
     pass
 
 def print_platform():
-    croaring.print_platform_information()
+    croaring.tellmeall()
 
 cdef croaring.roaring_bitmap_t *deserialize_ptr(char *buff):
     cdef croaring.roaring_bitmap_t *ptr
