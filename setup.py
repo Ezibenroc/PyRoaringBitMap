@@ -8,6 +8,11 @@ from distutils.sysconfig import get_config_vars
 
 from setuptools import setup
 from setuptools.extension import Extension
+try:
+    from Cython.Build import cythonize
+    USE_CYTHON = True
+except ImportError:
+    USE_CYTHON = False
 
 VERSION = "0.3.3"
 PKG_DIR = "pyroaring"
@@ -61,10 +66,8 @@ except (IOError, ImportError, RuntimeError):
     print("Could not generate long description.")
     long_description = ""
 
-USE_CYTHON = os.path.exists(os.path.join(PKG_DIR, "pyroaring.pyx"))
 if USE_CYTHON:
     print("Building pyroaring from Cython sources.")
-    from Cython.Build import cythonize
 
     ext = "pyx"
     write_version(
