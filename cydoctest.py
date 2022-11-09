@@ -58,3 +58,8 @@ def testmod(m=None, *args, **kwargs):
     result = doctest.testmod(m, *args, **kwargs)
     if result.failed > 0:
         sys.exit('%d test(s) failed' % result.failed)
+
+
+if __name__ == "__main__":
+    import pyroaring
+    testmod(pyroaring)

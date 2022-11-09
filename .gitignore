@@ -7,14 +7,14 @@ __pycache__
 *.pickle
 *.pdf
 *.so
+.tox
+wheel
 build
 dist
 *.egg-info
 amalgamation_demo.*
-roaring.*
-pyroaring.cpp
 MANIFEST
 docs/_build
 Pipfile.lock
-version.pxi
 .mypy_cache
+pyroaring/pyroaring.cpp

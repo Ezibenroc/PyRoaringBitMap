@@ -1475,11 +1475,8 @@ class VersionTest(unittest.TestCase):
             self.fail('Regex "%s" does not match text "%s".' % (pattern, text))
 
     def test_version(self):
-        self.assert_regex('\d+\.\d+\.\d+',      pyroaring.__version__)
-        self.assert_regex('[0-9a-fA-F]{40}',    pyroaring.__git_version__)
+        self.assert_regex('\d+\.\d+\.\d+(?:\.dev\d+)?',      pyroaring.__version__)
         self.assert_regex('v\d+\.\d+\.\d+',     pyroaring.__croaring_version__)
-        self.assert_regex('[0-9a-fA-F]{40}',
-                          pyroaring.__croaring_git_version__)
 
 
 if __name__ == "__main__":

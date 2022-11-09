@@ -41,7 +41,7 @@ cdef extern from "roaring.h":
     void roaring_bitmap_add_many(roaring_bitmap_t *r, size_t n_args, const uint32_t *vals)
     void roaring_bitmap_add_range(roaring_bitmap_t *ra, uint64_t min, uint64_t max);
     void roaring_bitmap_remove(roaring_bitmap_t *r, uint32_t x)
-    inline void roaring_bitmap_remove_range(roaring_bitmap_t *ra, uint64_t min, uint64_t max)
+    void roaring_bitmap_remove_range(roaring_bitmap_t *ra, uint64_t min, uint64_t max)
     bool roaring_bitmap_remove_checked(roaring_bitmap_t *r, uint32_t x)
     void roaring_bitmap_clear(roaring_bitmap_t *r)
     bool roaring_bitmap_contains(const roaring_bitmap_t *r, uint32_t val)
@@ -91,4 +91,3 @@ cdef extern from "roaring.h":
     uint32_t roaring_read_uint32_iterator(roaring_uint32_iterator_t *it, uint32_t* buf, uint32_t count)
     bool roaring_move_uint32_iterator_equalorlarger(roaring_uint32_iterator_t *it, uint32_t val)
     void roaring_free_uint32_iterator(roaring_uint32_iterator_t *it)
-    void print_platform_information()

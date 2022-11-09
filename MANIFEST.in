@@ -1,3 +1,4 @@
-include pyroaring/roaring.h
+include pyroaring/*
 include LICENSE
 exclude pyproject.toml
+exclude pyroaring/pyroaring.cpp
