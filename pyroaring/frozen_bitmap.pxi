@@ -1,17 +1,13 @@
 cdef class FrozenBitMap(AbstractBitMap):
 
     def __ior__(self, other):
-        '''Unsupported method.'''
-        raise TypeError('Cannot modify a %s.' % self.__class__.__name__)
+        return self.__or__(other)
 
     def __iand__(self, other):
-        '''Unsupported method.'''
-        raise TypeError('Cannot modify a %s.' % self.__class__.__name__)
+        return self.__and__(other)
 
     def __ixor__(self, other):
-        '''Unsupported method.'''
-        raise TypeError('Cannot modify a %s.' % self.__class__.__name__)
+        return self.__xor__(other)
 
     def __isub__(self, other):
-        '''Unsupported method.'''
-        raise TypeError('Cannot modify a %s.' % self.__class__.__name__)
+        return self.__sub__(other)

@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import unittest
+import contextlib
 import random
 import functools
 import os
@@ -825,20 +826,51 @@ class BitMapTest(unittest.TestCase):
 
 class FrozenTest(unittest.TestCase):
 
+    @contextlib.contextmanager
+    def assertUnchanged(self, instance):
+        the_copy = pickle.loads(pickle.dumps(instance))
+        yield
+        self.assertEqual(the_copy, instance)
+
+    @given(hyp_collection, hyp_collection, integer)
+    def test_in_place_operations(self, values, other, number):
+        copy = FrozenBitMap(values)
+        other = BitMap(other)
+
+        # The instance should be unchanged, even though the variable will be.
+        frozen = FrozenBitMap(values)
+        with self.assertUnchanged(frozen):
+            with self.assertUnchanged(other):
+                expected = frozen | other
+                frozen |= other
+                self.assertEqual(expected, frozen)
+
+        frozen = FrozenBitMap(values)
+        with self.assertUnchanged(frozen):
+            with self.assertUnchanged(other):
+                expected = frozen & other
+                frozen &= other
+                self.assertEqual(expected, frozen)
+
+        frozen = FrozenBitMap(values)
+        with self.assertUnchanged(frozen):
+            with self.assertUnchanged(other):
+                expected = frozen ^ other
+                frozen ^= other
+                self.assertEqual(expected, frozen)
+
+        frozen = FrozenBitMap(values)
+        with self.assertUnchanged(frozen):
+            with self.assertUnchanged(other):
+                expected = frozen - other
+                frozen -= other
+                self.assertEqual(expected, frozen)
+
     @given(hyp_collection, hyp_collection, integer)
     def test_immutability(self, values, other, number):
         frozen = FrozenBitMap(values)
         copy = FrozenBitMap(values)
         other = BitMap(other)
-        with self.assertRaises(TypeError):
-            frozen |= other
-        with self.assertRaises(TypeError):
-            frozen &= other
-        with self.assertRaises(TypeError):
-            frozen ^= other
-        with self.assertRaises(TypeError):
-            frozen -= other
-        self.assertEqual(frozen, copy)
         with self.assertRaises(AttributeError):
             frozen.clear()
         with self.assertRaises(AttributeError):
