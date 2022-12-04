@@ -1,7 +1,6 @@
 #! /usr/bin/env python3
 
 import unittest
-import contextlib
 import random
 import functools
 import os
@@ -387,6 +386,48 @@ class BinaryOperationsTest(Util):
 
     def test_sub_inplace(self):
         self.do_test_binary_op_inplace(lambda x, y: x.__isub__(y))
+
+    @given(bitmap_cls, hyp_collection, hyp_collection, st.booleans())
+    def do_test_binary_op_inplace_frozen(self, op, cls2, values1, values2, cow):
+        self.set1 = frozenset(values1)
+        self.set2 = frozenset(values2)
+
+        self.bitmap1 = FrozenBitMap(values1, cow)
+        old_bitmap1 = FrozenBitMap(self.bitmap1)
+        self.bitmap2 = cls2(values2, cow)
+        old_bitmap2 = cls2(self.bitmap2)
+
+        new_set = op(self.set1, self.set2)
+        new_bitmap = op(self.bitmap1, self.bitmap2)
+
+        self.assertEqual(self.bitmap1, old_bitmap1)
+        self.assertEqual(self.bitmap2, old_bitmap2)
+
+        self.compare_with_set(new_bitmap, new_set)
+
+    def test_or_inplace_frozen(self):
+        def op(x, y):
+            x |= y
+            return x
+        self.do_test_binary_op_inplace_frozen(op)
+
+    def test_and_inplace_frozen(self):
+        def op(x, y):
+            x &= y
+            return x
+        self.do_test_binary_op_inplace_frozen(op)
+
+    def test_xor_inplace_frozen(self):
+        def op(x, y):
+            x ^= y
+            return x
+        self.do_test_binary_op_inplace_frozen(op)
+
+    def test_sub_inplace_frozen(self):
+        def op(x, y):
+            x -= y
+            return x
+        self.do_test_binary_op_inplace_frozen(op)
 
 
 class ComparisonTest(Util):
@@ -825,46 +866,6 @@ class BitMapTest(unittest.TestCase):
 
 
 class FrozenTest(unittest.TestCase):
-
-    @contextlib.contextmanager
-    def assertUnchanged(self, instance):
-        the_copy = pickle.loads(pickle.dumps(instance))
-        yield
-        self.assertEqual(the_copy, instance)
-
-    @given(hyp_collection, hyp_collection, integer)
-    def test_in_place_operations(self, values, other, number):
-        copy = FrozenBitMap(values)
-        other = BitMap(other)
-
-        # The instance should be unchanged, even though the variable will be.
-        frozen = FrozenBitMap(values)
-        with self.assertUnchanged(frozen):
-            with self.assertUnchanged(other):
-                expected = frozen | other
-                frozen |= other
-                self.assertEqual(expected, frozen)
-
-        frozen = FrozenBitMap(values)
-        with self.assertUnchanged(frozen):
-            with self.assertUnchanged(other):
-                expected = frozen & other
-                frozen &= other
-                self.assertEqual(expected, frozen)
-
-        frozen = FrozenBitMap(values)
-        with self.assertUnchanged(frozen):
-            with self.assertUnchanged(other):
-                expected = frozen ^ other
-                frozen ^= other
-                self.assertEqual(expected, frozen)
-
-        frozen = FrozenBitMap(values)
-        with self.assertUnchanged(frozen):
-            with self.assertUnchanged(other):
-                expected = frozen - other
-                frozen -= other
-                self.assertEqual(expected, frozen)
 
     @given(hyp_collection, hyp_collection, integer)
     def test_immutability(self, values, other, number):
