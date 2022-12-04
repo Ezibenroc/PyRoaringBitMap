@@ -443,34 +443,17 @@ cdef class AbstractBitMap:
         cdef croaring.roaring_bitmap_t *r = func(self._c_bitmap, other._c_bitmap)
         return self.from_ptr(r)
 
-    cdef binary_iop(self, AbstractBitMap other, (void)func(croaring.roaring_bitmap_t*, const croaring.roaring_bitmap_t*)):
-        self.__check_compatibility(other)
-        func(self._c_bitmap, other._c_bitmap)
-        return self
-
     def __or__(self, other):
         return (<AbstractBitMap>self).binary_op(<AbstractBitMap?>other, croaring.roaring_bitmap_or)
-
-    def __ior__(self, other):
-        return (<AbstractBitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_or_inplace)
 
     def __and__(self, other):
         return (<AbstractBitMap>self).binary_op(<AbstractBitMap?>other, croaring.roaring_bitmap_and)
 
-    def __iand__(self, other):
-        return (<AbstractBitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_and_inplace)
-
     def __xor__(self, other):
         return (<AbstractBitMap>self).binary_op(<AbstractBitMap?>other, croaring.roaring_bitmap_xor)
 
-    def __ixor__(self, other):
-        return (<AbstractBitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_xor_inplace)
-
     def __sub__(self, other):
         return (<AbstractBitMap>self).binary_op(<AbstractBitMap?>other, croaring.roaring_bitmap_andnot)
-
-    def __isub__(self, other):
-        return (<AbstractBitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_andnot_inplace)
 
     def union_cardinality(self, AbstractBitMap other):
         """

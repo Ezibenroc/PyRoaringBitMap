@@ -106,6 +106,23 @@ cdef class BitMap(AbstractBitMap):
         if not test:
             raise KeyError(value)
 
+    cdef binary_iop(self, AbstractBitMap other, (void)func(croaring.roaring_bitmap_t*, const croaring.roaring_bitmap_t*)):
+        self.__check_compatibility(other)
+        func(self._c_bitmap, other._c_bitmap)
+        return self
+
+    def __ior__(self, other):
+        return (<BitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_or_inplace)
+
+    def __iand__(self, other):
+        return (<BitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_and_inplace)
+
+    def __ixor__(self, other):
+        return (<BitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_xor_inplace)
+
+    def __isub__(self, other):
+        return (<BitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_andnot_inplace)
+
     def intersection_update(self, *all_values): # FIXME could be more efficient
         """
         Update the bitmap by taking its intersection with the given values.
