@@ -387,6 +387,48 @@ class BinaryOperationsTest(Util):
     def test_sub_inplace(self):
         self.do_test_binary_op_inplace(lambda x, y: x.__isub__(y))
 
+    @given(bitmap_cls, hyp_collection, hyp_collection, st.booleans())
+    def do_test_binary_op_inplace_frozen(self, op, cls2, values1, values2, cow):
+        self.set1 = frozenset(values1)
+        self.set2 = frozenset(values2)
+
+        self.bitmap1 = FrozenBitMap(values1, cow)
+        old_bitmap1 = FrozenBitMap(self.bitmap1)
+        self.bitmap2 = cls2(values2, cow)
+        old_bitmap2 = cls2(self.bitmap2)
+
+        new_set = op(self.set1, self.set2)
+        new_bitmap = op(self.bitmap1, self.bitmap2)
+
+        self.assertEqual(self.bitmap1, old_bitmap1)
+        self.assertEqual(self.bitmap2, old_bitmap2)
+
+        self.compare_with_set(new_bitmap, new_set)
+
+    def test_or_inplace_frozen(self):
+        def op(x, y):
+            x |= y
+            return x
+        self.do_test_binary_op_inplace_frozen(op)
+
+    def test_and_inplace_frozen(self):
+        def op(x, y):
+            x &= y
+            return x
+        self.do_test_binary_op_inplace_frozen(op)
+
+    def test_xor_inplace_frozen(self):
+        def op(x, y):
+            x ^= y
+            return x
+        self.do_test_binary_op_inplace_frozen(op)
+
+    def test_sub_inplace_frozen(self):
+        def op(x, y):
+            x -= y
+            return x
+        self.do_test_binary_op_inplace_frozen(op)
+
 
 class ComparisonTest(Util):
 
@@ -830,15 +872,6 @@ class FrozenTest(unittest.TestCase):
         frozen = FrozenBitMap(values)
         copy = FrozenBitMap(values)
         other = BitMap(other)
-        with self.assertRaises(TypeError):
-            frozen |= other
-        with self.assertRaises(TypeError):
-            frozen &= other
-        with self.assertRaises(TypeError):
-            frozen ^= other
-        with self.assertRaises(TypeError):
-            frozen -= other
-        self.assertEqual(frozen, copy)
         with self.assertRaises(AttributeError):
             frozen.clear()
         with self.assertRaises(AttributeError):
