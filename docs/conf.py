@@ -59,7 +59,7 @@ author = 'Tom Cornebize'
 # built documents.
 #
 # The short X.Y version.
-version = '0.3.7'
+version = '0.3.8'
 # The full version, including alpha/beta/rc tags.
 release = version
 
