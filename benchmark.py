@@ -104,7 +104,7 @@ def run_all(nb_calls, nb_runs, sizes, densities, experiments):
             now = str(datetime.datetime.now())
             result = {'timestamp': now, 'operation': op, 'density': density, 'size': size}
             result['time'] = run(BitMap, op, size, density, nb_calls)
-            df = df.append(result, ignore_index=True)
+            df.loc[len(df.index)] = result
         stop = time.time()
         run_time = stop - start
         sys.stderr.write(f'    Done in {run_time:.1f} seconds\n')
@@ -142,9 +142,7 @@ def main():
                  experiments=experiments)
     if args.add_versions:
         df['pyroaring_version'] = pyroaring.__version__
-        df['pyroaring_git_version'] = pyroaring.__git_version__
         df['croaring_version'] = pyroaring.__croaring_version__
-        df['croaring_git_version'] = pyroaring.__croaring_git_version__
     df.to_csv(args.output, index=False)
 
 
