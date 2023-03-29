@@ -33,15 +33,31 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-20.04
+            cibw_archs: "native"
+          - os: ubuntu-20.04
+            cibw_archs: "aarch64"
+          - os: windows-latest
+            cibw_archs: "native ARM64"
+          - os: macos-latest
+            cibw_archs: "x86_64 universal2 arm64"
 
     steps:
       - uses: actions/checkout@v3
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.11.2
+      - name: Set up QEMU
+        if: matrix.cibw_archs == 'aarch64'
+        uses: docker/setup-qemu-action@v2
         with:
-          config-file: "{package}/pyproject-cibuildwheel.toml"
+          platforms: arm64
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.12.1
+        env:
+          CIBW_TEST_REQUIRES: "hypothesis"
+          CIBW_TEST_COMMAND: "python {project}/test.py && python {project}/cydoctest.py"
+          CIBW_SKIP: "pp* cp36-*"
+          CIBW_ARCHS: ${{ matrix.cibw_archs }}
+          CIBW_TEST_SKIP: "*-win_arm64"
 
       - uses: actions/upload-artifact@v3
         with:

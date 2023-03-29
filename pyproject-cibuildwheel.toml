@@ -1,9 +1,0 @@
-[tool.cibuildwheel]
-test-requires = "hypothesis"
-test-command = "python {project}/test.py && python {project}/cydoctest.py"
-
-# Skip builds on
-skip = ["pp*", "cp36-*"]
-
-[tool.cibuildwheel.macos]
-archs = ["x86_64", "universal2", "arm64"]
