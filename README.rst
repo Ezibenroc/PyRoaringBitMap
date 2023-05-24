@@ -14,6 +14,8 @@ You can use a bitmap nearly as the classical Python set in your code:
     bm1 = BitMap()
     bm1.add(3)
     bm1.add(18)
+    print("has 3:", 3 in bm1)
+    print("has 4:", 4 in bm1)
     bm2 = BitMap([3, 27, 42])
     print("bm1       = %s" % bm1)
     print("bm2       = %s" % bm2)
@@ -24,6 +26,8 @@ Output:
 
 ::
 
+    has 3: True
+    has 4: False
     bm1       = BitMap([3, 18])
     bm2       = BitMap([3, 27, 42])
     bm1 & bm2 = BitMap([3])
