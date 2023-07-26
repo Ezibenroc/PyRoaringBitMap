@@ -107,7 +107,7 @@ cdef class BitMap(AbstractBitMap):
             raise KeyError(value)
 
     cdef binary_iop(self, AbstractBitMap other, (void)func(croaring.roaring_bitmap_t*, const croaring.roaring_bitmap_t*)):
-        self.__check_compatibility(other)
+        self._check_compatibility(other)
         func(self._c_bitmap, other._c_bitmap)
         return self
 
