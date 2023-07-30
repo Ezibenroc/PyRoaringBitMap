@@ -72,7 +72,7 @@ setup(
     version=VERSION,
     description='Fast and lightweight set for unsigned 32 bits integers.',
     long_description=long_description,
-    setup_requires=['cython'],
+    setup_requires=['cython<3.0.0'],
     url='https://github.com/Ezibenroc/PyRoaringBitMap',
     author='Tom Cornebize',
     author_email='tom.cornebize@gmail.com',
