@@ -82,7 +82,7 @@ cdef class AbstractBitMap:
         BitMap([1, 27, 123456789])
         """
 
-    cdef from_ptr(self, croaring.roaring_bitmap_t *ptr):
+    cdef from_ptr(self, croaring.roaring_bitmap_t *ptr) noexcept:
         """
         Return an instance of AbstractBitMap (or one of its subclasses) initialized with the given pointer.
 
@@ -115,7 +115,7 @@ cdef class AbstractBitMap:
         if self._c_bitmap is not NULL:
             croaring.roaring_bitmap_free(self._c_bitmap)
 
-    def __check_compatibility(self, AbstractBitMap other):
+    def _check_compatibility(self, AbstractBitMap other):
         if self.copy_on_write != other.copy_on_write:
             raise ValueError('Cannot have interactions between bitmaps with and without copy_on_write.\n')
 
@@ -129,7 +129,7 @@ cdef class AbstractBitMap:
         return croaring.roaring_bitmap_get_cardinality(self._c_bitmap)
 
     def __richcmp__(self, other, int op):
-        self.__check_compatibility(other)
+        self._check_compatibility(other)
         if op == 0: # <
             return croaring.roaring_bitmap_is_strict_subset((<AbstractBitMap?>self)._c_bitmap, (<AbstractBitMap?>other)._c_bitmap)
         elif op == 1: # <=
@@ -414,7 +414,7 @@ cdef class AbstractBitMap:
             return bitmaps[0] | bitmaps[1]
         else:
             for bm in bitmaps:
-                bitmaps[0].__check_compatibility(bm)
+                bitmaps[0]._check_compatibility(bm)
                 buff.push_back(bm._c_bitmap)
             result = croaring.roaring_bitmap_or_many(size, &buff[0])
             return (<AbstractBitMap>bitmaps[0].__class__()).from_ptr(result) # FIXME to change when from_ptr is a classmethod
@@ -438,21 +438,24 @@ cdef class AbstractBitMap:
                 result &= bm
             return bitmaps[0].__class__(result)
 
-    cdef binary_op(self, AbstractBitMap other, (croaring.roaring_bitmap_t*)func(const croaring.roaring_bitmap_t*, const croaring.roaring_bitmap_t*)):
-        self.__check_compatibility(other)
+    cdef binary_op(self, AbstractBitMap other, (croaring.roaring_bitmap_t*)func(const croaring.roaring_bitmap_t*, const croaring.roaring_bitmap_t*) noexcept) noexcept:
         cdef croaring.roaring_bitmap_t *r = func(self._c_bitmap, other._c_bitmap)
         return self.from_ptr(r)
 
     def __or__(self, other):
+        self._check_compatibility(other)
         return (<AbstractBitMap>self).binary_op(<AbstractBitMap?>other, croaring.roaring_bitmap_or)
 
     def __and__(self, other):
+        self._check_compatibility(other)
         return (<AbstractBitMap>self).binary_op(<AbstractBitMap?>other, croaring.roaring_bitmap_and)
 
     def __xor__(self, other):
+        self._check_compatibility(other)
         return (<AbstractBitMap>self).binary_op(<AbstractBitMap?>other, croaring.roaring_bitmap_xor)
 
     def __sub__(self, other):
+        self._check_compatibility(other)
         return (<AbstractBitMap>self).binary_op(<AbstractBitMap?>other, croaring.roaring_bitmap_andnot)
 
     def union_cardinality(self, AbstractBitMap other):
@@ -464,7 +467,7 @@ cdef class AbstractBitMap:
         >>> BitMap([3, 12]).union_cardinality(AbstractBitMap([3, 5, 8]))
         4
         """
-        self.__check_compatibility(other)
+        self._check_compatibility(other)
         return croaring.roaring_bitmap_or_cardinality(self._c_bitmap, other._c_bitmap)
 
     def intersection_cardinality(self, AbstractBitMap other):
@@ -476,7 +479,7 @@ cdef class AbstractBitMap:
         >>> BitMap([3, 12]).intersection_cardinality(BitMap([3, 5, 8]))
         1
         """
-        self.__check_compatibility(other)
+        self._check_compatibility(other)
         return croaring.roaring_bitmap_and_cardinality(self._c_bitmap, other._c_bitmap)
 
     def difference_cardinality(self, AbstractBitMap other):
@@ -488,7 +491,7 @@ cdef class AbstractBitMap:
         >>> BitMap([3, 12]).difference_cardinality(BitMap([3, 5, 8]))
         1
         """
-        self.__check_compatibility(other)
+        self._check_compatibility(other)
         return croaring.roaring_bitmap_andnot_cardinality(self._c_bitmap, other._c_bitmap)
 
     def symmetric_difference_cardinality(self, AbstractBitMap other):
@@ -500,7 +503,7 @@ cdef class AbstractBitMap:
         >>> BitMap([3, 12]).symmetric_difference_cardinality(BitMap([3, 5, 8]))
         3
         """
-        self.__check_compatibility(other)
+        self._check_compatibility(other)
         return croaring.roaring_bitmap_xor_cardinality(self._c_bitmap, other._c_bitmap)
 
     def intersect(self, AbstractBitMap other):
@@ -514,7 +517,7 @@ cdef class AbstractBitMap:
         >>> BitMap([3, 12]).intersect(BitMap([5, 18]))
         False
         """
-        self.__check_compatibility(other)
+        self._check_compatibility(other)
         return croaring.roaring_bitmap_intersect(self._c_bitmap, other._c_bitmap)
 
     def jaccard_index(self, AbstractBitMap other):
@@ -527,7 +530,7 @@ cdef class AbstractBitMap:
         >>> BitMap([3, 10, 12]).jaccard_index(BitMap([3, 18]))
         0.25
         """
-        self.__check_compatibility(other)
+        self._check_compatibility(other)
         return croaring.roaring_bitmap_jaccard_index(self._c_bitmap, other._c_bitmap)
 
     def get_statistics(self):
