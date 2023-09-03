@@ -28,4 +28,4 @@ jobs:
               env:
                 HYPOTHESIS_PROFILE: ci
               run: |
-                tox -e test
+                tox
