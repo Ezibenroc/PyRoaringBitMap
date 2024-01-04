@@ -32,6 +32,7 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-20.04
@@ -51,7 +52,7 @@ jobs:
         with:
           platforms: arm64
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.15.0
+        uses: pypa/cibuildwheel@v2.16.2
         env:
           CIBW_TEST_REQUIRES: hypothesis==6.79.4
           CIBW_TEST_COMMAND: "python {project}/test.py && python {project}/cydoctest.py"
