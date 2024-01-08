@@ -92,11 +92,14 @@ To install from Cython via source, for example during development run the follow
 This will automatically install Cython if it not present for the build, cythonise the source files and compile everything for you.
 
 If you just want to recompile the package in place for quick testing you can
-try:
+try the following:
 
 .. code:: bash
 
+    python setup.py build_clib
     python setup.py build_ext -i
+
+Note that the build_clib compiles croaring only, and only needs to be run once.
 
 Then you can test the new code using tox - this will install all the other
 dependencies needed for testing and test in an isolated environment:
