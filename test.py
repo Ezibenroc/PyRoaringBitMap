@@ -1412,8 +1412,8 @@ class StringTest(unittest.TestCase):
         bm = cls(collection)
         s = repr(bm)
         nondigits = set(s) - set('0123456789\n.')
-        for i in nondigits:
-            s = s.replace(i, ' ')
+        for x in nondigits:
+            s = s.replace(x, ' ')
 
         small, large = s.split('...')
         small_ints = [int(i) for i in small.split()]
