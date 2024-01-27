@@ -16,6 +16,7 @@ from hypothesis import given, assume, errors, settings, Verbosity, HealthCheck
 import pyroaring
 from pyroaring import BitMap, FrozenBitMap
 
+
 settings.register_profile("ci", settings(
     max_examples=100, deadline=None))
 settings.register_profile("dev", settings(max_examples=10, deadline=None))
