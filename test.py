@@ -267,6 +267,10 @@ class BasicTest(Util):
         self.assertEqual(bitmap, cls(range(size), copy_on_write=cow))
 
 
+def slice_arg(n: int) -> st.SearchStrategy[int]:
+    return st.integers(min_value=-n, max_value=n)
+
+
 class SelectRankTest(Util):
 
     @given(bitmap_cls, hyp_collection, st.booleans())
@@ -314,10 +318,6 @@ class SelectRankTest(Util):
         expected.sort()
         observed = list(bitmap[start:stop:step])
         self.assertEqual(expected, observed)
-
-    @staticmethod
-    def slice_arg(n: int) -> st.SearchStrategy[int]:
-        return st.integers(min_value=-n, max_value=n)
 
     @given(bitmap_cls, hyp_collection, slice_arg(2**12), slice_arg(2**12), slice_arg(2**5), st.booleans())
     def test_slice_select_non_empty(
