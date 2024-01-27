@@ -206,8 +206,10 @@ class BasicTest(Util):
     def test_wrong_constructor_values(self, cls):
         with self.assertRaises(TypeError):  # this should fire a type error!
             cls([3, 'bla', 3, 42])
-        with self.assertRaises(ValueError):
-            cls(range(0, 10, 0))
+
+        bad_range = range(-3, 0)
+        with self.assertRaises(OverflowError):
+            cls(bad_range)
 
     @given(bitmap_cls, hyp_collection, st.booleans())
     def test_to_array(self, cls, values, cow):
