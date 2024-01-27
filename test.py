@@ -1400,7 +1400,7 @@ class StringTest(unittest.TestCase):
         bm = cls(collection)
         self.assertEqual(bm, eval(repr(bm)))
 
-    @settings(suppress_health_check=HealthCheck.all())
+    @settings(suppress_health_check=HealthCheck)
     @given(bitmap_cls, large_list_of_uin32)
     def test_large_list(self, cls, collection):
         # test that for a large bitmap the both the start and the end of the bitmap get printed
