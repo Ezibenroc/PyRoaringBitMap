@@ -1,19 +1,20 @@
 #! /usr/bin/env python3
 
-import unittest
-import random
-import functools
-import operator
 import os
-import sys
-import pickle
 import re
-from hypothesis import given, settings, Verbosity, errors, HealthCheck, assume
-import hypothesis.strategies as st
+import sys
 import array
+import pickle
+import random
+import operator
+import unittest
+import functools
+
+import hypothesis.strategies as st
+from hypothesis import given, assume, errors, settings, Verbosity, HealthCheck
+
 import pyroaring
 from pyroaring import BitMap, FrozenBitMap
-
 
 settings.register_profile("ci", settings(
     max_examples=100, deadline=None))
@@ -27,32 +28,32 @@ except errors.InvalidArgument:
     sys.exit('Unknown hypothesis profile: %s.' % env)
 
 uint18 = st.integers(min_value=0, max_value=2**18)
-uint32 = st.integers(min_value=0, max_value=2**32-1)
-uint64 = st.integers(min_value=0, max_value=2**64-1)
-large_uint64 = st.integers(min_value=2**32, max_value=2**64-1)
-integer = st.integers(min_value=0, max_value=2**31-1)
-int64 = st.integers(min_value=-2**63, max_value=2**63-1)
+uint32 = st.integers(min_value=0, max_value=2**32 - 1)
+uint64 = st.integers(min_value=0, max_value=2**64 - 1)
+large_uint64 = st.integers(min_value=2**32, max_value=2**64 - 1)
+integer = st.integers(min_value=0, max_value=2**31 - 1)
+int64 = st.integers(min_value=-2**63, max_value=2**63 - 1)
 
 range_max_size = 2**18
 
 range_big_step = uint18.flatmap(lambda n:
                                 st.builds(range, st.just(n),
                                           st.integers(
-                                              min_value=n+1, max_value=n+range_max_size),
-                                          st.integers(min_value=2**8, max_value=range_max_size//8)))
+                                              min_value=n + 1, max_value=n + range_max_size),
+                                          st.integers(min_value=2**8, max_value=range_max_size // 8)))
 
 range_small_step = uint18.flatmap(lambda n:
                                   st.builds(range, st.just(n),
                                             st.integers(
-                                                min_value=n+1, max_value=n+range_max_size),
+                                                min_value=n + 1, max_value=n + range_max_size),
                                             st.integers(min_value=1, max_value=2**8)))
 
 range_power2_step = uint18.flatmap(lambda n:
                                    st.builds(range, st.just(n),
                                              st.integers(
-                                                 min_value=n+1, max_value=n+range_max_size),
+                                                 min_value=n + 1, max_value=n + range_max_size),
                                              st.integers(min_value=0, max_value=8).flatmap(
-                                       lambda n: st.just(2**n)
+                                       lambda n: st.just(2**n),
                                    )))
 
 hyp_range = range_big_step | range_small_step | range_power2_step | st.sampled_from(
@@ -69,7 +70,7 @@ bitmap_cls = st.sampled_from([BitMap, FrozenBitMap])
 class Util(unittest.TestCase):
 
     comparison_set = random.sample(
-        range(2**8), 100) + random.sample(range(2**31-1), 50)
+        range(2**8), 100) + random.sample(range(2**31 - 1), 50)
 
     def compare_with_set(self, bitmap, expected_set):
         self.assertEqual(len(bitmap), len(expected_set))
@@ -119,23 +120,23 @@ class BasicTest(Util):
         values = list(values)
         random.shuffle(values)
         size = len(values)
-        for value in values[:size//2]:
+        for value in values[:size // 2]:
             bitmap.add(value)
             expected_set.add(value)
         self.compare_with_set(bitmap, expected_set)
-        for value in values[size//2:]:
+        for value in values[size // 2:]:
             bitmap.add(value)
             with self.assertRaises(KeyError):
                 bitmap.add_checked(value)
             expected_set.add(value)
         self.compare_with_set(bitmap, expected_set)
-        for value in values[:size//2]:
+        for value in values[:size // 2]:
             bitmap.remove(value)
             expected_set.remove(value)
             with self.assertRaises(KeyError):
                 bitmap.remove(value)
         self.compare_with_set(bitmap, expected_set)
-        for value in values[size//2:]:
+        for value in values[size // 2:]:
             bitmap.discard(value)
             # check that we can discard element not in the bitmap
             bitmap.discard(value)
@@ -203,9 +204,9 @@ class BasicTest(Util):
     @given(bitmap_cls)
     def test_wrong_constructor_values(self, cls):
         with self.assertRaises(TypeError):  # this should fire a type error!
-            bitmap = cls([3, 'bla', 3, 42])
+            cls([3, 'bla', 3, 42])
         with self.assertRaises(ValueError):
-            bitmap = cls(range(0, 10, 0))
+            cls(range(0, 10, 0))
 
     @given(bitmap_cls, hyp_collection, st.booleans())
     def test_to_array(self, cls, values, cow):
@@ -240,7 +241,7 @@ class SelectRankTest(Util):
         with self.assertRaises(IndexError):
             bitmap[n + len(values)]
         with self.assertRaises(IndexError):
-            bitmap[-len(values)-1]
+            bitmap[-len(values) - 1]
         with self.assertRaises(IndexError):
             bitmap[-n - len(values) - 1]
 
@@ -276,7 +277,7 @@ class SelectRankTest(Util):
     def test_simple_rank(self, cls, values, cow):
         bitmap = cls(values, copy_on_write=cow)
         for i, value in enumerate(sorted(values)):
-            self.assertEqual(bitmap.rank(value), i+1)
+            self.assertEqual(bitmap.rank(value), i + 1)
 
     @given(bitmap_cls, hyp_collection, uint18, st.booleans())
     def test_general_rank(self, cls, values, element, cow):
@@ -295,7 +296,7 @@ class SelectRankTest(Util):
     def test_wrong_min(self, cls):
         bitmap = cls()
         with self.assertRaises(ValueError):
-            m = bitmap.min()
+            bitmap.min()
 
     @given(bitmap_cls, hyp_collection, st.booleans())
     def test_max(self, cls, values, cow):
@@ -307,7 +308,7 @@ class SelectRankTest(Util):
     def test_wrong_max(self, cls):
         bitmap = cls()
         with self.assertRaises(ValueError):
-            m = bitmap.max()
+            bitmap.max()
 
     @given(bitmap_cls, hyp_collection, uint32, st.booleans())
     def test_next_set_bit(self, cls, values, other_value, cow):
@@ -318,19 +319,19 @@ class SelectRankTest(Util):
             self.assertEqual(bitmap.next_set_bit(other_value), expected)
         except StopIteration:
             with self.assertRaises(ValueError):
-                b = bitmap.next_set_bit(other_value)
+                bitmap.next_set_bit(other_value)
 
     @given(bitmap_cls)
     def test_wrong_next_set_bit(self, cls):
         bitmap = cls()
         with self.assertRaises(ValueError):
-            b = bitmap.next_set_bit(0)
+            bitmap.next_set_bit(0)
 
 
 class BinaryOperationsTest(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection, st.booleans())
-    def test_binary_op(self, cls1, cls2,  values1, values2, cow):
+    def test_binary_op(self, cls1, cls2, values1, values2, cow):
         for op in [operator.or_, operator.and_, operator.xor, operator.sub]:
             self.set1 = set(values1)
             self.set2 = set(values2)
@@ -359,7 +360,6 @@ class BinaryOperationsTest(Util):
             self.assertIs(original, self.bitmap1)
             self.assertEqual(self.bitmap2, old_bitmap2)
             self.compare_with_set(self.bitmap1, self.set1)
-
 
     @given(bitmap_cls, hyp_collection, hyp_collection, st.booleans())
     def test_binary_op_inplace_frozen(self, cls2, values1, values2, cow):
@@ -417,13 +417,13 @@ class RangeTest(Util):
     def test_contains_range(self, cls, cow, start, end):
         assume(start < end)
         self.assertTrue(cls(range(start, end)).contains_range(start, end))
-        self.assertTrue(cls(range(start, end)).contains_range(start, end-1))
-        self.assertFalse(cls(range(start, end-1)).contains_range(start, end))
-        self.assertTrue(cls(range(start, end)).contains_range(start+1, end))
-        self.assertFalse(cls(range(start+1, end)).contains_range(start, end))
+        self.assertTrue(cls(range(start, end)).contains_range(start, end - 1))
+        self.assertFalse(cls(range(start, end - 1)).contains_range(start, end))
+        self.assertTrue(cls(range(start, end)).contains_range(start + 1, end))
+        self.assertFalse(cls(range(start + 1, end)).contains_range(start, end))
         r = range(start, end)
         try:
-            middle = r[len(r)//2]  # on 32bits systems, this call might fail when len(r) is too large
+            middle = r[len(r) // 2]  # on 32bits systems, this call might fail when len(r) is too large
         except OverflowError:
             if sys.maxsize > 2**32:
                 raise
@@ -432,7 +432,7 @@ class RangeTest(Util):
         bm = cls(range(start, end)) - cls([middle])
         self.assertFalse(bm.contains_range(start, end))
         self.assertTrue(bm.contains_range(start, middle))
-        self.assertTrue(bm.contains_range(middle+1, end))
+        self.assertTrue(bm.contains_range(middle + 1, end))
 
     @given(hyp_collection, st.booleans(), uint32, uint32)
     def test_add_remove_range(self, values, cow, start, end):
@@ -447,12 +447,12 @@ class RangeTest(Util):
         # Adding the range
         bm.add_range(start, end)
         self.assertTrue(bm.contains_range(start, end))
-        self.assertEqual(bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)), end-start)
+        self.assertEqual(bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)), end - start)
         # Empty range (again)
         original = BitMap(bm)
         bm.remove_range(end, start)
         self.assertEqual(bm, original)
-        self.assertEqual(bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)), end-start)
+        self.assertEqual(bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)), end - start)
         # Removing the range
         bm.remove_range(start, end)
         self.assertFalse(bm.contains_range(start, end))
@@ -478,7 +478,7 @@ class CardinalityTest(Util):
             (operator.or_, cls1.union_cardinality),
             (operator.and_, cls1.intersection_cardinality),
             (operator.sub, cls1.difference_cardinality),
-            (operator.xor, cls1.symmetric_difference_cardinality)
+            (operator.xor, cls1.symmetric_difference_cardinality),
         ]:
             self.bitmap1 = cls1(values1, copy_on_write=cow)
             self.bitmap2 = cls2(values2, copy_on_write=cow)
@@ -501,7 +501,7 @@ class CardinalityTest(Util):
         bm = cls(values)
         start, end = sorted([a, b])
 
-        #make an intersection with the relevant range to test against
+        # make an intersection with the relevant range to test against
         test_bm = bm.intersection(BitMap(range(start, end)))
 
         self.assertEqual(len(test_bm), bm.range_cardinality(start, end))
@@ -516,7 +516,7 @@ class ManyOperationsTest(Util):
                             for values in all_values]
         self.initial_bitmap.update(*all_values)
         expected_result = functools.reduce(
-            lambda x, y: x | y, self.all_bitmaps+[self.initial_bitmap])
+            lambda x, y: x | y, self.all_bitmaps + [self.initial_bitmap])
         self.assertEqual(expected_result, self.initial_bitmap)
         self.assertEqual(type(expected_result), type(self.initial_bitmap))
 
@@ -527,7 +527,7 @@ class ManyOperationsTest(Util):
                             for values in all_values]
         self.initial_bitmap.intersection_update(*all_values)
         expected_result = functools.reduce(
-            lambda x, y: x & y, self.all_bitmaps+[self.initial_bitmap])
+            lambda x, y: x & y, self.all_bitmaps + [self.initial_bitmap])
         self.assertEqual(expected_result, self.initial_bitmap)
         self.assertEqual(type(expected_result), type(self.initial_bitmap))
 
@@ -591,18 +591,18 @@ class StatisticsTest(Util):
         self.assertEqual(stats['n_values_array_containers'] + stats['n_values_bitset_containers']
                          + stats['n_values_run_containers'], len(bitmap))
         self.assertEqual(stats['n_bytes_array_containers'],
-                         2*stats['n_values_array_containers'])
+                         2 * stats['n_values_array_containers'])
         self.assertEqual(stats['n_bytes_bitset_containers'],
-                         2**13*stats['n_bitset_containers'])
+                         2**13 * stats['n_bitset_containers'])
         if len(values) > 0:
             self.assertEqual(stats['min_value'], bitmap[0])
-            self.assertEqual(stats['max_value'], bitmap[len(bitmap)-1])
+            self.assertEqual(stats['max_value'], bitmap[len(bitmap) - 1])
         self.assertEqual(stats['cardinality'], len(bitmap))
         self.assertEqual(stats['sum_value'], sum(values))
 
     @given(bitmap_cls)
     def test_implementation_properties_array(self, cls):
-        values = range(2**16-10, 2**16+10, 2)
+        values = range(2**16 - 10, 2**16 + 10, 2)
         stats = cls(values).get_statistics()
         self.assertEqual(stats['n_array_containers'], 2)
         self.assertEqual(stats['n_bitset_containers'], 0)
@@ -697,7 +697,7 @@ class ShiftTest(Util):
         bm_copy = cls(bm_before)
         bm_after = bm_before.shift(offset)
         self.assertEqual(bm_before, bm_copy)
-        expected = cls([val+offset for val in values if val+offset in range(0, 2**32)], copy_on_write=cow)
+        expected = cls([val + offset for val in values if val + offset in range(0, 2**32)], copy_on_write=cow)
         self.assertEqual(bm_after, expected)
 
 
@@ -720,7 +720,7 @@ class IncompatibleInteraction(Util):
         self.incompatible_op(lambda x, y: x ^ y)
 
     def test_incompatible_sub(self):
-        self.incompatible_op(lambda x, y: x-y)
+        self.incompatible_op(lambda x, y: x - y)
 
     def test_incompatible_or_inplace(self):
         self.incompatible_op(lambda x, y: x.__ior__(y))
@@ -819,7 +819,7 @@ class FrozenTest(unittest.TestCase):
         with self.assertRaises(AttributeError):
             frozen.symmetric_difference_update(other)
         with self.assertRaises(AttributeError):
-            frozen.update(number, number+10)
+            frozen.update(number, number + 10)
         with self.assertRaises(AttributeError):
             frozen.overwrite(other)
         self.assertEqual(frozen, copy)
@@ -892,8 +892,11 @@ class OptimizationTest(unittest.TestCase):
         bm3 = cls(bm1, optimize=True)
         self.assertEqual(bm3.shrink_to_fit(), 0)
 
+
 small_integer = st.integers(min_value=0, max_value=200)
 small_integer_list = st.lists(min_size=0, max_size=2000, elements=small_integer)
+
+
 class PythonSetEquivalentTest(unittest.TestCase):
     """
     The main goal of this class is to make sure the BitMap api is a superset of the python builtin set api.
@@ -932,7 +935,6 @@ class PythonSetEquivalentTest(unittest.TestCase):
 
         for i in range(min_value, max_value):
             self.assertEqual(i in s1, i in converted_set)
-
 
     @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
     def test_difference(self, BitMapClass, list1, list2, cow):
@@ -1010,7 +1012,6 @@ class PythonSetEquivalentTest(unittest.TestCase):
         self.assertEqual(s1.issubset(s2), b1.issubset(b2))
         self.assertEqual(SetClass.issubset(s1, s2), BitMapClass.issubset(b1, b2))
 
-
     @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
     def test_le(self, BitMapClass, list1, list2, cow):
         if BitMapClass == BitMap:
@@ -1029,7 +1030,6 @@ class PythonSetEquivalentTest(unittest.TestCase):
         self.assertEqual(s1.__le__(s2), b1.__le__(b2))
         self.assertEqual(SetClass.__le__(s1, s2), BitMapClass.__le__(b1, b2))
         self.assertEqual((s1 <= s2), (b1 <= b2))
-
 
     @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
     def test_ge(self, BitMapClass, list1, list2, cow):
@@ -1068,7 +1068,6 @@ class PythonSetEquivalentTest(unittest.TestCase):
         self.assertEqual(SetClass.__eq__(s1, s2), BitMapClass.__eq__(b1, b2))
         self.assertEqual((s1 == s2), (b1 == b2))
 
-
     @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
     def test_issuperset(self, BitMapClass, list1, list2, cow):
         if BitMapClass == BitMap:
@@ -1105,8 +1104,7 @@ class PythonSetEquivalentTest(unittest.TestCase):
         self.assertEqual(s1.isdisjoint(s2), b1.isdisjoint(b2))
         self.assertEqual(SetClass.isdisjoint(s1, s2), BitMapClass.isdisjoint(b1, b2))
 
-
-    @given(small_integer_list,  st.booleans())
+    @given(small_integer_list, st.booleans())
     def test_clear(self, list1, cow):
         b1 = BitMap(list1, copy_on_write=cow)
         b1.clear()
@@ -1118,8 +1116,8 @@ class PythonSetEquivalentTest(unittest.TestCase):
         starting_length = len(b1)
         if starting_length >= 1:
             popped_element = b1.pop()
-            self.assertEqual(len(b1), starting_length - 1) #length decreased by one
-            self.assertFalse(popped_element in b1) #and element isn't in the BitMap anymore
+            self.assertEqual(len(b1), starting_length - 1)  # length decreased by one
+            self.assertFalse(popped_element in b1)  # and element isn't in the BitMap anymore
         else:
             with self.assertRaises(KeyError):
                 b1.pop()
@@ -1130,14 +1128,13 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b2 = b1.copy()
         self.assertEqual(b2, b1)
 
-
     @given(small_integer_list, st.booleans())
     def test_copy_writable(self, list1, cow):
         b1 = BitMap(list1, copy_on_write=cow)
         b2 = b1.copy()
 
         try:
-            new_element = max(b1) + 1 #doesn't exist in the set
+            new_element = max(b1) + 1  # doesn't exist in the set
         except ValueError:
             new_element = 1
 
@@ -1155,7 +1152,7 @@ class PythonSetEquivalentTest(unittest.TestCase):
         orig2 = b2.copy()
         b1.overwrite(b2)
         self.assertEqual(b1, b2)       # the two bitmaps are now equal
-        self.assertNotEqual(b1, orig1) # the first bitmap has been modified
+        self.assertNotEqual(b1, orig1)  # the first bitmap has been modified
         self.assertEqual(b2, orig2)    # the second bitmap was left untouched
         with self.assertRaises(ValueError):
             b1.overwrite(b1)
@@ -1183,7 +1180,6 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1.symmetric_difference_update(b2)
 
         self.assertEqual(s1, set(b1))
-
 
     @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
     def test_dunder(self, BitMapClass, list1, list2, cow):
@@ -1247,7 +1243,7 @@ class PythonSetEquivalentTest(unittest.TestCase):
             b1_raised = True
 
         self.assertEqual(s1, set(b1))
-        self.assertEqual(s1_raised, b1_raised) #Either both raised exception or neither did
+        self.assertEqual(s1_raised, b1_raised)  # Either both raised exception or neither did
 
     @given(bitmap_cls, small_integer_list, small_integer_list, small_integer_list, st.booleans())
     def test_nary_union(self, BitMapClass, list1, list2, list3, cow):
@@ -1323,7 +1319,6 @@ class PythonSetEquivalentTest(unittest.TestCase):
         BitMap.intersection_update(b1, b2, b3)
         self.assertEqual(s1, set(b1))
 
-
         s1 = set(list1)
         s2 = set(list2)
         s3 = set(list3)
@@ -1336,7 +1331,6 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1.intersection_update(b2, b3)
 
         self.assertEqual(s1, set(b1))
-
 
     @given(small_integer_list, small_integer_list, small_integer_list, st.booleans())
     def test_nary_difference_update(self, list1, list2, list3, cow):
@@ -1351,7 +1345,6 @@ class PythonSetEquivalentTest(unittest.TestCase):
         set.difference_update(s1, s2, s3)
         BitMap.difference_update(b1, b2, b3)
         self.assertEqual(s1, set(b1))
-
 
         s1 = set(list1)
         s2 = set(list2)
@@ -1380,7 +1373,6 @@ class PythonSetEquivalentTest(unittest.TestCase):
         BitMap.update(b1, b2, b3)
         self.assertEqual(s1, set(b1))
 
-
         s1 = set(list1)
         s2 = set(list2)
         s3 = set(list3)
@@ -1394,13 +1386,16 @@ class PythonSetEquivalentTest(unittest.TestCase):
 
         self.assertEqual(s1, set(b1))
 
+
 small_list_of_uin32 = st.lists(min_size=0, max_size=400, elements=uint32)
 large_list_of_uin32 = st.lists(min_size=600, max_size=1000, elements=uint32, unique=True)
+
+
 class StringTest(unittest.TestCase):
 
     @given(bitmap_cls, small_list_of_uin32)
     def test_small_list(self, cls, collection):
-        #test that repr for a small bitmap is equal to the original bitmap
+        # test that repr for a small bitmap is equal to the original bitmap
         bm = cls(collection)
         self.assertEqual(bm, eval(repr(bm)))
 
@@ -1436,8 +1431,8 @@ class VersionTest(unittest.TestCase):
             self.fail('Regex "%s" does not match text "%s".' % (pattern, text))
 
     def test_version(self):
-        self.assert_regex('\d+\.\d+\.\d+(?:\.dev\d+)?',      pyroaring.__version__)
-        self.assert_regex('v\d+\.\d+\.\d+',     pyroaring.__croaring_version__)
+        self.assert_regex(r'\d+\.\d+\.\d+(?:\.dev\d+)?', pyroaring.__version__)
+        self.assert_regex(r'v\d+\.\d+\.\d+', pyroaring.__croaring_version__)
 
 
 if __name__ == "__main__":

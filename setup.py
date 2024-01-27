@@ -1,13 +1,11 @@
 #! /usr/bin/env python3
 
+import os
+import platform
+from distutils.sysconfig import get_config_vars
+
 from setuptools import setup
 from setuptools.extension import Extension
-from distutils.sysconfig import get_config_vars
-import os
-import sys
-import subprocess
-import platform
-
 
 PKG_DIR = 'pyroaring'
 
@@ -17,7 +15,7 @@ PLATFORM_MACOSX = (platform.system() == 'Darwin')
 # Read version file from the src
 with open("pyroaring/version.pxi") as fp:
     exec(fp.read())
-    VERSION = __version__
+    VERSION = __version__  # noqa: F821
 
 
 # Remove -Wstrict-prototypes option
@@ -25,7 +23,7 @@ with open("pyroaring/version.pxi") as fp:
 if not PLATFORM_WINDOWS:
     cfg_vars = get_config_vars()
     for key, value in cfg_vars.items():
-        if type(value) == str:
+        if type(value) is str:
             cfg_vars[key] = value.replace("-Wstrict-prototypes", "")
 
 try:
@@ -40,7 +38,7 @@ if PLATFORM_WINDOWS:
     pyroaring_module = Extension(
         'pyroaring',
         sources=[os.path.join(PKG_DIR, 'pyroaring.pyx'), os.path.join(PKG_DIR, 'roaring.c')],
-        language='c++'
+        language='c++',
     )
     libraries = None
 else:
@@ -59,14 +57,14 @@ else:
     # also creates troubles under macOS with pip installs and requires ugly workarounds.
     # The best way to handle people who want to use -march=native is to ask them
     # to pass ARCHI=native to their build process.
-    #else:
+    # else:
     #    compile_args.append('-march=native')
 
     pyroaring_module = Extension(
         'pyroaring',
         sources=[os.path.join(PKG_DIR, 'pyroaring.pyx')],
         extra_compile_args=compile_args + ["-std=c++11"],
-        language='c++'
+        language='c++',
     )
 
     # Because we compile croaring with a c compiler with sometimes incompatible arguments,
@@ -76,7 +74,7 @@ else:
         'croaring',
         {
             'sources': [os.path.join(PKG_DIR, 'roaring.c')],
-            "extra_compile_args": compile_args + ["-std=c11"]
+            "extra_compile_args": compile_args + ["-std=c11"],
         },
     )
     libraries = [croaring]
