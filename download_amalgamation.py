@@ -7,8 +7,8 @@ The version needs to be the specific release tag on github.
 
 """
 import os
-from urllib.request import urlretrieve
 import sys
+from urllib.request import urlretrieve
 
 version = sys.argv[1]
 
@@ -19,8 +19,7 @@ print(f"Downloading version {version} of the croaring amalgamation")
 files = ["roaring.c", "roaring.h"]
 
 for file in files:
-	r = urlretrieve(release + file, os.path.join("pyroaring", file))
+    r = urlretrieve(release + file, os.path.join("pyroaring", file))
 
 with open(os.path.join("pyroaring", "croaring_version.pxi"), "w") as f:
-	f.write(f"__croaring_version__ = \"{version}\"")
-
+    f.write(f"__croaring_version__ = \"{version}\"")

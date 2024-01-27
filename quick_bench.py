@@ -1,9 +1,11 @@
 #! /usr/bin/env python3
 
 import sys
-import timeit
-from pandas import DataFrame, Series
 import random
+import timeit
+
+from pandas import Series, DataFrame
+
 try:
     import tabulate
     has_tabulate = True
@@ -17,7 +19,7 @@ classes = {'set': set, 'pyroaring': BitMap}
 nb_exp = 30
 size = int(1e6)
 density = 0.125
-universe_size = int(size/density)
+universe_size = int(size / density)
 
 try:
     from roaringbitmap import RoaringBitmap
@@ -41,20 +43,20 @@ except ImportError:
     sys.stderr.write('         see https://github.com/sunzhaoping/python-croaring\n')
 
 import_str = 'import array, pickle; from __main__ import %s' % (','.join(
-    ['get_list', 'get_range', 'random', 'size', 'universe_size'] +
-    [cls.__name__ for cls in classes.values() if cls is not set]))
+    ['get_list', 'get_range', 'random', 'size', 'universe_size']
+    + [cls.__name__ for cls in classes.values() if cls is not set]))
 
 
 def run_exp(stmt, setup, number):
     setup = '%s ; %s' % (import_str, setup)
     try:
-        return timeit.timeit(stmt=stmt, setup=setup, number=number)/number
-    except Exception as e:
+        return timeit.timeit(stmt=stmt, setup=setup, number=number) / number
+    except Exception:
         return float('nan')
 
 
 def get_range():
-    r = (0, universe_size, int(1/density))
+    r = (0, universe_size, int(1 / density))
     try:
         return xrange(*r)
     except NameError:
