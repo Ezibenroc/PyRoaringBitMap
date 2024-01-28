@@ -83,6 +83,8 @@ setup(
     name='pyroaring',
     ext_modules=[pyroaring_module],
     libraries=libraries,
+    package_data={'pyroaring': ['py.typed', '__init__.pyi']},
+    packages=['pyroaring'],
     version=VERSION,
     description='Fast and lightweight set for unsigned 32 bits integers.',
     long_description=long_description,
