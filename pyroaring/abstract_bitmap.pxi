@@ -116,6 +116,8 @@ cdef class AbstractBitMap:
             croaring.roaring_bitmap_free(self._c_bitmap)
 
     def _check_compatibility(self, AbstractBitMap other):
+        if other is None:
+            raise TypeError('Argument has incorrect type (expected pyroaring.AbstractBitMap, got None)')
         if self.copy_on_write != other.copy_on_write:
             raise ValueError('Cannot have interactions between bitmaps with and without copy_on_write.\n')
 
@@ -128,21 +130,33 @@ cdef class AbstractBitMap:
     def __len__(self):
         return croaring.roaring_bitmap_get_cardinality(self._c_bitmap)
 
-    def __richcmp__(self, other, int op):
+    def __lt__(self, AbstractBitMap other):
         self._check_compatibility(other)
-        if op == 0: # <
-            return croaring.roaring_bitmap_is_strict_subset((<AbstractBitMap?>self)._c_bitmap, (<AbstractBitMap?>other)._c_bitmap)
-        elif op == 1: # <=
-            return croaring.roaring_bitmap_is_subset((<AbstractBitMap?>self)._c_bitmap, (<AbstractBitMap?>other)._c_bitmap)
-        elif op == 2: # ==
-            return croaring.roaring_bitmap_equals((<AbstractBitMap?>self)._c_bitmap, (<AbstractBitMap?>other)._c_bitmap)
-        elif op == 3: # !=
-            return not (self == other)
-        elif op == 4: # >
-            return croaring.roaring_bitmap_is_strict_subset((<AbstractBitMap?>other)._c_bitmap, (<AbstractBitMap?>self)._c_bitmap)
-        else:         # >=
-            assert op == 5
-            return croaring.roaring_bitmap_is_subset((<AbstractBitMap?>other)._c_bitmap, (<AbstractBitMap?>self)._c_bitmap)
+        return croaring.roaring_bitmap_is_strict_subset((<AbstractBitMap?>self)._c_bitmap, (<AbstractBitMap?>other)._c_bitmap)
+
+    def __le__(self, AbstractBitMap other):
+        self._check_compatibility(other)
+        return croaring.roaring_bitmap_is_subset((<AbstractBitMap?>self)._c_bitmap, (<AbstractBitMap?>other)._c_bitmap)
+
+    def __eq__(self, object other):
+        if not isinstance(other, AbstractBitMap):
+            return NotImplemented
+        self._check_compatibility(other)
+        return croaring.roaring_bitmap_equals((<AbstractBitMap?>self)._c_bitmap, (<AbstractBitMap?>other)._c_bitmap)
+
+    def __ne__(self, object other):
+        if not isinstance(other, AbstractBitMap):
+            return NotImplemented
+        self._check_compatibility(other)
+        return not croaring.roaring_bitmap_equals((<AbstractBitMap?>self)._c_bitmap, (<AbstractBitMap?>other)._c_bitmap)
+
+    def __gt__(self, AbstractBitMap other):
+        self._check_compatibility(other)
+        return croaring.roaring_bitmap_is_strict_subset((<AbstractBitMap?>other)._c_bitmap, (<AbstractBitMap?>self)._c_bitmap)
+
+    def __ge__(self, AbstractBitMap other):
+        self._check_compatibility(other)
+        return croaring.roaring_bitmap_is_subset((<AbstractBitMap?>other)._c_bitmap, (<AbstractBitMap?>self)._c_bitmap)
 
     def contains_range(self, uint64_t range_start, uint64_t range_end):
         """

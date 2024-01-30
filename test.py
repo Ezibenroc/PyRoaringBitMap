@@ -528,7 +528,7 @@ class ComparisonTest(Util):
         values2: HypCollection,
         cow: bool,
     ) -> None:
-        for op in [operator.le, operator.ge, operator.lt, operator.gt]:
+        for op in [operator.le, operator.ge, operator.lt, operator.gt, operator.eq, operator.ne]:
             self.set1 = set(values1)
             self.set2 = set(values2)
             self.bitmap1 = cls1(values1, copy_on_write=cow)
@@ -542,6 +542,15 @@ class ComparisonTest(Util):
             self.assertEqual(op(self.set1, self.set1 | self.set2),
                              op(self.set1, self.set1 | self.set2))
 
+    @given(bitmap_cls, hyp_collection, st.booleans())
+    def test_comparison_other_objects(self, cls: type[EitherBitMap], values: HypCollection, cow: bool) -> None:
+        for op in [operator.le, operator.ge, operator.lt, operator.gt]:
+            bm = cls(values, copy_on_write=cow)
+            with self.assertRaises(TypeError):
+                op(bm, 42)
+            with self.assertRaises(TypeError):
+                op(bm, None)
+
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection, st.booleans())
     def test_intersect(
         self,
@@ -554,6 +563,24 @@ class ComparisonTest(Util):
         bm1 = cls1(values1, copy_on_write=cow)
         bm2 = cls2(values2, copy_on_write=cow)
         self.assertEqual(bm1.intersect(bm2), len(bm1 & bm2) > 0)
+
+    @given(bitmap_cls, hyp_collection, st.booleans())
+    def test_eq_other_objects(self, cls: type[EitherBitMap], values: HypCollection, cow: bool) -> None:
+        bm = cls(values, copy_on_write=cow)
+
+        self.assertFalse(bm == 42)
+        self.assertIs(cls.__eq__(bm, 42), NotImplemented)
+        self.assertFalse(bm == None)  # noqa: E711
+        self.assertIs(cls.__eq__(bm, None), NotImplemented)
+
+    @given(bitmap_cls, hyp_collection, st.booleans())
+    def test_ne_other_objects(self, cls: type[EitherBitMap], values: HypCollection, cow: bool) -> None:
+        bm = cls(values, copy_on_write=cow)
+
+        self.assertTrue(bm != 42)
+        self.assertIs(cls.__ne__(bm, 42), NotImplemented)
+        self.assertTrue(bm != None)  # noqa: E711
+        self.assertIs(cls.__ne__(bm, None), NotImplemented)
 
 
 class RangeTest(Util):
