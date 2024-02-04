@@ -54,12 +54,38 @@ range_power2_step = uint18.flatmap(lambda n:
                                        lambda n: st.just(2**n)
                                    )))
 
-hyp_range = range_big_step | range_small_step | range_power2_step | st.sampled_from(
-    [range(0, 0)])  # last one is an empty range
+range_huge_interval = uint18.flatmap(lambda n:
+                                st.builds(range, st.just(n),
+                                          st.integers(
+                                              min_value=n+2**52, max_value=n+2**63),
+                                          st.integers(min_value=2**45, max_value=2**63)))
+
+# Build a list of values of the form a * 2**16 + b with b in [-2,+2]
+# In other words, numbers that are close (or equal) to a multiple of 2**16
+multiple_2p16 = st.sets(
+        st.builds(
+            int.__add__, st.builds(
+                int.__mul__,
+                st.integers(min_value=1, max_value=2**32),
+                st.just(2**16)
+                ),
+            st.integers(min_value=-2, max_value=+2)
+            ),
+        max_size=100)
+
+hyp_range = (
+        range_big_step |
+        range_small_step |
+        range_power2_step |
+        range_huge_interval |
+        multiple_2p16 |
+        st.sampled_from([range(0, 0)])  # last one is an empty range
+)
 # would be great to build a true random set, but it takes too long and hypothesis does a timeout...
 hyp_set = st.builds(set, hyp_range)
 hyp_array = st.builds(lambda x: array.array('Q', x), hyp_range)
-hyp_collection = hyp_range | hyp_set | hyp_array
+# Take the union of several strategies
+hyp_collection = st.recursive(hyp_set, lambda values: st.builds(set.union, values, hyp_set))
 hyp_many_collections = st.lists(hyp_collection, min_size=1, max_size=20)
 
 bitmap_cls = st.sampled_from([BitMap64, FrozenBitMap64])
@@ -152,7 +178,7 @@ class BasicTest(Util):
         bitmap2 = cls2(values2)
         self.assertNotEqual(bitmap1, bitmap2)
 
-    @given(bitmap_cls, hyp_collection)
+    @given(bitmap_cls, hyp_range | hyp_set | hyp_array | hyp_collection)
     def test_constructor_values(self, cls, values):
         bitmap = cls(values)
         expected_set = set(values)
