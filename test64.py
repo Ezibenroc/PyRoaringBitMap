@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 
+import pytest
 import unittest
 import random
 import functools
@@ -91,22 +92,22 @@ hyp_many_collections = st.lists(hyp_collection, min_size=1, max_size=20)
 bitmap_cls = st.sampled_from([BitMap64, FrozenBitMap64])
 
 
-class Util(unittest.TestCase):
+class Util:
 
     comparison_set = random.sample(
         range(2**8), 100) + random.sample(range(2**62), 50)
 
     def compare_with_set(self, bitmap, expected_set):
-        self.assertEqual(len(bitmap), len(expected_set))
-        self.assertEqual(bool(bitmap), bool(expected_set))
-        self.assertEqual(set(bitmap), expected_set)
-        self.assertEqual(sorted(list(bitmap)), sorted(list(expected_set)))
-        self.assertEqual(BitMap64(expected_set), bitmap)
+        assert len(bitmap) == len(expected_set)
+        assert bool(bitmap) == bool(expected_set)
+        assert set(bitmap) == expected_set
+        assert sorted(list(bitmap)) == sorted(list(expected_set))
+        assert BitMap64(expected_set) == bitmap
         for value in self.comparison_set:
             if value in expected_set:
-                self.assertIn(value, bitmap)
+                assert value in bitmap
             else:
-                self.assertNotIn(value, bitmap)
+                assert value not in bitmap
 
     @staticmethod
     def bitmap_sample(bitmap, size):
@@ -127,7 +128,7 @@ class Util(unittest.TestCase):
         else:  # The two are non-mutable, cannot do anything...
             return
         if bitmap1 == bitmap2:
-            self.fail(
+            pytest.fail(
                 'The two bitmaps are identical (modifying one also modifies the other).')
 
 
@@ -148,14 +149,14 @@ class BasicTest(Util):
         self.compare_with_set(bitmap, expected_set)
         for value in values[size//2:]:
             bitmap.add(value)
-            with self.assertRaises(KeyError):
+            with pytest.raises(KeyError):
                 bitmap.add_checked(value)
             expected_set.add(value)
         self.compare_with_set(bitmap, expected_set)
         for value in values[:size//2]:
             bitmap.remove(value)
             expected_set.remove(value)
-            with self.assertRaises(KeyError):
+            with pytest.raises(KeyError):
                 bitmap.remove(value)
         self.compare_with_set(bitmap, expected_set)
         for value in values[size//2:]:
@@ -169,14 +170,14 @@ class BasicTest(Util):
     def test_bitmap_equality(self, cls1, cls2, values):
         bitmap1 = cls1(values)
         bitmap2 = cls2(values)
-        self.assertEqual(bitmap1, bitmap2)
+        assert bitmap1 == bitmap2
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection)
     def test_bitmap_unequality(self, cls1, cls2, values1, values2):
         assume(set(values1) != set(values2))
         bitmap1 = cls1(values1)
         bitmap2 = cls2(values2)
-        self.assertNotEqual(bitmap1, bitmap2)
+        assert bitmap1 != bitmap2
 
     @given(bitmap_cls, hyp_range | hyp_set | hyp_array | hyp_collection)
     def test_constructor_values(self, cls, values):
@@ -188,7 +189,7 @@ class BasicTest(Util):
     def test_constructor_copy(self, cls1, cls2, values):
         bitmap1 = cls1(values)
         bitmap2 = cls2(bitmap1)
-        self.assertEqual(bitmap1, bitmap2)
+        assert bitmap1 == bitmap2
         self.assert_is_not(bitmap1, bitmap2)
 
     @given(hyp_collection, hyp_collection)
@@ -197,7 +198,7 @@ class BasicTest(Util):
         expected = BitMap64(bm)
         bm.update(new_values)
         expected |= BitMap64(new_values)
-        self.assertEqual(bm, expected)
+        assert bm == expected
 
     @given(hyp_collection, hyp_collection)
     def test_intersection_update(self, initial_values, new_values):
@@ -205,15 +206,15 @@ class BasicTest(Util):
         expected = BitMap64(bm)
         bm.intersection_update(new_values)
         expected &= BitMap64(new_values)
-        self.assertEqual(bm, expected)
+        assert bm == expected
 
     def wrong_op(self, op):
         bitmap = BitMap64()
-        with self.assertRaises(OverflowError):
+        with pytest.raises(OverflowError):
             op(bitmap, -3)
-        with self.assertRaises(OverflowError):
+        with pytest.raises(OverflowError):
             op(bitmap, 2**65)
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             op(bitmap, 'bla')
 
     def test_wrong_add(self):
@@ -224,7 +225,7 @@ class BasicTest(Util):
 
     @given(bitmap_cls)
     def test_wrong_constructor_values(self, cls):
-        with self.assertRaises(TypeError):  # this should fire a type error!
+        with pytest.raises(TypeError):  # this should fire a type error!
             bitmap = cls([3, 'bla', 3, 42])
 
     @given(bitmap_cls, hyp_collection)
@@ -232,7 +233,7 @@ class BasicTest(Util):
         bitmap = cls(values)
         result = bitmap.to_array()
         expected = array.array('Q', sorted(values))
-        self.assertEqual(result, expected)
+        assert result == expected
 
     @given(bitmap_cls, st.integers(min_value=0, max_value=100))
     def test_constructor_generator(self, cls, size):
@@ -240,7 +241,7 @@ class BasicTest(Util):
             for i in range(n):
                 yield i
         bitmap = cls(generator(size))
-        self.assertEqual(bitmap, cls(range(size)))
+        assert bitmap == cls(range(size))
 
 
 class SelectRankTest(Util):
@@ -250,18 +251,18 @@ class SelectRankTest(Util):
         bitmap = cls(values)
         values = list(bitmap)  # enforce sorted order
         for i in range(-len(values), len(values)):
-            self.assertEqual(bitmap[i], values[i])
+            assert bitmap[i] == values[i]
 
     @given(bitmap_cls, hyp_collection, uint32)
     def test_wrong_selection(self, cls, values, n):
         bitmap = cls(values)
-        with self.assertRaises(IndexError):
+        with pytest.raises(IndexError):
             bitmap[len(values)]
-        with self.assertRaises(IndexError):
+        with pytest.raises(IndexError):
             bitmap[n + len(values)]
-        with self.assertRaises(IndexError):
+        with pytest.raises(IndexError):
             bitmap[-len(values)-1]
-        with self.assertRaises(IndexError):
+        with pytest.raises(IndexError):
             bitmap[-n - len(values) - 1]
 
     def check_slice(self, cls, values, start, stop, step):
@@ -270,7 +271,7 @@ class SelectRankTest(Util):
         expected = values[start:stop:step]
         expected.sort()
         observed = list(bitmap[start:stop:step])
-        self.assertEqual(expected, observed)
+        assert expected == observed
 
     def slice_arg(n):
         return st.integers(min_value=-n, max_value=n)
@@ -296,37 +297,37 @@ class SelectRankTest(Util):
     def test_simple_rank(self, cls, values):
         bitmap = cls(values)
         for i, value in enumerate(sorted(values)):
-            self.assertEqual(bitmap.rank(value), i+1)
+            assert bitmap.rank(value) == i+1
 
     @given(bitmap_cls, hyp_collection, uint18)
     def test_general_rank(self, cls, values, element):
         bitmap = cls(values)
         observed_rank = bitmap.rank(element)
         expected_rank = len([n for n in set(values) if n <= element])
-        self.assertEqual(expected_rank, observed_rank)
+        assert expected_rank == observed_rank
 
     @given(bitmap_cls, hyp_collection)
     def test_min(self, cls, values):
         assume(len(values) > 0)
         bitmap = cls(values)
-        self.assertEqual(bitmap.min(), min(values))
+        assert bitmap.min() == min(values)
 
     @given(bitmap_cls)
     def test_wrong_min(self, cls):
         bitmap = cls()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             m = bitmap.min()
 
     @given(bitmap_cls, hyp_collection)
     def test_max(self, cls, values):
         assume(len(values) > 0)
         bitmap = cls(values)
-        self.assertEqual(bitmap.max(), max(values))
+        assert bitmap.max() == max(values)
 
     @given(bitmap_cls)
     def test_wrong_max(self, cls):
         bitmap = cls()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             m = bitmap.max()
 
     @given(bitmap_cls, hyp_collection, uint32)
@@ -335,15 +336,15 @@ class SelectRankTest(Util):
         bitmap = cls(values)
         try:
             expected = next(i for i in sorted(values) if i >= other_value)
-            self.assertEqual(bitmap.next_set_bit(other_value), expected)
+            assert bitmap.next_set_bit(other_value) == expected
         except StopIteration:
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 b = bitmap.next_set_bit(other_value)
 
     @given(bitmap_cls)
     def test_wrong_next_set_bit(self, cls):
         bitmap = cls()
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             b = bitmap.next_set_bit(0)
 
 
@@ -360,10 +361,10 @@ class BinaryOperationsTest(Util):
             old_bitmap2 = cls2(self.bitmap2)
             result_set = op(self.set1, self.set2)
             result_bitmap = op(self.bitmap1, self.bitmap2)
-            self.assertEqual(self.bitmap1, old_bitmap1)
-            self.assertEqual(self.bitmap2, old_bitmap2)
+            assert self.bitmap1 == old_bitmap1
+            assert self.bitmap2 == old_bitmap2
             self.compare_with_set(result_bitmap, result_set)
-            self.assertEqual(type(self.bitmap1), type(result_bitmap))
+            assert type(self.bitmap1) == type(result_bitmap)
 
     @given(bitmap_cls, hyp_collection, hyp_collection)
     def test_binary_op_inplace(self, cls2, values1, values2):
@@ -376,8 +377,8 @@ class BinaryOperationsTest(Util):
             old_bitmap2 = cls2(self.bitmap2)
             op(self.set1, self.set2)
             op(self.bitmap1, self.bitmap2)
-            self.assertIs(original, self.bitmap1)
-            self.assertEqual(self.bitmap2, old_bitmap2)
+            assert original is self.bitmap1
+            assert self.bitmap2 == old_bitmap2
             self.compare_with_set(self.bitmap1, self.set1)
 
 
@@ -395,8 +396,8 @@ class BinaryOperationsTest(Util):
             new_set = op(self.set1, self.set2)
             new_bitmap = op(self.bitmap1, self.bitmap2)
 
-            self.assertEqual(self.bitmap1, old_bitmap1)
-            self.assertEqual(self.bitmap2, old_bitmap2)
+            assert self.bitmap1 == old_bitmap1
+            assert self.bitmap2 == old_bitmap2
 
             self.compare_with_set(new_bitmap, new_set)
 
@@ -410,20 +411,20 @@ class ComparisonTest(Util):
             self.set2 = set(values2)
             self.bitmap1 = cls1(values1)
             self.bitmap2 = cls2(values2)
-            self.assertEqual(op(self.bitmap1, self.bitmap1),
-                             op(self.set1, self.set1))
-            self.assertEqual(op(self.bitmap1, self.bitmap2),
-                             op(self.set1, self.set2))
-            self.assertEqual(op(self.bitmap1 | self.bitmap2, self.bitmap2),
-                             op(self.set1 | self.set2, self.set2))
-            self.assertEqual(op(self.set1, self.set1 | self.set2),
-                             op(self.set1, self.set1 | self.set2))
+            assert op(self.bitmap1, self.bitmap1) == \
+                             op(self.set1, self.set1)
+            assert op(self.bitmap1, self.bitmap2) == \
+                             op(self.set1, self.set2)
+            assert op(self.bitmap1 | self.bitmap2, self.bitmap2) == \
+                             op(self.set1 | self.set2, self.set2)
+            assert op(self.set1, self.set1 | self.set2) == \
+                             op(self.set1, self.set1 | self.set2)
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection)
     def test_intersect(self, cls1, cls2, values1, values2):
         bm1 = cls1(values1)
         bm2 = cls2(values2)
-        self.assertEqual(bm1.intersect(bm2), len(bm1 & bm2) > 0)
+        assert bm1.intersect(bm2) == len(bm1 & bm2) > 0
 
 
 class RangeTest(Util):
@@ -431,16 +432,16 @@ class RangeTest(Util):
     def test_contains_range_arbitrary(self, cls, values, start, end):
         bm = cls(values)
         expected = (cls(range(start, end)) <= bm)
-        self.assertEqual(expected, bm.contains_range(start, end))
+        assert expected == bm.contains_range(start, end)
 
     @given(bitmap_cls, uint32, uint32)
     def test_contains_range(self, cls, start, end):
         assume(start < end)
-        self.assertTrue(cls(range(start, end)).contains_range(start, end))
-        self.assertTrue(cls(range(start, end)).contains_range(start, end-1))
-        self.assertFalse(cls(range(start, end-1)).contains_range(start, end))
-        self.assertTrue(cls(range(start, end)).contains_range(start+1, end))
-        self.assertFalse(cls(range(start+1, end)).contains_range(start, end))
+        assert cls(range(start, end)).contains_range(start, end)
+        assert cls(range(start, end)).contains_range(start, end-1)
+        assert not cls(range(start, end-1)).contains_range(start, end)
+        assert cls(range(start, end)).contains_range(start+1, end)
+        assert not cls(range(start+1, end)).contains_range(start, end)
         r = range(start, end)
         try:
             middle = r[len(r)//2]  # on 32bits systems, this call might fail when len(r) is too large
@@ -450,9 +451,9 @@ class RangeTest(Util):
             else:
                 return
         bm = cls(range(start, end)) - cls([middle])
-        self.assertFalse(bm.contains_range(start, end))
-        self.assertTrue(bm.contains_range(start, middle))
-        self.assertTrue(bm.contains_range(middle+1, end))
+        assert not bm.contains_range(start, end)
+        assert bm.contains_range(start, middle)
+        assert bm.contains_range(middle+1, end)
 
     @given(hyp_collection, uint32, uint32)
     def test_add_remove_range(self, values, start, end):
@@ -461,22 +462,22 @@ class RangeTest(Util):
         # Empty range
         original = BitMap64(bm)
         bm.add_range(end, start)
-        self.assertEqual(bm, original)
+        assert bm == original
         bm.remove_range(end, start)
-        self.assertEqual(bm, original)
+        assert bm == original
         # Adding the range
         bm.add_range(start, end)
-        self.assertTrue(bm.contains_range(start, end))
-        self.assertEqual(bm.intersection_cardinality(BitMap64(range(start, end))), end-start)
+        assert bm.contains_range(start, end)
+        assert bm.intersection_cardinality(BitMap64(range(start, end))) == end-start
         # Empty range (again)
         original = BitMap64(bm)
         bm.remove_range(end, start)
-        self.assertEqual(bm, original)
-        self.assertEqual(bm.intersection_cardinality(BitMap64(range(start, end))), end-start)
+        assert bm == original
+        assert bm.intersection_cardinality(BitMap64(range(start, end))) == end-start
         # Removing the range
         bm.remove_range(start, end)
-        self.assertFalse(bm.contains_range(start, end))
-        self.assertEqual(bm.intersection_cardinality(BitMap64(range(start, end))), 0)
+        assert not bm.contains_range(start, end)
+        assert bm.intersection_cardinality(BitMap64(range(start, end))) == 0
 
 
 class CardinalityTest(Util):
@@ -494,7 +495,7 @@ class CardinalityTest(Util):
             self.bitmap2 = cls2(values2)
             real_value = len(real_op(self.bitmap1, self.bitmap2))
             estimated_value = estimated_op(self.bitmap1, self.bitmap2)
-            self.assertEqual(real_value, estimated_value)
+            assert real_value == estimated_value
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection)
     def test_jaccard_index(self, cls1, cls2, values1, values2):
@@ -504,7 +505,7 @@ class CardinalityTest(Util):
         real_value = float(len(self.bitmap1 & self.bitmap2)) / \
             float(max(1, len(self.bitmap1 | self.bitmap2)))
         estimated_value = self.bitmap1.jaccard_index(self.bitmap2)
-        self.assertAlmostEqual(real_value, estimated_value)
+        assert real_value == pytest.approx(estimated_value)
 
     @given(bitmap_cls, hyp_collection, uint32, uint32)
     def test_range_cardinality(self, cls, values, a, b):
@@ -514,7 +515,7 @@ class CardinalityTest(Util):
         #make an intersection with the relevant range to test against
         test_bm = bm.intersection(BitMap64(range(start, end)))
 
-        self.assertEqual(len(test_bm), bm.range_cardinality(start, end))
+        assert len(test_bm) == bm.range_cardinality(start, end)
 
 
 class ManyOperationsTest(Util):
@@ -527,8 +528,8 @@ class ManyOperationsTest(Util):
         self.initial_bitmap.update(*all_values)
         expected_result = functools.reduce(
             lambda x, y: x | y, self.all_bitmaps+[self.initial_bitmap])
-        self.assertEqual(expected_result, self.initial_bitmap)
-        self.assertEqual(type(expected_result), type(self.initial_bitmap))
+        assert expected_result == self.initial_bitmap
+        assert type(expected_result) == type(self.initial_bitmap)
 
     @given(hyp_collection, hyp_many_collections)
     def test_intersection_update(self, initial_values, all_values):
@@ -538,8 +539,8 @@ class ManyOperationsTest(Util):
         self.initial_bitmap.intersection_update(*all_values)
         expected_result = functools.reduce(
             lambda x, y: x & y, self.all_bitmaps+[self.initial_bitmap])
-        self.assertEqual(expected_result, self.initial_bitmap)
-        self.assertEqual(type(expected_result), type(self.initial_bitmap))
+        assert expected_result == self.initial_bitmap
+        assert type(expected_result) == type(self.initial_bitmap)
 
     @given(bitmap_cls, st.data(), hyp_many_collections)
     def test_union(self, cls, data, all_values):
@@ -549,7 +550,7 @@ class ManyOperationsTest(Util):
         result = cls.union(*self.all_bitmaps)
         expected_result = functools.reduce(
             lambda x, y: x | y, self.all_bitmaps)
-        self.assertEqual(expected_result, result)
+        assert expected_result == result
 
     @given(bitmap_cls, st.data(), hyp_many_collections)
     def test_intersection(self, cls, data, all_values):
@@ -559,7 +560,7 @@ class ManyOperationsTest(Util):
         result = cls.intersection(*self.all_bitmaps)
         expected_result = functools.reduce(
             lambda x, y: x & y, self.all_bitmaps)
-        self.assertEqual(expected_result, result)
+        assert expected_result == result
 
     @given(bitmap_cls, st.data(), hyp_many_collections)
     def test_difference(self, cls, data, all_values):
@@ -569,7 +570,7 @@ class ManyOperationsTest(Util):
         result = cls.difference(*self.all_bitmaps)
         expected_result = functools.reduce(
             lambda x, y: x - y, self.all_bitmaps)
-        self.assertEqual(expected_result, result)
+        assert expected_result == result
 
 
 class SerializationTest(Util):
@@ -579,8 +580,8 @@ class SerializationTest(Util):
         old_bm = cls1(values)
         buff = old_bm.serialize()
         new_bm = cls2.deserialize(buff)
-        self.assertEqual(old_bm, new_bm)
-        self.assertIsInstance(new_bm, cls2)
+        assert old_bm == new_bm
+        assert isinstance(new_bm, cls2)
         self.assert_is_not(old_bm, new_bm)
 
     @given(bitmap_cls, hyp_collection, st.integers(min_value=2, max_value=pickle.HIGHEST_PROTOCOL))
@@ -588,7 +589,7 @@ class SerializationTest(Util):
         old_bm = cls(values)
         pickled = pickle.dumps(old_bm, protocol=protocol)
         new_bm = pickle.loads(pickled)
-        self.assertEqual(old_bm, new_bm)
+        assert old_bm == new_bm
         self.assert_is_not(old_bm, new_bm)
 
 
@@ -602,15 +603,15 @@ class FlipTest(Util):
         iter_after = self.bitmap_sample(bm_after, min(size, len(bm_after)))
         for elt in iter_range:
             if elt in bm_before:
-                self.assertNotIn(elt, bm_after)
+                assert elt not in bm_after
             else:
-                self.assertIn(elt, bm_after)
+                assert elt in bm_after
         for elt in iter_before:
             if not (start <= elt < end):
-                self.assertIn(elt, bm_after)
+                assert elt in bm_after
         for elt in iter_after:
             if not (start <= elt < end):
-                self.assertIn(elt, bm_before)
+                assert elt in bm_before
 
     @given(bitmap_cls, hyp_collection, integer, integer)
     def test_flip_empty(self, cls, values, start, end):
@@ -618,8 +619,8 @@ class FlipTest(Util):
         bm_before = cls(values)
         bm_copy = cls(bm_before)
         bm_after = bm_before.flip(start, end)
-        self.assertEqual(bm_before, bm_copy)
-        self.assertEqual(bm_before, bm_after)
+        assert bm_before == bm_copy
+        assert bm_before == bm_after
 
     @given(bitmap_cls, hyp_collection, integer, integer)
     def test_flip(self, cls, values, start, end):
@@ -627,7 +628,7 @@ class FlipTest(Util):
         bm_before = cls(values)
         bm_copy = cls(bm_before)
         bm_after = bm_before.flip(start, end)
-        self.assertEqual(bm_before, bm_copy)
+        assert bm_before == bm_copy
         self.check_flip(bm_before, bm_after, start, end)
 
     @given(hyp_collection, integer, integer)
@@ -636,7 +637,7 @@ class FlipTest(Util):
         bm_before = BitMap64(values)
         bm_after = BitMap64(bm_before)
         bm_after.flip_inplace(start, end)
-        self.assertEqual(bm_before, bm_after)
+        assert bm_before == bm_after
 
     @given(hyp_collection, integer, integer)
     def test_flip_inplace(self, values, start, end):
@@ -646,19 +647,19 @@ class FlipTest(Util):
         bm_after.flip_inplace(start, end)
         self.check_flip(bm_before, bm_after, start, end)
 
-@unittest.skip("not supported yet")
+@pytest.mark.skip("not supported yet")
 class ShiftTest(Util):
     @given(bitmap_cls, hyp_collection, int64)
     def test_shift(self, cls, values, offset):
         bm_before = cls(values)
         bm_copy = cls(bm_before)
         bm_after = bm_before.shift(offset)
-        self.assertEqual(bm_before, bm_copy)
+        assert bm_before == bm_copy
         expected = cls([val+offset for val in values if val+offset in range(0, 2**32)])
-        self.assertEqual(bm_after, expected)
+        assert bm_after == expected
 
 
-class BitMapTest(unittest.TestCase):
+class TestBitMap:
     @given(hyp_collection, uint32)
     def test_iter_equal_or_larger(self, values, other_value):
         bm = BitMap64(values)
@@ -667,44 +668,44 @@ class BitMapTest(unittest.TestCase):
         expected.sort()
 
         observed = list(bm_iter)
-        self.assertEqual(expected, observed)
+        assert expected == observed
 
     def test_unashability(self):
         bm = BitMap64()
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             hash(bm)
 
 
-class FrozenTest(unittest.TestCase):
+class TestFrozen:
 
     @given(hyp_collection, hyp_collection, integer)
     def test_immutability(self, values, other, number):
         frozen = FrozenBitMap64(values)
         copy = FrozenBitMap64(values)
         other = BitMap64(other)
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             frozen.clear()
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             frozen.pop()
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             frozen.add(number)
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             frozen.update(other)
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             frozen.discard(number)
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             frozen.remove(number)
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             frozen.intersection_update(other)
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             frozen.difference_update(other)
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             frozen.symmetric_difference_update(other)
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             frozen.update(number, number+10)
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             frozen.overwrite(other)
-        self.assertEqual(frozen, copy)
+        assert frozen == copy
 
     @given(hyp_collection, hyp_collection)
     def test_hash_uneq(self, values1, values2):
@@ -717,15 +718,15 @@ class FrozenTest(unittest.TestCase):
         hd = hash(bitmap1 ^ bitmap2)
         hashes = [h1, h2, hd]
         nb_collisions = len(hashes) - len(set(hashes))
-        self.assertGreaterEqual(1, nb_collisions)
+        assert 1 >= nb_collisions
 
     @given(hyp_collection)
     def test_hash_eq(self, values):
         bitmap1 = FrozenBitMap64(values)
         bitmap2 = FrozenBitMap64(values)
         bitmap3 = FrozenBitMap64(bitmap1)
-        self.assertEqual(hash(bitmap1), hash(bitmap2))
-        self.assertEqual(hash(bitmap1), hash(bitmap3))
+        assert hash(bitmap1) == hash(bitmap2)
+        assert hash(bitmap1) == hash(bitmap3)
 
     def test_hash_eq2(self):
         """It can happen that two bitmaps hold the same values but have a different data structure. They should still
@@ -737,12 +738,12 @@ class FrozenTest(unittest.TestCase):
         for i in range(n):
             bm2.add(i)
         bm2 = FrozenBitMap64(bm2, optimize=False)
-        self.assertEqual(bm1, bm2)
-        self.assertEqual(hash(bm1), hash(bm2))
+        assert bm1 == bm2
+        assert hash(bm1) == hash(bm2)
 
 small_integer = st.integers(min_value=0, max_value=200)
 small_integer_list = st.lists(min_size=0, max_size=2000, elements=small_integer)
-class PythonSetEquivalentTest(unittest.TestCase):
+class TestPythonSetEquivalent:
     """
     The main goal of this class is to make sure the BitMap64 api is a superset of the python builtin set api.
     """
@@ -779,7 +780,7 @@ class PythonSetEquivalentTest(unittest.TestCase):
             max_value = 200 + 1
 
         for i in range(min_value, max_value):
-            self.assertEqual(i in s1, i in converted_set)
+            assert (i in s1) == (i in converted_set)
 
 
     @given(bitmap_cls, small_integer_list, small_integer_list)
@@ -797,10 +798,10 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1 = BitMap64Class(list1)
         b2 = BitMap64Class(list2)
 
-        self.assertEqual(s1.difference(s2), set(b1.difference(b2)))
-        self.assertEqual(SetClass.difference(s1, s2), set(BitMap64Class.difference(b1, b2)))
-        self.assertEqual((s1 - s2), set(b1 - b2))
-        self.assertEqual(b1 - b2, b1.difference(b2))
+        assert s1.difference(s2) == set(b1.difference(b2))
+        assert SetClass.difference(s1, s2) == set(BitMap64Class.difference(b1, b2))
+        assert (s1 - s2) == set(b1 - b2)
+        assert b1 - b2 == b1.difference(b2)
 
     @given(bitmap_cls, small_integer_list, small_integer_list)
     def test_symmetric_difference(self, BitMap64Class, list1, list2):
@@ -817,8 +818,8 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1 = BitMap64Class(list1)
         b2 = BitMap64Class(list2)
 
-        self.assertEqual(s1.symmetric_difference(s2), set(b1.symmetric_difference(b2)))
-        self.assertEqual(SetClass.symmetric_difference(s1, s2), set(BitMap64Class.symmetric_difference(b1, b2)))
+        assert s1.symmetric_difference(s2) == set(b1.symmetric_difference(b2))
+        assert SetClass.symmetric_difference(s1, s2) == set(BitMap64Class.symmetric_difference(b1, b2))
 
     @given(bitmap_cls, small_integer_list, small_integer_list)
     def test_union(self, BitMap64Class, list1, list2):
@@ -835,10 +836,10 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1 = BitMap64Class(list1)
         b2 = BitMap64Class(list2)
 
-        self.assertEqual(s1.union(s2), set(b1.union(b2)))
-        self.assertEqual(SetClass.union(s1, s2), set(BitMap64Class.union(b1, b2)))
-        self.assertEqual((s1 | s2), set(b1 | b2))
-        self.assertEqual(b1 | b2, b1.union(b2))
+        assert s1.union(s2) == set(b1.union(b2))
+        assert SetClass.union(s1, s2) == set(BitMap64Class.union(b1, b2))
+        assert (s1 | s2) == set(b1 | b2)
+        assert b1 | b2 == b1.union(b2)
 
     @given(bitmap_cls, small_integer_list, small_integer_list)
     def test_issubset(self, BitMap64Class, list1, list2):
@@ -855,8 +856,8 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1 = BitMap64Class(list1)
         b2 = BitMap64Class(list2)
 
-        self.assertEqual(s1.issubset(s2), b1.issubset(b2))
-        self.assertEqual(SetClass.issubset(s1, s2), BitMap64Class.issubset(b1, b2))
+        assert s1.issubset(s2) == b1.issubset(b2)
+        assert SetClass.issubset(s1, s2) == BitMap64Class.issubset(b1, b2)
 
 
     @given(bitmap_cls, small_integer_list, small_integer_list)
@@ -874,9 +875,9 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1 = BitMap64Class(list1)
         b2 = BitMap64Class(list2)
 
-        self.assertEqual(s1.__le__(s2), b1.__le__(b2))
-        self.assertEqual(SetClass.__le__(s1, s2), BitMap64Class.__le__(b1, b2))
-        self.assertEqual((s1 <= s2), (b1 <= b2))
+        assert s1.__le__(s2) == b1.__le__(b2)
+        assert SetClass.__le__(s1, s2) == BitMap64Class.__le__(b1, b2)
+        assert (s1 <= s2) == (b1 <= b2)
 
 
     @given(bitmap_cls, small_integer_list, small_integer_list)
@@ -894,9 +895,9 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1 = BitMap64Class(list1)
         b2 = BitMap64Class(list2)
 
-        self.assertEqual(s1.__ge__(s2), b1.__ge__(b2))
-        self.assertEqual(SetClass.__ge__(s1, s2), BitMap64Class.__ge__(b1, b2))
-        self.assertEqual((s1 >= s2), (b1 >= b2))
+        assert s1.__ge__(s2) == b1.__ge__(b2)
+        assert SetClass.__ge__(s1, s2) == BitMap64Class.__ge__(b1, b2)
+        assert (s1 >= s2) == (b1 >= b2)
 
     @given(bitmap_cls, small_integer_list, small_integer_list)
     def test_eq(self, BitMap64Class, list1, list2):
@@ -912,9 +913,9 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1 = BitMap64Class(list1)
         b2 = BitMap64Class(list2)
 
-        self.assertEqual(s1.__eq__(s2), b1.__eq__(b2))
-        self.assertEqual(SetClass.__eq__(s1, s2), BitMap64Class.__eq__(b1, b2))
-        self.assertEqual((s1 == s2), (b1 == b2))
+        assert s1.__eq__(s2) == b1.__eq__(b2)
+        assert SetClass.__eq__(s1, s2) == BitMap64Class.__eq__(b1, b2)
+        assert (s1 == s2) == (b1 == b2)
 
 
     @given(bitmap_cls, small_integer_list, small_integer_list)
@@ -932,8 +933,8 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1 = BitMap64Class(list1)
         b2 = BitMap64Class(list2)
 
-        self.assertEqual(s1.issuperset(s2), b1.issuperset(b2))
-        self.assertEqual(SetClass.issuperset(s1, s2), BitMap64Class.issuperset(b1, b2))
+        assert s1.issuperset(s2) == b1.issuperset(b2)
+        assert SetClass.issuperset(s1, s2) == BitMap64Class.issuperset(b1, b2)
 
     @given(bitmap_cls, small_integer_list, small_integer_list)
     def test_isdisjoint(self, BitMap64Class, list1, list2):
@@ -950,15 +951,15 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1 = BitMap64Class(list1)
         b2 = BitMap64Class(list2)
 
-        self.assertEqual(s1.isdisjoint(s2), b1.isdisjoint(b2))
-        self.assertEqual(SetClass.isdisjoint(s1, s2), BitMap64Class.isdisjoint(b1, b2))
+        assert s1.isdisjoint(s2) == b1.isdisjoint(b2)
+        assert SetClass.isdisjoint(s1, s2) == BitMap64Class.isdisjoint(b1, b2)
 
 
     @given(small_integer_list)
     def test_clear(self, list1):
         b1 = BitMap64(list1)
         b1.clear()
-        self.assertEqual(len(b1), 0)
+        assert len(b1) == 0
 
     @given(small_integer_list)
     def test_pop(self, list1):
@@ -966,17 +967,17 @@ class PythonSetEquivalentTest(unittest.TestCase):
         starting_length = len(b1)
         if starting_length >= 1:
             popped_element = b1.pop()
-            self.assertEqual(len(b1), starting_length - 1) #length decreased by one
-            self.assertFalse(popped_element in b1) #and element isn't in the BitMap64 anymore
+            assert len(b1) == starting_length - 1#length decreased by one
+            assert not popped_element in b1#and element isn't in the BitMap64 anymore
         else:
-            with self.assertRaises(KeyError):
+            with pytest.raises(KeyError):
                 b1.pop()
 
     @given(bitmap_cls, small_integer_list)
     def test_copy(self, BitMap64Class, list1):
         b1 = BitMap64Class(list1)
         b2 = b1.copy()
-        self.assertEqual(b2, b1)
+        assert b2 == b1
 
 
     @given(small_integer_list)
@@ -991,8 +992,8 @@ class PythonSetEquivalentTest(unittest.TestCase):
 
         b2.add(new_element)
 
-        self.assertTrue(new_element in b2)
-        self.assertTrue(new_element not in b1)
+        assert new_element in b2
+        assert new_element not in b1
 
     @given(small_integer_list, small_integer_list)
     def test_difference_update(self, list1, list2):
@@ -1004,7 +1005,7 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b2 = BitMap64(list2)
         b1.difference_update(b2)
 
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
     @given(small_integer_list, small_integer_list)
     def test_symmetric_difference_update(self, list1, list2):
@@ -1016,7 +1017,7 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b2 = BitMap64(list2)
         b1.symmetric_difference_update(b2)
 
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
 
     @given(bitmap_cls, small_integer_list, small_integer_list)
@@ -1037,36 +1038,36 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b1 = BitMap64Class(list1)
         b2 = BitMap64Class(list2)
 
-        self.assertEqual(s1.__and__(s2), SetClass(b1.__and__(b2)))
-        self.assertEqual(s1.__or__(s2), SetClass(b1.__or__(b2)))
-        self.assertEqual(s1.__xor__(s2), SetClass(b1.__xor__(b2)))
-        self.assertEqual(s1.__sub__(s2), SetClass(b1.__sub__(b2)))
+        assert s1.__and__(s2) == SetClass(b1.__and__(b2))
+        assert s1.__or__(s2) == SetClass(b1.__or__(b2))
+        assert s1.__xor__(s2) == SetClass(b1.__xor__(b2))
+        assert s1.__sub__(s2) == SetClass(b1.__sub__(b2))
 
     @given(small_integer_list, small_integer)
     def test_add(self, list1, value):
         s1 = set(list1)
         b1 = BitMap64(list1)
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
         s1.add(value)
         b1.add(value)
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
     @given(small_integer_list, small_integer)
     def test_discard(self, list1, value):
         s1 = set(list1)
         b1 = BitMap64(list1)
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
         s1.discard(value)
         b1.discard(value)
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
     @given(small_integer_list, small_integer)
     def test_remove(self, list1, value):
         s1 = set(list1)
         b1 = BitMap64(list1)
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
         s1_raised = False
         b1_raised = False
@@ -1080,8 +1081,8 @@ class PythonSetEquivalentTest(unittest.TestCase):
         except KeyError:
             b1_raised = True
 
-        self.assertEqual(s1, set(b1))
-        self.assertEqual(s1_raised, b1_raised) #Either both raised exception or neither did
+        assert s1 == set(b1)
+        assert s1_raised == b1_raised#Either both raised exception or neither did
 
     @given(bitmap_cls, small_integer_list, small_integer_list, small_integer_list)
     def test_nary_union(self, BitMap64Class, list1, list2, list3):
@@ -1100,8 +1101,8 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b2 = BitMap64Class(list2)
         b3 = BitMap64Class(list3)
 
-        self.assertEqual(SetClass.union(s1, s2, s3), SetClass(BitMap64Class.union(b1, b2, b3)))
-        self.assertEqual(s1.union(s2, s3), SetClass(b1.union(b2, b3)))
+        assert SetClass.union(s1, s2, s3) == SetClass(BitMap64Class.union(b1, b2, b3))
+        assert s1.union(s2, s3) == SetClass(b1.union(b2, b3))
 
     @given(bitmap_cls, small_integer_list, small_integer_list, small_integer_list)
     def test_nary_difference(self, BitMap64Class, list1, list2, list3):
@@ -1120,8 +1121,8 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b2 = BitMap64Class(list2)
         b3 = BitMap64Class(list3)
 
-        self.assertEqual(SetClass.difference(s1, s2, s3), SetClass(BitMap64Class.difference(b1, b2, b3)))
-        self.assertEqual(s1.difference(s2, s3), SetClass(b1.difference(b2, b3)))
+        assert SetClass.difference(s1, s2, s3) == SetClass(BitMap64Class.difference(b1, b2, b3))
+        assert s1.difference(s2, s3) == SetClass(b1.difference(b2, b3))
 
     @given(bitmap_cls, small_integer_list, small_integer_list, small_integer_list)
     def test_nary_intersection(self, BitMap64Class, list1, list2, list3):
@@ -1140,8 +1141,8 @@ class PythonSetEquivalentTest(unittest.TestCase):
         b2 = BitMap64Class(list2)
         b3 = BitMap64Class(list3)
 
-        self.assertEqual(SetClass.intersection(s1, s2, s3), SetClass(BitMap64Class.intersection(b1, b2, b3)))
-        self.assertEqual(s1.intersection(s2, s3), SetClass(b1.intersection(b2, b3)))
+        assert SetClass.intersection(s1, s2, s3) == SetClass(BitMap64Class.intersection(b1, b2, b3))
+        assert s1.intersection(s2, s3) == SetClass(b1.intersection(b2, b3))
 
     @given(small_integer_list, small_integer_list, small_integer_list)
     def test_nary_intersection_update(self, list1, list2, list3):
@@ -1155,7 +1156,7 @@ class PythonSetEquivalentTest(unittest.TestCase):
 
         set.intersection_update(s1, s2, s3)
         BitMap64.intersection_update(b1, b2, b3)
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
 
         s1 = set(list1)
@@ -1169,7 +1170,7 @@ class PythonSetEquivalentTest(unittest.TestCase):
         s1.intersection_update(s2, s3)
         b1.intersection_update(b2, b3)
 
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
 
     @given(small_integer_list, small_integer_list, small_integer_list)
@@ -1184,7 +1185,7 @@ class PythonSetEquivalentTest(unittest.TestCase):
 
         set.difference_update(s1, s2, s3)
         BitMap64.difference_update(b1, b2, b3)
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
 
         s1 = set(list1)
@@ -1198,7 +1199,7 @@ class PythonSetEquivalentTest(unittest.TestCase):
         s1.difference_update(s2, s3)
         b1.difference_update(b2, b3)
 
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
     @given(small_integer_list, small_integer_list, small_integer_list)
     def test_nary_update(self, list1, list2, list3):
@@ -1212,7 +1213,7 @@ class PythonSetEquivalentTest(unittest.TestCase):
 
         set.update(s1, s2, s3)
         BitMap64.update(b1, b2, b3)
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
 
         s1 = set(list1)
@@ -1226,17 +1227,17 @@ class PythonSetEquivalentTest(unittest.TestCase):
         s1.update(s2, s3)
         b1.update(b2, b3)
 
-        self.assertEqual(s1, set(b1))
+        assert s1 == set(b1)
 
 small_list_of_uin32 = st.lists(min_size=0, max_size=400, elements=uint32)
 large_list_of_uin32 = st.lists(min_size=600, max_size=1000, elements=uint32, unique=True)
-class StringTest(unittest.TestCase):
+class TestString:
 
     @given(bitmap_cls, small_list_of_uin32)
     def test_small_list(self, cls, collection):
         #test that repr for a small bitmap is equal to the original bitmap
         bm = cls(collection)
-        self.assertEqual(bm, eval(repr(bm)))
+        assert bm == eval(repr(bm))
 
     @settings(suppress_health_check=HealthCheck.all())
     @given(bitmap_cls, large_list_of_uin32)
@@ -1253,13 +1254,13 @@ class StringTest(unittest.TestCase):
         large_ints = [int(i) for i in large.split()]
 
         for i in small_ints:
-            self.assertIn(i, bm)
+            assert i in bm
 
         for i in large_ints:
-            self.assertIn(i, bm)
+            assert i in bm
 
-        self.assertEqual(min(small_ints), bm.min())
-        self.assertEqual(max(large_ints), bm.max())
+        assert min(small_ints) == bm.min()
+        assert max(large_ints) == bm.max()
 
 if __name__ == "__main__":
     unittest.main()
