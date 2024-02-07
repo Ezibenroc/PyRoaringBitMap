@@ -113,10 +113,10 @@ If you just want to run the tests directly from the root of the repository:
 
 .. code:: bash
 
-    python -m pip install hypothesis
+    python -m pip install hypothesis pytest
     # This will test in three ways: via installation from source,
     # via cython directly, and creation of a wheel
-    python test.py
+    python -m pytest test.py
 
 
 Package pyroaring as an sdist and wheel. Note that building wheels that have
