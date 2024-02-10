@@ -120,7 +120,7 @@ class Util:
                 'The two bitmaps are identical (modifying one also modifies the other).')
 
 
-class BasicTest(Util):
+class TestBasic(Util):
 
     @given(hyp_collection, st.booleans())
     @settings(deadline=None)
@@ -272,7 +272,7 @@ def slice_arg(n: int) -> st.SearchStrategy[int]:
     return st.integers(min_value=-n, max_value=n)
 
 
-class SelectRankTest(Util):
+class TestSelectRank(Util):
 
     @given(bitmap_cls, hyp_collection, st.booleans())
     def test_simple_select(
@@ -443,7 +443,7 @@ class SelectRankTest(Util):
             bitmap.next_set_bit(0)
 
 
-class BinaryOperationsTest(Util):
+class TestBinaryOperations(Util):
     set1: Set[int]
     set2: Set[int]
 
@@ -517,7 +517,7 @@ class BinaryOperationsTest(Util):
             self.compare_with_set(new_bitmap, new_set)
 
 
-class ComparisonTest(Util):
+class TestComparison(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection, st.booleans())
     def test_comparison(
@@ -562,7 +562,7 @@ class ComparisonTest(Util):
     ) -> None:
         bm1 = cls1(values1, copy_on_write=cow)
         bm2 = cls2(values2, copy_on_write=cow)
-        assert bm1.intersect(bm2) == len(bm1 & bm2) > 0
+        assert (bm1.intersect(bm2)) == (len(bm1 & bm2) > 0)
 
     @given(bitmap_cls, hyp_collection, st.booleans())
     def test_eq_other_objects(self, cls: type[EitherBitMap], values: HypCollection, cow: bool) -> None:
@@ -583,7 +583,7 @@ class ComparisonTest(Util):
         assert cls.__ne__(bm, None) is NotImplemented
 
 
-class RangeTest(Util):
+class TestRange(Util):
     @given(bitmap_cls, hyp_collection, st.booleans(), uint32, uint32)
     def test_contains_range_arbitrary(
         self,
@@ -653,7 +653,7 @@ class RangeTest(Util):
         assert bm.contains_range(start, end)
 
 
-class CardinalityTest(Util):
+class TestCardinality(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection, st.booleans())
     def test_cardinality(
@@ -711,7 +711,7 @@ class CardinalityTest(Util):
         assert len(test_bm) == bm.range_cardinality(start, end)
 
 
-class ManyOperationsTest(Util):
+class TestManyOperations(Util):
     all_bitmaps: Iterable[AbstractBitMap]
 
     @given(hyp_collection, hyp_many_collections, st.booleans())
@@ -795,7 +795,7 @@ class ManyOperationsTest(Util):
         assert expected_result == result
 
 
-class SerializationTest(Util):
+class TestSerialization(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection)
     def test_serialization(
@@ -825,7 +825,7 @@ class SerializationTest(Util):
         self.assert_is_not(old_bm, new_bm)
 
 
-class StatisticsTest(Util):
+class TestStatistics(Util):
 
     @given(bitmap_cls, hyp_collection, st.booleans())
     def test_basic_properties(
@@ -883,7 +883,7 @@ class StatisticsTest(Util):
         assert stats['n_bytes_run_containers'] == 12
 
 
-class FlipTest(Util):
+class TestFlip(Util):
 
     def check_flip(self, bm_before: AbstractBitMap, bm_after: AbstractBitMap, start: int, end: int) -> None:
         size = 100
@@ -964,7 +964,7 @@ class FlipTest(Util):
         self.check_flip(bm_before, bm_after, start, end)
 
 
-class ShiftTest(Util):
+class TestShift(Util):
     @given(bitmap_cls, hyp_collection, int64, st.booleans())
     def test_shift(
         self,
@@ -981,7 +981,7 @@ class ShiftTest(Util):
         assert bm_after == expected
 
 
-class IncompatibleInteraction(Util):
+class TestIncompatibleInteraction(Util):
 
     def incompatible_op(self, op: Callable[[BitMap, BitMap], object]) -> None:
         for cow1, cow2 in [(True, False), (False, True)]:
