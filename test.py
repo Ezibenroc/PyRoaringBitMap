@@ -491,6 +491,21 @@ class TestBinaryOperations(Util):
             assert self.bitmap2 == old_bitmap2
             self.compare_with_set(self.bitmap1, self.set1)
 
+    @given(hyp_collection, st.booleans())
+    def test_binary_op_inplace_self(
+        self,
+        values: HypCollection,
+        cow: bool,
+    ) -> None:
+        for op in [operator.ior, operator.iand, operator.ixor, operator.isub]:
+            self.set = set(values)
+            self.bitmap = BitMap(values, cow)
+            original = self.bitmap
+            op(self.set, self.set)
+            op(self.bitmap, self.bitmap)
+            assert original is self.bitmap
+            self.compare_with_set(self.bitmap, self.set)
+
     @given(bitmap_cls, hyp_collection, hyp_collection, st.booleans())
     def test_binary_op_inplace_frozen(
         self,
