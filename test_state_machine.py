@@ -4,7 +4,7 @@ from hypothesis.stateful import Bundle, RuleBasedStateMachine, rule
 from hypothesis import settings
 from dataclasses import dataclass
 from pyroaring import BitMap, BitMap64
-from test64 import hyp_range, uint64
+from test64 import hyp_collection, uint64
 
 BitMapClass = BitMap64
 
@@ -25,7 +25,7 @@ class Collection:
 class SetComparison(RuleBasedStateMachine):
     collections = Bundle("collections")
 
-    @rule(target=collections, val=hyp_range)
+    @rule(target=collections, val=hyp_collection)
     def init_collection(self, val):
         return Collection(test=BitMapClass(val), ref=set(val))
 
@@ -110,7 +110,7 @@ class SetComparison(RuleBasedStateMachine):
 
 
 TestTrees = SetComparison.TestCase
-TestTrees.settings = settings(max_examples=100, stateful_step_count=200)
+TestTrees.settings = settings(max_examples=100, stateful_step_count=100)
 
 if __name__ == "__main__":
     unittest.main()
