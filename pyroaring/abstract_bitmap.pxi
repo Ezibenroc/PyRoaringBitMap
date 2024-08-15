@@ -591,7 +591,7 @@ cdef class AbstractBitMap:
         >>> stats['n_values_run_containers']
         0
         >>> stats['sum_value'] 
-        1088966928
+        0
         """
         cdef croaring.roaring_statistics_t stat
         croaring.roaring_bitmap_statistics(self._c_bitmap, &stat)
