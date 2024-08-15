@@ -112,18 +112,28 @@ cdef class BitMap(AbstractBitMap):
 
     def __ior__(self, other):
         self._check_compatibility(other)
+        if self._c_bitmap == (<AbstractBitMap?>other)._c_bitmap:
+            return self
         return (<BitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_or_inplace)
 
     def __iand__(self, other):
         self._check_compatibility(other)
+        if self._c_bitmap == (<AbstractBitMap?>other)._c_bitmap:
+            return self
         return (<BitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_and_inplace)
 
     def __ixor__(self, other):
         self._check_compatibility(other)
+        if self._c_bitmap == (<AbstractBitMap?>other)._c_bitmap:
+            self.clear()
+            return self
         return (<BitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_xor_inplace)
 
     def __isub__(self, other):
         self._check_compatibility(other)
+        if self._c_bitmap == (<AbstractBitMap?>other)._c_bitmap:
+            self.clear()
+            return self
         return (<BitMap>self).binary_iop(<AbstractBitMap?>other, croaring.roaring_bitmap_andnot_inplace)
 
     def intersection_update(self, *all_values): # FIXME could be more efficient
