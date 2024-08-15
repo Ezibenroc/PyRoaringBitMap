@@ -86,11 +86,11 @@ cdef extern from "roaring.h":
     size_t roaring_bitmap_portable_size_in_bytes(const roaring_bitmap_t *ra)
     size_t roaring_bitmap_portable_serialize(const roaring_bitmap_t *ra, char *buf)
     roaring_bitmap_t *roaring_bitmap_portable_deserialize(const char *buf)
-    roaring_uint32_iterator_t *roaring_create_iterator(const roaring_bitmap_t *ra)
-    bool roaring_advance_uint32_iterator(roaring_uint32_iterator_t *it)
-    uint32_t roaring_read_uint32_iterator(roaring_uint32_iterator_t *it, uint32_t* buf, uint32_t count)
-    bool roaring_move_uint32_iterator_equalorlarger(roaring_uint32_iterator_t *it, uint32_t val)
-    void roaring_free_uint32_iterator(roaring_uint32_iterator_t *it)
+    roaring_uint32_iterator_t *roaring_iterator_create(const roaring_bitmap_t *ra)
+    bool roaring_uint32_iterator_advance(roaring_uint32_iterator_t *it)
+    uint32_t roaring_uint32_iterator_read(roaring_uint32_iterator_t *it, uint32_t* buf, uint32_t count)
+    bool roaring_uint32_iterator_move_equalorlarger(roaring_uint32_iterator_t *it, uint32_t val)
+    void roaring_uint32_iterator_free(roaring_uint32_iterator_t *it)
 
     # 64-bit roaring bitmaps
     ctypedef struct roaring64_bitmap_t:

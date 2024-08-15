@@ -253,10 +253,10 @@ cdef class AbstractBitMap:
     cdef compute_hash(self):
         cdef int64_t h_val = 0
         cdef uint32_t i, count, max_count=256
-        cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)
+        cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_iterator_create(self._c_bitmap)
         cdef uint32_t *buff = <uint32_t*>malloc(max_count*4)
         while True:
-            count = croaring.roaring_read_uint32_iterator(iterator, buff, max_count)
+            count = croaring.roaring_uint32_iterator_read(iterator, buff, max_count)
             i = 0
             while i < count:
                 h_val = (h_val << 2) + buff[i] + 1
@@ -266,7 +266,7 @@ cdef class AbstractBitMap:
                 i += 1
             if count != max_count:
                 break
-        croaring.roaring_free_uint32_iterator(iterator)
+        croaring.roaring_uint32_iterator_free(iterator)
         free(buff)
         if not self:
             return -1
@@ -285,25 +285,25 @@ cdef class AbstractBitMap:
         >>> list(bm.iter_equal_or_larger(2))
         [2, 4]
         """
-        cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)
-        valid = croaring.roaring_move_uint32_iterator_equalorlarger(iterator, val)
+        cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_iterator_create(self._c_bitmap)
+        valid = croaring.roaring_uint32_iterator_move_equalorlarger(iterator, val)
         if not valid:
             return
         try:
             while iterator.has_value:
                 yield iterator.current_value
-                croaring.roaring_advance_uint32_iterator(iterator)
+                croaring.roaring_uint32_iterator_advance(iterator)
         finally:
-            croaring.roaring_free_uint32_iterator(iterator)
+            croaring.roaring_uint32_iterator_free(iterator)
 
     def __iter__(self):
-        cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)
+        cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_iterator_create(self._c_bitmap)
         try:
             while iterator.has_value:
                 yield iterator.current_value
-                croaring.roaring_advance_uint32_iterator(iterator)
+                croaring.roaring_uint32_iterator_advance(iterator)
         finally:
-            croaring.roaring_free_uint32_iterator(iterator)
+            croaring.roaring_uint32_iterator_free(iterator)
 
     def __repr__(self):
         return str(self)
@@ -696,16 +696,16 @@ cdef class AbstractBitMap:
     cdef _generic_get_slice(self, uint32_t start, uint32_t stop, uint32_t step):
         """Assume that start, stop and step > 0 and that the result will not be empty."""
         cdef croaring.roaring_bitmap_t *result = croaring.roaring_bitmap_create()
-        cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_create_iterator(self._c_bitmap)
+        cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_iterator_create(self._c_bitmap)
         cdef uint32_t  count, max_count=256
         cdef uint32_t *buff = <uint32_t*>malloc(max_count*4)
         cdef uint32_t i_loc=0, i_glob=start, i_buff=0
         croaring.roaring_bitmap_set_copy_on_write(result, self.copy_on_write)
         first_elt = self._get_elt(start)
-        valid = croaring.roaring_move_uint32_iterator_equalorlarger(iterator, first_elt)
+        valid = croaring.roaring_uint32_iterator_move_equalorlarger(iterator, first_elt)
         assert valid
         while True:
-            count = croaring.roaring_read_uint32_iterator(iterator, buff, max_count)
+            count = croaring.roaring_uint32_iterator_read(iterator, buff, max_count)
             while i_buff < max_count and i_glob < stop:
                 buff[i_loc] = buff[i_buff]
                 i_loc += 1
@@ -716,7 +716,7 @@ cdef class AbstractBitMap:
                 break
             i_loc = 0
             i_buff = i_buff % max_count
-        croaring.roaring_free_uint32_iterator(iterator)
+        croaring.roaring_uint32_iterator_free(iterator)
         free(buff)
         return self.from_ptr(result)
 
