@@ -36,7 +36,7 @@ Output:
 Installation from Pypi
 ----------------------
 
-Supported systems: Linux, MacOS or Windows, Python 3.7 or higher. Note that pyroaring might still work with older Python
+Supported systems: Linux, MacOS or Windows, Python 3.8 or higher. Note that pyroaring might still work with older Python
 versions, but they are not tested anymore.
 
 To install pyroaring on your local account, use the following command:
