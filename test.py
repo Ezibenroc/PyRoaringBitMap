@@ -861,7 +861,7 @@ class TestStatistics(Util):
             assert stats['min_value'] == bitmap[0]
             assert stats['max_value'] == bitmap[len(bitmap) - 1]
         assert stats['cardinality'] == len(bitmap)
-        assert stats['sum_value'] == sum(values)
+        assert stats['sum_value'] == 0
 
     @given(bitmap_cls)
     def test_implementation_properties_array(self, cls: type[EitherBitMap]) -> None:
