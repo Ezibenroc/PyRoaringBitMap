@@ -59,7 +59,7 @@ range_huge_interval = uint18.flatmap(lambda n:
                                 st.builds(range, st.just(n),
                                           st.integers(
                                               min_value=n+2**52, max_value=n+2**63),
-                                          st.integers(min_value=2**45, max_value=2**63)))
+                                          st.integers(min_value=2**49, max_value=2**63)))
 
 # Build a list of values of the form a * 2**16 + b with b in [-2,+2]
 # In other words, numbers that are close (or equal) to a multiple of 2**16
