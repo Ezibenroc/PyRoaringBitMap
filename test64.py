@@ -434,7 +434,7 @@ class TestComparison(Util):
     def test_intersect(self, cls1, cls2, values1, values2):
         bm1 = cls1(values1)
         bm2 = cls2(values2)
-        assert bm1.intersect(bm2) == len(bm1 & bm2) > 0
+        assert (bm1.intersect(bm2)) == (len(bm1 & bm2) > 0)
 
 
 class TestRange(Util):
@@ -1249,7 +1249,7 @@ class TestString:
         bm = cls(collection)
         assert bm == eval(repr(bm))
 
-    @settings(suppress_health_check=HealthCheck.all())
+    @settings(suppress_health_check=list(HealthCheck))
     @given(bitmap_cls, large_list_of_uin32)
     def test_large_list(self, cls, collection):
         # test that for a large bitmap the both the start and the end of the bitmap get printed
