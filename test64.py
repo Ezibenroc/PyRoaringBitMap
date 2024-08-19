@@ -132,7 +132,7 @@ class Util:
                 'The two bitmaps are identical (modifying one also modifies the other).')
 
 
-class BasicTest(Util):
+class TestBasic(Util):
 
     @given(hyp_collection)
     @settings(deadline=None)
@@ -244,7 +244,7 @@ class BasicTest(Util):
         assert bitmap == cls(range(size))
 
 
-class SelectRankTest(Util):
+class TestSelectRank(Util):
 
     @given(bitmap_cls, hyp_collection)
     def test_simple_select(self, cls, values):
@@ -348,7 +348,7 @@ class SelectRankTest(Util):
             b = bitmap.next_set_bit(0)
 
 
-class BinaryOperationsTest(Util):
+class TestBinaryOperations(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection)
     def test_binary_op(self, cls1, cls2,  values1, values2):
@@ -402,7 +402,7 @@ class BinaryOperationsTest(Util):
             self.compare_with_set(new_bitmap, new_set)
 
 
-class ComparisonTest(Util):
+class TestComparison(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection)
     def test_comparison(self, cls1, cls2, values1, values2):
@@ -427,7 +427,7 @@ class ComparisonTest(Util):
         assert bm1.intersect(bm2) == len(bm1 & bm2) > 0
 
 
-class RangeTest(Util):
+class TestRange(Util):
     @given(bitmap_cls, hyp_collection, uint32, uint32)
     def test_contains_range_arbitrary(self, cls, values, start, end):
         bm = cls(values)
@@ -480,7 +480,7 @@ class RangeTest(Util):
         assert bm.intersection_cardinality(BitMap64(range(start, end))) == 0
 
 
-class CardinalityTest(Util):
+class TestCardinality(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection)
     def test_cardinality(self, cls1, cls2, values1, values2):
@@ -518,7 +518,7 @@ class CardinalityTest(Util):
         assert len(test_bm) == bm.range_cardinality(start, end)
 
 
-class ManyOperationsTest(Util):
+class TestManyOperations(Util):
 
     @given(hyp_collection, hyp_many_collections)
     def test_update(self, initial_values, all_values):
@@ -573,7 +573,7 @@ class ManyOperationsTest(Util):
         assert expected_result == result
 
 
-class SerializationTest(Util):
+class TestSerialization(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection)
     def test_serialization(self, cls1, cls2, values):
@@ -593,7 +593,7 @@ class SerializationTest(Util):
         self.assert_is_not(old_bm, new_bm)
 
 
-class FlipTest(Util):
+class TestFlip(Util):
 
     def check_flip(self, bm_before, bm_after, start, end):
         size = 100
@@ -648,7 +648,7 @@ class FlipTest(Util):
         self.check_flip(bm_before, bm_after, start, end)
 
 @pytest.mark.skip("not supported yet")
-class ShiftTest(Util):
+class TestShift(Util):
     @given(bitmap_cls, hyp_collection, int64)
     def test_shift(self, cls, values, offset):
         bm_before = cls(values)
