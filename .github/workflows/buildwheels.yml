@@ -56,7 +56,7 @@ jobs:
         env:
           CIBW_TEST_REQUIRES: hypothesis
           CIBW_TEST_COMMAND: "python {project}/test.py -v && python {project}/cydoctest.py -v"
-          CIBW_SKIP: "pp* cp36-*"
+          CIBW_SKIP: "pp* cp36-* cp37-*"
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_TEST_SKIP: "*-win_arm64"
           CIBW_BUILD_FRONTEND: "build"
