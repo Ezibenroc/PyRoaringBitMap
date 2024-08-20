@@ -1,3 +1,5 @@
+from __future__ import annotations  # for using set[int] in Python 3.8
+
 import hypothesis.strategies as st
 from hypothesis.database import DirectoryBasedExampleDatabase
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, rule
