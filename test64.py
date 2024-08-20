@@ -59,7 +59,7 @@ range_huge_interval = uint18.flatmap(lambda n:
                                 st.builds(range, st.just(n),
                                           st.integers(
                                               min_value=n+2**52, max_value=n+2**63),
-                                          st.integers(min_value=2**45, max_value=2**63)))
+                                          st.integers(min_value=2**49, max_value=2**63)))
 
 # Build a list of values of the form a * 2**16 + b with b in [-2,+2]
 # In other words, numbers that are close (or equal) to a multiple of 2**16
@@ -132,7 +132,7 @@ class Util:
                 'The two bitmaps are identical (modifying one also modifies the other).')
 
 
-class BasicTest(Util):
+class TestBasic(Util):
 
     @given(hyp_collection)
     @settings(deadline=None)
@@ -244,7 +244,7 @@ class BasicTest(Util):
         assert bitmap == cls(range(size))
 
 
-class SelectRankTest(Util):
+class TestSelectRank(Util):
 
     @given(bitmap_cls, hyp_collection)
     def test_simple_select(self, cls, values):
@@ -348,7 +348,7 @@ class SelectRankTest(Util):
             b = bitmap.next_set_bit(0)
 
 
-class BinaryOperationsTest(Util):
+class TestBinaryOperations(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection)
     def test_binary_op(self, cls1, cls2,  values1, values2):
@@ -381,6 +381,16 @@ class BinaryOperationsTest(Util):
             assert self.bitmap2 == old_bitmap2
             self.compare_with_set(self.bitmap1, self.set1)
 
+    @given(hyp_collection)
+    def test_binary_op_inplace_self(self, values) -> None:
+        for op in [operator.ior, operator.iand, operator.ixor, operator.isub]:
+            self.set = set(values)
+            self.bitmap = BitMap64(values)
+            original = self.bitmap
+            op(self.set, self.set)
+            op(self.bitmap, self.bitmap)
+            assert original is self.bitmap
+            self.compare_with_set(self.bitmap, self.set)
 
     @given(bitmap_cls, hyp_collection, hyp_collection)
     def test_binary_op_inplace_frozen(self, cls2, values1, values2):
@@ -402,7 +412,7 @@ class BinaryOperationsTest(Util):
             self.compare_with_set(new_bitmap, new_set)
 
 
-class ComparisonTest(Util):
+class TestComparison(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection)
     def test_comparison(self, cls1, cls2, values1, values2):
@@ -424,10 +434,10 @@ class ComparisonTest(Util):
     def test_intersect(self, cls1, cls2, values1, values2):
         bm1 = cls1(values1)
         bm2 = cls2(values2)
-        assert bm1.intersect(bm2) == len(bm1 & bm2) > 0
+        assert (bm1.intersect(bm2)) == (len(bm1 & bm2) > 0)
 
 
-class RangeTest(Util):
+class TestRange(Util):
     @given(bitmap_cls, hyp_collection, uint32, uint32)
     def test_contains_range_arbitrary(self, cls, values, start, end):
         bm = cls(values)
@@ -480,7 +490,7 @@ class RangeTest(Util):
         assert bm.intersection_cardinality(BitMap64(range(start, end))) == 0
 
 
-class CardinalityTest(Util):
+class TestCardinality(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection, hyp_collection)
     def test_cardinality(self, cls1, cls2, values1, values2):
@@ -518,7 +528,7 @@ class CardinalityTest(Util):
         assert len(test_bm) == bm.range_cardinality(start, end)
 
 
-class ManyOperationsTest(Util):
+class TestManyOperations(Util):
 
     @given(hyp_collection, hyp_many_collections)
     def test_update(self, initial_values, all_values):
@@ -573,7 +583,7 @@ class ManyOperationsTest(Util):
         assert expected_result == result
 
 
-class SerializationTest(Util):
+class TestSerialization(Util):
 
     @given(bitmap_cls, bitmap_cls, hyp_collection)
     def test_serialization(self, cls1, cls2, values):
@@ -593,7 +603,7 @@ class SerializationTest(Util):
         self.assert_is_not(old_bm, new_bm)
 
 
-class FlipTest(Util):
+class TestFlip(Util):
 
     def check_flip(self, bm_before, bm_after, start, end):
         size = 100
@@ -648,7 +658,7 @@ class FlipTest(Util):
         self.check_flip(bm_before, bm_after, start, end)
 
 @pytest.mark.skip("not supported yet")
-class ShiftTest(Util):
+class TestShift(Util):
     @given(bitmap_cls, hyp_collection, int64)
     def test_shift(self, cls, values, offset):
         bm_before = cls(values)
@@ -1239,7 +1249,7 @@ class TestString:
         bm = cls(collection)
         assert bm == eval(repr(bm))
 
-    @settings(suppress_health_check=HealthCheck.all())
+    @settings(suppress_health_check=list(HealthCheck))
     @given(bitmap_cls, large_list_of_uin32)
     def test_large_list(self, cls, collection):
         # test that for a large bitmap the both the start and the end of the bitmap get printed
