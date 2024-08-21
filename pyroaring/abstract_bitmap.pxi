@@ -794,7 +794,7 @@ cdef class AbstractBitMap64:
     cdef croaring.roaring64_bitmap_t* _c_bitmap
     cdef int64_t _h_val
 
-    def __cinit__(self, values=None, optimize=True, no_init=False):
+    def __cinit__(self, values=None, copy_on_write=False, optimize=True, no_init=False):
         if no_init:
             assert values is None
             return
@@ -836,7 +836,7 @@ cdef class AbstractBitMap64:
         if optimize:
             self.run_optimize()
 
-    def __init__(self, values=None, optimize=True):
+    def __init__(self, values=None, copy_on_write=False, optimize=True):
         """
         Construct a AbstractBitMap64 object, either empry or from an iterable.
 
@@ -859,12 +859,30 @@ cdef class AbstractBitMap64:
         (<AbstractBitMap64>bm)._c_bitmap = ptr
         return bm
 
+    @property
+    def copy_on_write(self):
+        """
+        Always False, not implemented for 64 bits roaring bitmaps.
+
+        >>> BitMap64(copy_on_write=False).copy_on_write
+        False
+        >>> BitMap64(copy_on_write=True).copy_on_write
+        False
+        """
+        return False
+
     def run_optimize(self):
         return croaring.roaring64_bitmap_run_optimize(self._c_bitmap)
 
     def __dealloc__(self):
         if self._c_bitmap is not NULL:
             croaring.roaring64_bitmap_free(self._c_bitmap)
+
+    def _check_compatibility(self, AbstractBitMap64 other):
+        if other is None:
+            raise TypeError('Argument has incorrect type (expected pyroaring.AbstractBitMap64, got None)')
+        if self.copy_on_write != other.copy_on_write:
+            raise ValueError('Cannot have interactions between bitmaps with and without copy_on_write.\n')
 
     def __contains__(self, uint64_t value):
         return croaring.roaring64_bitmap_contains(self._c_bitmap, value)
@@ -875,20 +893,33 @@ cdef class AbstractBitMap64:
     def __len__(self):
         return croaring.roaring64_bitmap_get_cardinality(self._c_bitmap)
 
-    def __richcmp__(self, other, int op):
-        if op == 0: # <
-            return croaring.roaring64_bitmap_is_strict_subset((<AbstractBitMap64?>self)._c_bitmap, (<AbstractBitMap64?>other)._c_bitmap)
-        elif op == 1: # <=
-            return croaring.roaring64_bitmap_is_subset((<AbstractBitMap64?>self)._c_bitmap, (<AbstractBitMap64?>other)._c_bitmap)
-        elif op == 2: # ==
-            return croaring.roaring64_bitmap_equals((<AbstractBitMap64?>self)._c_bitmap, (<AbstractBitMap64?>other)._c_bitmap)
-        elif op == 3: # !=
-            return not (self == other)
-        elif op == 4: # >
-            return croaring.roaring64_bitmap_is_strict_subset((<AbstractBitMap64?>other)._c_bitmap, (<AbstractBitMap64?>self)._c_bitmap)
-        else:         # >=
-            assert op == 5
-            return croaring.roaring64_bitmap_is_subset((<AbstractBitMap64?>other)._c_bitmap, (<AbstractBitMap64?>self)._c_bitmap)
+    def __lt__(self, AbstractBitMap64 other):
+        self._check_compatibility(other)
+        return croaring.roaring64_bitmap_is_strict_subset((<AbstractBitMap64?>self)._c_bitmap, (<AbstractBitMap64?>other)._c_bitmap)
+
+    def __le__(self, AbstractBitMap64 other):
+        self._check_compatibility(other)
+        return croaring.roaring64_bitmap_is_subset((<AbstractBitMap64?>self)._c_bitmap, (<AbstractBitMap64?>other)._c_bitmap)
+
+    def __eq__(self, object other):
+        if not isinstance(other, AbstractBitMap64):
+            return NotImplemented
+        self._check_compatibility(other)
+        return croaring.roaring64_bitmap_equals((<AbstractBitMap64?>self)._c_bitmap, (<AbstractBitMap64?>other)._c_bitmap)
+
+    def __ne__(self, object other):
+        if not isinstance(other, AbstractBitMap64):
+            return NotImplemented
+        self._check_compatibility(other)
+        return not croaring.roaring64_bitmap_equals((<AbstractBitMap64?>self)._c_bitmap, (<AbstractBitMap64?>other)._c_bitmap)
+
+    def __gt__(self, AbstractBitMap64 other):
+        self._check_compatibility(other)
+        return croaring.roaring64_bitmap_is_strict_subset((<AbstractBitMap64?>other)._c_bitmap, (<AbstractBitMap64?>self)._c_bitmap)
+
+    def __ge__(self, AbstractBitMap64 other):
+        self._check_compatibility(other)
+        return croaring.roaring64_bitmap_is_subset((<AbstractBitMap64?>other)._c_bitmap, (<AbstractBitMap64?>self)._c_bitmap)
 
     def contains_range(self, uint64_t range_start, uint64_t range_end):
         """
@@ -991,6 +1022,42 @@ cdef class AbstractBitMap64:
         BitMap64([3, 10, 11, 13, 14])
         """
         return self.from_ptr(croaring.roaring64_bitmap_flip(self._c_bitmap, start, end))
+
+    def get_statistics(self):
+        """
+        Return relevant metrics about the bitmap.
+
+        >>> stats = BitMap64(range(18, 66000, 2)).get_statistics()
+        >>> stats['cardinality']
+        32991
+        >>> stats['max_value']
+        65998
+        >>> stats['min_value']
+        18
+        >>> stats['n_array_containers']
+        1
+        >>> stats['n_bitset_containers']
+        1
+        >>> stats['n_bytes_array_containers']
+        464
+        >>> stats['n_bytes_bitset_containers']
+        8192
+        >>> stats['n_bytes_run_containers']
+        0
+        >>> stats['n_containers']
+        2
+        >>> stats['n_run_containers']
+        0
+        >>> stats['n_values_array_containers']
+        232
+        >>> stats['n_values_bitset_containers']
+        32759
+        >>> stats['n_values_run_containers']
+        0
+        """
+        cdef croaring.roaring64_statistics_t stat
+        croaring.roaring64_bitmap_statistics(self._c_bitmap, &stat)
+        return stat
 
     def min(self):
         """
