@@ -6,14 +6,20 @@ from hypothesis.stateful import Bundle, RuleBasedStateMachine, rule
 from hypothesis import settings
 from dataclasses import dataclass
 from pyroaring import BitMap, BitMap64
-from test64 import hyp_collection, uint64
+from test import hyp_collection, uint32, uint64, is_32_bits
 
-BitMapClass = BitMap64
-
+if is_32_bits:
+    BitMapClass = BitMap
+    int_class = uint32
+    large_val = 2**30
+else:
+    BitMapClass = BitMap64
+    int_class = uint64
+    large_val = 2**40
 
 @dataclass
 class Collection:
-    test: BitMap
+    test: BitMapClass
     ref: set[int]
 
     def check(self):
@@ -35,13 +41,13 @@ class SetComparison(RuleBasedStateMachine):
     def copy(self, col):
         return Collection(test=BitMapClass(col.test), ref=set(col.ref))
 
-    @rule(col=collections, val=uint64)
+    @rule(col=collections, val=int_class)
     def add_elt(self, col, val):
         col.test.add(val)
         col.ref.add(val)
         col.check()
 
-    @rule(col=collections, val=uint64)
+    @rule(col=collections, val=int_class)
     def remove_elt(self, col, val):
         col.test.discard(val)
         col.ref.discard(val)
@@ -90,7 +96,7 @@ class SetComparison(RuleBasedStateMachine):
     @rule(
         target=collections,
         col=collections,
-        start=st.integers(min_value=0, max_value=2**40),
+        start=st.integers(min_value=0, max_value=large_val),
         size=st.integers(min_value=0, max_value=2**18),
     )
     def flip(self, col, start, size):
@@ -101,7 +107,7 @@ class SetComparison(RuleBasedStateMachine):
 
     @rule(
         col=collections,
-        start=st.integers(min_value=0, max_value=2**40),
+        start=st.integers(min_value=0, max_value=large_val),
         size=st.integers(min_value=0, max_value=2**18),
     )
     def flip_inplace(self, col, start, size):
