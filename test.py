@@ -41,6 +41,10 @@ if is_32_bits:
     from pyroaring import BitMap, FrozenBitMap, AbstractBitMap
 else:
     from pyroaring import BitMap64 as BitMap, FrozenBitMap64 as FrozenBitMap, AbstractBitMap64 as AbstractBitMap  # type: ignore[assignment]
+# Note: we could not find a way to type-check both the 32-bit and the 64-bit implementations using a same file.
+# Out of simplcity, we therefore decided to only type-check the 32-bit version.
+# To type-check the 64-bit version, remove the above if statement to only keep the else part
+# (i.e. directly import BitMap64 as BitMap etc.)
 
 uint18 = st.integers(min_value=0, max_value=2**18)
 uint32 = st.integers(min_value=0, max_value=2**32 - 1)
