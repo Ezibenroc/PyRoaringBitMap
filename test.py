@@ -75,8 +75,31 @@ range_power2_step = uint18.flatmap(lambda n:
                                        lambda n: st.just(2**n),
                                    )))
 
+range_huge_interval = uint18.flatmap(lambda n:
+                                st.builds(range, st.just(n),
+                                          st.integers(
+                                              min_value=n+2**52, max_value=n+2**63),
+                                          st.integers(min_value=2**49, max_value=2**63)))
+
+# Build a list of values of the form a * 2**16 + b with b in [-2,+2]
+# In other words, numbers that are close (or equal) to a multiple of 2**16
+multiple_2p16 = st.sets(
+        st.builds(
+            int.__add__, st.builds(
+                int.__mul__,
+                st.integers(min_value=1, max_value=2**32),
+                st.just(2**16)
+                ),
+            st.integers(min_value=-2, max_value=+2)
+            ),
+        max_size=100)
+
 hyp_range = range_big_step | range_small_step | range_power2_step | st.sampled_from(
     [range(0, 0)])  # last one is an empty range
+
+if not is_32_bits:
+    hyp_range = hyp_range | range_huge_interval | multiple_2p16
+
 # would be great to build a true random set, but it takes too long and hypothesis does a timeout...
 hyp_set: st.SearchStrategy[set[int]] = st.builds(set, hyp_range)
 if is_32_bits:
@@ -276,7 +299,10 @@ class TestBasic(Util):
     ) -> None:
         bitmap = cls(values, copy_on_write=cow)
         result = bitmap.to_array()
-        expected = array.array('I', sorted(values))
+        if is_32_bits:
+            expected = array.array('I', sorted(values))
+        else:
+            expected = array.array('Q', sorted(values))
         assert result == expected
 
     @given(bitmap_cls, st.booleans(), st.integers(min_value=0, max_value=100))
