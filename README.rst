@@ -1,6 +1,6 @@
 |Documentation Status|
 
-An efficient and light-weight ordered set of 32 bits integers.
+An efficient and light-weight ordered set of integers.
 This is a Python wrapper for the C library `CRoaring <https://github.com/RoaringBitmap/CRoaring>`__.
 
 Example
@@ -32,6 +32,10 @@ Output:
     bm2       = BitMap([3, 27, 42])
     bm1 & bm2 = BitMap([3])
     bm1 | bm2 = BitMap([3, 18, 27, 42])
+
+The class ``BitMap`` is for 32 bit integers, it supports values from 0 to 2**32-1 (included).
+
+For larger numbers, you can use the class ``BitMap64`` that supports values from 0 to 2**64-1 (included).
 
 Installation from Pypi
 ----------------------
@@ -191,11 +195,7 @@ updated automatically when downloading a new amalgamation.
 Benchmark
 ---------
 
-``Pyroaring`` is compared with the built-in ``set`` and other implementations:
-
-- A `Python wrapper <https://github.com/sunzhaoping/python-croaring>`__ of CRoaring called ``python-croaring``
-- A `Cython implementation <https://github.com/andreasvc/roaringbitmap>`__ of Roaring bitmaps called ``roaringbitmap``
-- A Python implementation of `ordered sets <https://github.com/grantjenks/sorted_containers>`__ called ``sortedcontainers``
+``Pyroaring`` is compared with the built-in ``set`` and the library ``sortedcontainers``.
 
 The script ``quick_bench.py`` measures the time of different set
 operations. It uses randomly generated sets of size 1e6 and density
@@ -204,45 +204,42 @@ is reported.
 
 The results have been obtained with:
 
-- CPU Intel Xeon CPU E5-2630 v3
-- CPython version 3.5.3
-- gcc version 6.3.0
-- Cython version 0.28.3
--  pyroaring commit
-   `dcf448a <https://github.com/Ezibenroc/PyRoaringBitMap/tree/dcf448a166b535b35693071254d0042633671194>`__
--  python-croaring commit
-   `3aa61dd <https://github.com/sunzhaoping/python-croaring/tree/3aa61dde6b4a123665ca5632eb5b089ec0bc5bc4>`__
--  roaringbitmap commit
-   `502d78d <https://github.com/andreasvc/roaringbitmap/tree/502d78d2e5d65967ab61c1a759cac53ddfefd9a2>`__
--  sortedcontainers commit
-   `7d6a28c <https://github.com/grantjenks/python-sortedcontainers/tree/7d6a28cdcba2f46eb2ef6cb1cc33cd8de0e8f27f>`__
+- CPU AMD Ryzen 7 5700X
+- CPython version 3.11.2
+- gcc version 12.2.0
+- Cython version 3.0.2
+- sortedcontainers version 2.4.0
+- pyroaring commit `b54769b <https://github.com/Ezibenroc/PyRoaringBitMap/tree/b54769bf22b037ed989348b04d297ddc56db7ed8>`__
 
-===============================  ===========  =================  ===============  ==========  ==================
-operation                          pyroaring    python-croaring    roaringbitmap         set    sortedcontainers
-===============================  ===========  =================  ===============  ==========  ==================
-range constructor                   3.09e-04           1.48e-04         8.72e-05    7.29e-02            2.08e-01
-ordered list constructor            3.45e-02           6.93e-02         1.45e-01    1.86e-01            5.74e-01
-list constructor                    1.23e-01           1.33e-01         1.55e-01    1.12e-01            5.12e-01
-ordered array constructor           5.06e-03           6.42e-03         2.89e-01    9.82e-02            3.01e-01
-array constructor                   1.13e-01           1.18e-01         4.63e-01    1.45e-01            5.08e-01
-element addition                    3.08e-07           8.26e-07         2.21e-07    1.50e-07            1.18e-06
-element removal                     3.44e-07           8.17e-07         2.61e-07    1.78e-07            4.26e-07
-membership test                     1.24e-07           1.00e-06         1.50e-07    1.00e-07            5.72e-07
-union                               1.61e-04           1.96e-04         1.44e-04    2.15e-01            1.11e+00
-intersection                        9.08e-04           9.48e-04         9.26e-04    5.22e-02            1.65e-01
-difference                          1.57e-04           1.97e-04         1.43e-04    1.56e-01            4.84e-01
-symmetric diference                 1.62e-04           2.01e-04         1.44e-04    2.62e-01            9.13e-01
-equality test                       7.80e-05           7.82e-05         5.89e-05    1.81e-02            1.81e-02
-subset test                         7.92e-05           8.12e-05         8.22e-05    1.81e-02            1.81e-02
-conversion to list                  4.71e-02           2.78e-01         4.35e-02    5.77e-02            5.32e-02
-pickle dump & load                  4.02e-04           6.27e-04         5.08e-04    2.41e-01            5.75e-01
-"naive" conversion to array         5.12e-02           2.92e-01         4.75e-02    1.20e-01            1.18e-01
-"optimized" conversion to array     1.27e-03           3.40e-02       nan         nan                 nan
-selection                           1.77e-06           5.33e-05         1.14e-06  nan                   1.64e-05
-contiguous slice                    9.38e-05           9.51e-05         6.99e-05  nan                   2.04e-02
-slice                               2.88e-03           3.04e-01         1.00e-01  nan                   4.74e-01
-small slice                         8.93e-05           3.00e-01         3.60e-03  nan                   1.79e-02
-===============================  ===========  =================  ===============  ==========  ==================
+===============================  =====================  =====================  ==========  ==================
+operation                          pyroaring (32 bits)    pyroaring (64 bits)         set    sortedcontainers
+===============================  =====================  =====================  ==========  ==================
+range constructor                             3.03e-04               3.15e-04    4.09e-02            8.54e-02
+ordered list constructor                      2.17e-02               3.06e-02    8.21e-02            2.67e-01
+list constructor                              7.23e-02               6.38e-02    5.65e-02            2.34e-01
+ordered array constructor                     4.50e-03             nan           6.53e-02            1.75e-01
+array constructor                             6.51e-02             nan           8.98e-02            2.40e-01
+element addition                              4.33e-07               2.19e-07    2.13e-07            3.82e-07
+element removal                               2.69e-07               1.67e-07    2.33e-07            2.83e-07
+membership test                               1.59e-07               1.33e-07    1.42e-07            3.22e-07
+union                                         1.07e-04               1.04e-04    1.06e-01            5.69e-01
+intersection                                  6.00e-04               6.26e-04    4.66e-02            1.03e-01
+difference                                    7.24e-05               8.34e-05    7.94e-02            2.34e-01
+symmetric diference                           8.32e-05               1.03e-04    1.31e-01            4.19e-01
+equality test                                 3.52e-05               3.21e-05    3.18e-02            3.29e-02
+subset test                                   4.15e-05               4.41e-05    3.20e-02            3.20e-02
+conversion to list                            2.92e-02               3.08e-02    3.16e-02            3.53e-02
+pickle dump & load                            1.64e-04               1.76e-04    1.37e-01            3.53e-01
+"naive" conversion to array                   2.46e-02               2.57e-02    6.49e-02            5.73e-02
+"optimized" conversion to array               8.73e-04               1.45e-03  nan                 nan
+selection                                     8.83e-07               2.49e-06  nan                   8.18e-06
+contiguous slice                              3.31e-03               6.49e-03  nan                   4.32e-03
+slice                                         1.58e-03               2.74e-03  nan                   1.29e-01
+small slice                                   6.62e-05               1.15e-04  nan                   5.43e-03
+===============================  =====================  =====================  ==========  ==================
+
+Note: the timings are missing for pyroaring 64 bits with the array constructor. For simplicity reasons the Benchmark
+builds an array of 32 bit integers, which is not compatible with ``BitMap64``.
 
 .. |Documentation Status| image:: https://readthedocs.org/projects/pyroaringbitmap/badge/?version=stable
    :target: http://pyroaringbitmap.readthedocs.io/en/stable/?badge=stable
