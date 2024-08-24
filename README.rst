@@ -209,8 +209,7 @@ The results have been obtained with:
 - gcc version 12.2.0
 - Cython version 3.0.2
 - sortedcontainers version 2.4.0
-- pyroaring commit
-   `b54769b <https://github.com/Ezibenroc/PyRoaringBitMap/tree/b54769bf22b037ed989348b04d297ddc56db7ed8>`
+- pyroaring commit `b54769b <https://github.com/Ezibenroc/PyRoaringBitMap/tree/b54769bf22b037ed989348b04d297ddc56db7ed8>`__
 
 ===============================  =====================  =====================  ==========  ==================
 operation                          pyroaring (32 bits)    pyroaring (64 bits)         set    sortedcontainers
