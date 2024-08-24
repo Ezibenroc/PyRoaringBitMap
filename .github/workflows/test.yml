@@ -24,8 +24,15 @@ jobs:
               run: |
                 pip install --upgrade pip
                 pip install tox
-            - name: Local build and tests
+            - name: Local build and tests (32 bits roaring bitmaps)
               env:
                 HYPOTHESIS_PROFILE: ci
+                ROARING_BITSIZE: 32
+              run: |
+                tox
+            - name: Local build and tests (64 bits roaring bitmaps)
+              env:
+                HYPOTHESIS_PROFILE: ci
+                ROARING_BITSIZE: 64
               run: |
                 tox

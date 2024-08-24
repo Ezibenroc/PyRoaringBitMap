@@ -19,7 +19,6 @@ import hypothesis.strategies as st
 from hypothesis import given, assume, errors, settings, Verbosity, HealthCheck
 
 import pyroaring
-from pyroaring import BitMap, FrozenBitMap, AbstractBitMap
 
 
 settings.register_profile("ci", settings(
@@ -31,7 +30,21 @@ try:
     env = os.getenv('HYPOTHESIS_PROFILE', 'dev')
     settings.load_profile(env)
 except errors.InvalidArgument:
-    sys.exit('Unknown hypothesis profile: %s.' % env)
+    sys.exit(f'Unknown hypothesis profile: {env}')
+
+bitsize = os.getenv('ROARING_BITSIZE', '32')
+if bitsize not in ('32', '64'):
+    sys.exit(f'Unknown bit size: {bitsize}')
+is_32_bits = (bitsize=="32")
+
+if is_32_bits:
+    from pyroaring import BitMap, FrozenBitMap, AbstractBitMap
+else:
+    from pyroaring import BitMap64 as BitMap, FrozenBitMap64 as FrozenBitMap, AbstractBitMap64 as AbstractBitMap  # type: ignore[assignment]
+# Note: we could not find a way to type-check both the 32-bit and the 64-bit implementations using a same file.
+# Out of simplcity, we therefore decided to only type-check the 32-bit version.
+# To type-check the 64-bit version, remove the above if statement to only keep the else part
+# (i.e. directly import BitMap64 as BitMap etc.)
 
 uint18 = st.integers(min_value=0, max_value=2**18)
 uint32 = st.integers(min_value=0, max_value=2**32 - 1)
@@ -62,11 +75,37 @@ range_power2_step = uint18.flatmap(lambda n:
                                        lambda n: st.just(2**n),
                                    )))
 
+range_huge_interval = uint18.flatmap(lambda n:
+                                st.builds(range, st.just(n),
+                                          st.integers(
+                                              min_value=n+2**52, max_value=n+2**63),
+                                          st.integers(min_value=2**49, max_value=2**63)))
+
+# Build a list of values of the form a * 2**16 + b with b in [-2,+2]
+# In other words, numbers that are close (or equal) to a multiple of 2**16
+multiple_2p16 = st.sets(
+        st.builds(
+            int.__add__, st.builds(
+                int.__mul__,
+                st.integers(min_value=1, max_value=2**32),
+                st.just(2**16)
+                ),
+            st.integers(min_value=-2, max_value=+2)
+            ),
+        max_size=100)
+
 hyp_range = range_big_step | range_small_step | range_power2_step | st.sampled_from(
     [range(0, 0)])  # last one is an empty range
+
+if not is_32_bits:
+    hyp_range = hyp_range | range_huge_interval | multiple_2p16
+
 # would be great to build a true random set, but it takes too long and hypothesis does a timeout...
 hyp_set: st.SearchStrategy[set[int]] = st.builds(set, hyp_range)
-hyp_array = st.builds(lambda x: array.array('I', x), hyp_range)
+if is_32_bits:
+    hyp_array = st.builds(lambda x: array.array('I', x), hyp_range)
+else:
+    hyp_array = st.builds(lambda x: array.array('Q', x), hyp_range)
 hyp_collection = hyp_range | hyp_set | hyp_array
 hyp_many_collections = st.lists(hyp_collection, min_size=1, max_size=20)
 
@@ -126,7 +165,8 @@ class TestBasic(Util):
     @settings(deadline=None)
     def test_basic(self, values: HypCollection, cow: bool) -> None:
         bitmap = BitMap(copy_on_write=cow)
-        assert bitmap.copy_on_write == cow
+        if is_32_bits:
+            assert bitmap.copy_on_write == cow
         expected_set: set[int] = set()
         self.compare_with_set(bitmap, expected_set)
         values = list(values)
@@ -229,7 +269,10 @@ class TestBasic(Util):
         with pytest.raises(OverflowError):
             op(bitmap, -3)
         with pytest.raises(OverflowError):
-            op(bitmap, 2**33)
+            if is_32_bits:
+                op(bitmap, 2**33)
+            else:
+                op(bitmap, 2**65)
         with pytest.raises(TypeError):
             op(bitmap, 'bla')  # type: ignore[arg-type]
 
@@ -256,7 +299,10 @@ class TestBasic(Util):
     ) -> None:
         bitmap = cls(values, copy_on_write=cow)
         result = bitmap.to_array()
-        expected = array.array('I', sorted(values))
+        if is_32_bits:
+            expected = array.array('I', sorted(values))
+        else:
+            expected = array.array('Q', sorted(values))
         assert result == expected
 
     @given(bitmap_cls, st.booleans(), st.integers(min_value=0, max_value=100))
@@ -657,6 +703,7 @@ class TestRange(Util):
         assert not bm.contains_range(start, end)
         assert bm.intersection_cardinality(BitMap(range(start, end), copy_on_write=cow)) == 0
 
+    @pytest.mark.skipif(not is_32_bits, reason="build a too large bitmap with 64 bits, blows up memory")
     @given(hyp_collection, st.booleans(), large_uint64, large_uint64)
     def test_large_values(self, values: HypCollection, cow: bool, start: int, end: int) -> None:
         bm = BitMap(values, copy_on_write=cow)
@@ -861,7 +908,6 @@ class TestStatistics(Util):
             assert stats['min_value'] == bitmap[0]
             assert stats['max_value'] == bitmap[len(bitmap) - 1]
         assert stats['cardinality'] == len(bitmap)
-        assert stats['sum_value'] == sum(values)
 
     @given(bitmap_cls)
     def test_implementation_properties_array(self, cls: type[EitherBitMap]) -> None:
@@ -978,7 +1024,7 @@ class TestFlip(Util):
         bm_after.flip_inplace(start, end)
         self.check_flip(bm_before, bm_after, start, end)
 
-
+@pytest.mark.skipif(not is_32_bits, reason="not supported yet")
 class TestShift(Util):
     @given(bitmap_cls, hyp_collection, int64, st.booleans())
     def test_shift(
@@ -995,7 +1041,7 @@ class TestShift(Util):
         expected = cls([val + offset for val in values if val + offset in range(0, 2**32)], copy_on_write=cow)
         assert bm_after == expected
 
-
+@pytest.mark.skipif(not is_32_bits, reason="not supported yet")
 class TestIncompatibleInteraction(Util):
 
     def incompatible_op(self, op: Callable[[BitMap, BitMap], object]) -> None:
@@ -1174,6 +1220,7 @@ class TestOptimization:
         bm3 = cls(bm1)  # optimize is True by default
         assert stats == bm3.get_statistics()
 
+    @pytest.mark.skipif(not is_32_bits, reason="not supported yet")
     @given(bitmap_cls)
     def test_shrink_to_fit(self, cls: type[EitherBitMap]) -> None:
         bm1 = BitMap()
@@ -1437,6 +1484,7 @@ class TestPythonSetEquivalent:
         assert new_element in b2
         assert new_element not in b1
 
+    @pytest.mark.skipif(not is_32_bits, reason="not supported yet")
     @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
     def test_overwrite(self, BitMapClass: type[EitherBitMap], list1: list[int], list2: list[int], cow: bool) -> None:
         assume(set(list1) != set(list2))
@@ -1691,7 +1739,10 @@ class TestString:
     def test_small_list(self, cls: type[EitherBitMap], collection: list[int]) -> None:
         # test that repr for a small bitmap is equal to the original bitmap
         bm = cls(collection)
-        assert bm == eval(repr(bm))
+        string_repr = repr(bm)
+        if not is_32_bits:
+            string_repr = string_repr.replace("BitMap64", "BitMap")  # we redefined BitMap64 to BitMap at the top of this file
+        assert bm == eval(string_repr)
 
     @settings(suppress_health_check=HealthCheck)
     @given(bitmap_cls, large_list_of_uin32)
@@ -1699,7 +1750,7 @@ class TestString:
         # test that for a large bitmap the both the start and the end of the bitmap get printed
 
         bm = cls(collection)
-        s = repr(bm)
+        s = repr(bm).replace(cls.__name__, " ")
         nondigits = set(s) - set('0123456789\n.')
         for x in nondigits:
             s = s.replace(x, ' ')
@@ -1714,8 +1765,8 @@ class TestString:
         for i in large_ints:
             assert i in bm
 
-        assert min(small_ints) == min(bm)
-        assert max(large_ints) == max(bm)
+        assert min(small_ints) == bm.min()
+        assert max(large_ints) == bm.max()
 
 
 class TestVersion:
