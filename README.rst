@@ -34,7 +34,8 @@ Output:
     bm1 | bm2 = BitMap([3, 18, 27, 42])
 
 The class ``BitMap`` is for 32 bit integers, it supports values from 0 to 2**32-1 (included).
-For a larger numbers, you can use the class ``BitMap64`` that supports values from 0 to 2**64-1 (included).
+
+For larger numbers, you can use the class ``BitMap64`` that supports values from 0 to 2**64-1 (included).
 
 Installation from Pypi
 ----------------------
@@ -209,7 +210,7 @@ The results have been obtained with:
 - Cython version 3.0.2
 - sortedcontainers version 2.4.0
 - pyroaring commit
-   `b54769b <https://github.com/Ezibenroc/PyRoaringBitMap/tree/b54769bf22b037ed989348b04d297ddc56db7ed8>`__
+   `b54769b <https://github.com/Ezibenroc/PyRoaringBitMap/tree/b54769bf22b037ed989348b04d297ddc56db7ed8>`
 
 ===============================  =====================  =====================  ==========  ==================
 operation                          pyroaring (32 bits)    pyroaring (64 bits)         set    sortedcontainers
