@@ -86,7 +86,7 @@ setup(
     package_data={'pyroaring': ['py.typed', '__init__.pyi']},
     packages=['pyroaring'],
     version=VERSION,
-    description='Fast and lightweight set for unsigned 32 bits integers.',
+    description='Library for handling efficiently sorted integer sets.',
     long_description=long_description,
     setup_requires=['cython'],
     url='https://github.com/Ezibenroc/PyRoaringBitMap',
@@ -104,5 +104,6 @@ setup(
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
     ],
 )
