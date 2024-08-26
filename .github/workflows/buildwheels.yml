@@ -52,10 +52,10 @@ jobs:
         with:
           platforms: arm64
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.2
+        uses: pypa/cibuildwheel@v2.20.0
         env:
           CIBW_TEST_REQUIRES: hypothesis pytest
-          CIBW_TEST_COMMAND: "python {project}/test.py -v && python {project}/cydoctest.py -v"
+          CIBW_TEST_COMMAND: "py.test {project}/test.py -v && python {project}/cydoctest.py -v"
           CIBW_SKIP: "pp* cp36-* cp37-*"
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_TEST_SKIP: "*-win_arm64"
