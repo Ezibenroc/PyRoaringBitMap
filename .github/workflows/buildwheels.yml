@@ -37,8 +37,8 @@ jobs:
         include:
           - os: ubuntu-20.04
             cibw_archs: "native"
-          - os: ubuntu-20.04
-            cibw_archs: "aarch64"
+          - os: ubuntu-22.04
+            cibw_archs: "aarch64 armv7l"
           - os: windows-latest
             cibw_archs: "native ARM64"
           - os: macos-latest
@@ -52,7 +52,7 @@ jobs:
         with:
           platforms: arm64
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.20.0
+        uses: pypa/cibuildwheel@v2.23.2
         env:
           CIBW_TEST_REQUIRES: hypothesis pytest
           CIBW_TEST_COMMAND: "py.test {project}/test.py -v && python {project}/cydoctest.py -v"
