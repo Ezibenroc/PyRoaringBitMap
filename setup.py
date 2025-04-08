@@ -1,13 +1,11 @@
 #! /usr/bin/env python3
 
+import os
+import platform
+from distutils.sysconfig import get_config_vars
+
 from setuptools import setup
 from setuptools.extension import Extension
-from distutils.sysconfig import get_config_vars
-import os
-import sys
-import subprocess
-import platform
-
 
 PKG_DIR = 'pyroaring'
 
@@ -17,7 +15,7 @@ PLATFORM_MACOSX = (platform.system() == 'Darwin')
 # Read version file from the src
 with open("pyroaring/version.pxi") as fp:
     exec(fp.read())
-    VERSION = __version__
+    VERSION = __version__  # noqa: F821
 
 
 # Remove -Wstrict-prototypes option
@@ -25,7 +23,7 @@ with open("pyroaring/version.pxi") as fp:
 if not PLATFORM_WINDOWS:
     cfg_vars = get_config_vars()
     for key, value in cfg_vars.items():
-        if type(value) == str:
+        if type(value) is str:
             cfg_vars[key] = value.replace("-Wstrict-prototypes", "")
 
 try:
@@ -37,13 +35,16 @@ except (IOError, ImportError, RuntimeError):
 
 
 if PLATFORM_WINDOWS:
-    compile_args = []
+    pyroaring_module = Extension(
+        'pyroaring',
+        sources=[os.path.join(PKG_DIR, 'pyroaring.pyx'), os.path.join(PKG_DIR, 'roaring.c')],
+        language='c++',
+    )
+    libraries = None
 else:
     compile_args = ['-D__STDC_LIMIT_MACROS', '-D__STDC_CONSTANT_MACROS', '-D _GLIBCXX_ASSERTIONS']
     if PLATFORM_MACOSX:
         compile_args.append('-mmacosx-version-min=10.14')
-    else:
-        compile_args.append('-std=c99')
     if 'DEBUG' in os.environ:
         compile_args.extend(['-O0', '-g'])
     else:
@@ -56,21 +57,36 @@ else:
     # also creates troubles under macOS with pip installs and requires ugly workarounds.
     # The best way to handle people who want to use -march=native is to ask them
     # to pass ARCHI=native to their build process.
-    #else:
+    # else:
     #    compile_args.append('-march=native')
 
-pyroaring_module = Extension(
-    'pyroaring',
-    sources=[os.path.join(PKG_DIR, 'pyroaring.pyx'), os.path.join(PKG_DIR, 'roaring.c')],
-    extra_compile_args=compile_args,
-    language='c++'
-)
+    pyroaring_module = Extension(
+        'pyroaring',
+        sources=[os.path.join(PKG_DIR, 'pyroaring.pyx')],
+        extra_compile_args=compile_args + ["-std=c++11"],
+        language='c++',
+    )
+
+    # Because we compile croaring with a c compiler with sometimes incompatible arguments,
+    # define croaring compilation with an extra argument for the c11 standard, which is
+    # required for atomic support.
+    croaring = (
+        'croaring',
+        {
+            'sources': [os.path.join(PKG_DIR, 'roaring.c')],
+            "extra_compile_args": compile_args + ["-std=c11"],
+        },
+    )
+    libraries = [croaring]
 
 setup(
     name='pyroaring',
     ext_modules=[pyroaring_module],
+    libraries=libraries,
+    package_data={'pyroaring': ['py.typed', '__init__.pyi']},
+    packages=['pyroaring'],
     version=VERSION,
-    description='Fast and lightweight set for unsigned 32 bits integers.',
+    description='Library for handling efficiently sorted integer sets.',
     long_description=long_description,
     setup_requires=['cython'],
     url='https://github.com/Ezibenroc/PyRoaringBitMap',
@@ -83,10 +99,11 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
     ],
 )

@@ -1,9 +1,11 @@
 #! /usr/bin/env python3
 
 import sys
-import timeit
-from pandas import DataFrame, Series
 import random
+import timeit
+
+from pandas import Series, DataFrame
+
 try:
     import tabulate
     has_tabulate = True
@@ -11,13 +13,13 @@ except ImportError:
     has_tabulate = False
     sys.stderr.write('Warning: could not import tabulate\n')
     sys.stderr.write('         see https://bitbucket.org/astanin/python-tabulate\n')
-from pyroaring import BitMap
+from pyroaring import BitMap, BitMap64
 
-classes = {'set': set, 'pyroaring': BitMap}
+classes = {'set': set, 'pyroaring (32 bits)': BitMap, 'pyroaring (64 bits)': BitMap64, }
 nb_exp = 30
 size = int(1e6)
 density = 0.125
-universe_size = int(size/density)
+universe_size = int(size / density)
 
 try:
     from roaringbitmap import RoaringBitmap
@@ -41,20 +43,20 @@ except ImportError:
     sys.stderr.write('         see https://github.com/sunzhaoping/python-croaring\n')
 
 import_str = 'import array, pickle; from __main__ import %s' % (','.join(
-    ['get_list', 'get_range', 'random', 'size', 'universe_size'] +
-    [cls.__name__ for cls in classes.values() if cls is not set]))
+    ['get_list', 'get_range', 'random', 'size', 'universe_size']
+    + [cls.__name__ for cls in classes.values() if cls is not set]))
 
 
 def run_exp(stmt, setup, number):
     setup = '%s ; %s' % (import_str, setup)
     try:
-        return timeit.timeit(stmt=stmt, setup=setup, number=number)/number
-    except Exception as e:
+        return timeit.timeit(stmt=stmt, setup=setup, number=number) / number
+    except Exception:
         return float('nan')
 
 
 def get_range():
-    r = (0, universe_size, int(1/density))
+    r = (0, universe_size, int(1 / density))
     try:
         return xrange(*r)
     except NameError:
@@ -110,18 +112,14 @@ def run(cls, op):
 
 
 def run_all():
-    df = DataFrame({
-        'operation': Series([], dtype='str'),
-    })
-    for cls in sorted(classes):
-        df[cls] = Series([], dtype='float')
+    all_results = []
     for op, _ in experiments:
         sys.stderr.write('experiment: %s\n' % op)
         result = {'operation': op}
         for cls in random.sample(list(classes), len(classes)):
             result[cls] = run(cls, op)
-        df = df.append(result, ignore_index=True)
-    return df
+        all_results.append(result)
+    return DataFrame(all_results).sort_index(axis=1)
 
 
 if __name__ == '__main__':

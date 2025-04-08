@@ -18,6 +18,7 @@ import sys
 import doctest
 import inspect
 
+
 def _from_module(module, object):
     """
     Return true if the given object is defined in the given module.
@@ -33,9 +34,10 @@ def _from_module(module, object):
     elif hasattr(object, '__module__'):
         return module.__name__ == object.__module__
     elif isinstance(object, property):
-        return True # [XX] no way not be sure.
+        return True  # [XX] no way not be sure.
     else:
         raise ValueError("object must be a class or function")
+
 
 def fix_module_doctest(module):
     """
@@ -44,9 +46,10 @@ def fix_module_doctest(module):
     """
     module.__test__ = {}
     for name in dir(module):
-       value = getattr(module, name)
-       if inspect.isbuiltin(value) and isinstance(value.__doc__, str) and _from_module(module, value):
-           module.__test__[name] = value.__doc__
+        value = getattr(module, name)
+        if inspect.isbuiltin(value) and isinstance(value.__doc__, str) and _from_module(module, value):
+            module.__test__[name] = value.__doc__
+
 
 def testmod(m=None, *args, **kwargs):
     """

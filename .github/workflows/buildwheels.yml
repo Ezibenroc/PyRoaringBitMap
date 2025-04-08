@@ -32,12 +32,13 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-20.04
             cibw_archs: "native"
-          - os: ubuntu-20.04
-            cibw_archs: "aarch64"
+          - os: ubuntu-22.04
+            cibw_archs: "aarch64 armv7l"
           - os: windows-latest
             cibw_archs: "native ARM64"
           - os: macos-latest
@@ -51,13 +52,14 @@ jobs:
         with:
           platforms: arm64
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.12.1
+        uses: pypa/cibuildwheel@v2.23.2
         env:
-          CIBW_TEST_REQUIRES: "hypothesis"
-          CIBW_TEST_COMMAND: "python {project}/test.py && python {project}/cydoctest.py"
-          CIBW_SKIP: "pp* cp36-*"
+          CIBW_TEST_REQUIRES: hypothesis pytest
+          CIBW_TEST_COMMAND: "py.test {project}/test.py -v && python {project}/cydoctest.py -v"
+          CIBW_SKIP: "pp* cp36-* cp37-*"
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_TEST_SKIP: "*-win_arm64"
+          CIBW_BUILD_FRONTEND: "build"
 
       - uses: actions/upload-artifact@v3
         with:
