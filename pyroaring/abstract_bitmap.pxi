@@ -12,9 +12,18 @@ try:
 except NameError: # python 3
     pass
 
-cdef croaring.roaring_bitmap_t *deserialize_ptr(char *buff):
+cdef croaring.roaring_bitmap_t *deserialize_ptr(bytes buff):
     cdef croaring.roaring_bitmap_t *ptr
-    ptr = croaring.roaring_bitmap_portable_deserialize(buff)
+    cdef const char *reason_failure = NULL
+    buff_size = len(buff)
+    ptr = croaring.roaring_bitmap_portable_deserialize_safe(buff, buff_size)
+    if ptr == NULL:
+      raise ValueError("Could not deserialize bitmap!!")
+    # Validate the bitmap
+    if not croaring.roaring_bitmap_internal_validate(ptr, &reason_failure):
+        # If validation fails, free the bitmap and raise an exception
+        croaring.roaring_bitmap_free(ptr)
+        raise ValueError(f"Invalid bitmap: {reason_failure.decode('utf-8')}")
     return ptr
 
 cdef croaring.roaring64_bitmap_t *deserialize64_ptr(bytes buff):
@@ -744,7 +753,7 @@ cdef class AbstractBitMap:
 
 
     @classmethod
-    def deserialize(cls, char *buff):
+    def deserialize(cls, bytes buff):
         """
         Generate a bitmap from the given serialization. See AbstractBitMap.serialize for the reverse operation.
 
