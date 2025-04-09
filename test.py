@@ -12,6 +12,7 @@ import random
 import operator
 import unittest
 import functools
+import base64
 from typing import TYPE_CHECKING
 from collections.abc import Set, Callable, Iterable, Iterator
 
@@ -885,6 +886,27 @@ class TestSerialization(Util):
         new_bm = pickle.loads(pickled)
         assert old_bm == new_bm
         self.assert_is_not(old_bm, new_bm)
+
+    @given(bitmap_cls)
+    def test_impossible_deserialization(
+        self,
+        cls: type[EitherBitMap],
+    ) -> None:
+        wrong_input = base64.b64decode('aGVsbG8gd29ybGQ=')
+        with pytest.raises(ValueError, match='Could not deserialize bitmap'):
+            bitmap = cls.deserialize(wrong_input)
+
+    @given(bitmap_cls)
+    def test_invalid_deserialization(
+        self,
+        cls: type[EitherBitMap],
+    ) -> None:
+        wrong_input = base64.b64decode('aGVsbG8gd29ybGQ=')
+        bm = cls(list(range(0, 1000000, 3)))
+        bitmap_bytes = bm.serialize()
+        bitmap_bytes = bitmap_bytes[:42] + wrong_input + bitmap_bytes[42:]
+        with pytest.raises(ValueError, match='Invalid bitmap after deserialization'):
+            bitmap = pyroaring.FrozenBitMap.deserialize(bitmap_bytes)
 
 
 class TestStatistics(Util):

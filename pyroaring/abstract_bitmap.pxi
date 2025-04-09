@@ -18,12 +18,12 @@ cdef croaring.roaring_bitmap_t *deserialize_ptr(bytes buff):
     buff_size = len(buff)
     ptr = croaring.roaring_bitmap_portable_deserialize_safe(buff, buff_size)
     if ptr == NULL:
-      raise ValueError("Could not deserialize bitmap!!")
+      raise ValueError("Could not deserialize bitmap")
     # Validate the bitmap
     if not croaring.roaring_bitmap_internal_validate(ptr, &reason_failure):
         # If validation fails, free the bitmap and raise an exception
         croaring.roaring_bitmap_free(ptr)
-        raise ValueError(f"Invalid bitmap: {reason_failure.decode('utf-8')}")
+        raise ValueError(f"Invalid bitmap after deserialization: {reason_failure.decode('utf-8')}")
     return ptr
 
 cdef croaring.roaring64_bitmap_t *deserialize64_ptr(bytes buff):
