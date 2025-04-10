@@ -906,7 +906,7 @@ class TestSerialization(Util):
         bitmap_bytes = bm.serialize()
         bitmap_bytes = bitmap_bytes[:42] + wrong_input + bitmap_bytes[42:]
         with pytest.raises(ValueError, match='Invalid bitmap after deserialization'):
-            bitmap = pyroaring.FrozenBitMap.deserialize(bitmap_bytes)
+            bitmap = cls.deserialize(bitmap_bytes)
 
 
 class TestStatistics(Util):

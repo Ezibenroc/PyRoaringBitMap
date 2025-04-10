@@ -28,11 +28,16 @@ cdef croaring.roaring_bitmap_t *deserialize_ptr(bytes buff):
 
 cdef croaring.roaring64_bitmap_t *deserialize64_ptr(bytes buff):
     cdef croaring.roaring64_bitmap_t *ptr
+    cdef const char *reason_failure = NULL
     buff_size = len(buff)
-    bm_size = croaring.roaring64_bitmap_portable_deserialize_size(buff, buff_size)
-    if bm_size == 0:
-        raise ValueError("Invalid bitmap serialization")
-    ptr = croaring.roaring64_bitmap_portable_deserialize_safe(buff, bm_size)
+    ptr = croaring.roaring64_bitmap_portable_deserialize_safe(buff, buff_size)
+    if ptr == NULL:
+      raise ValueError("Could not deserialize bitmap")
+    # Validate the bitmap
+    if not croaring.roaring64_bitmap_internal_validate(ptr, &reason_failure):
+        # If validation fails, free the bitmap and raise an exception
+        croaring.roaring64_bitmap_free(ptr)
+        raise ValueError(f"Invalid bitmap after deserialization: {reason_failure.decode('utf-8')}")
     return ptr
 
 def _string_rep(bm):
