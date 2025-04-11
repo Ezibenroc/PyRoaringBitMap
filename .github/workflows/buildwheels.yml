@@ -8,10 +8,14 @@
 name: Build and upload wheels
 
 on:
+  workflow_dispatch:
   push:
-    tags:
-      - '[0-9]+\.[0-9]+\.[0-9]+'
-      - '[0-9]+\.[0-9]+\.[0-9]+\.dev[0-9]+'
+    branches:
+      - master
+  release:
+    types:
+      - released
+      - prereleased
 
 jobs:
 
@@ -77,19 +81,15 @@ jobs:
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@v1.5.0
-        # PRODUCTION PYPI: tags not containing dev.
-        # Note that the tags are already validated to control the running of
-        # this workflow!
-        if: "!contains(github.ref, 'dev')"
+        # Deploy releases to pypi.
+        if: github.event_name == 'release' && github.event.action == 'released'
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
 
       - uses: pypa/gh-action-pypi-publish@v1.5.0
-        # Deploy tags containing 'dev' to test pypi.
-        # Note that the tags are already validated to control the running of
-        # this workflow!
-        if: contains(github.ref, 'dev')
+        # Deploy pre-releases to test pypi.
+        if: github.event_name == 'release' && github.event.action == 'prereleased'
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
