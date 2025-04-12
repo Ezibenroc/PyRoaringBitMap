@@ -31,6 +31,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: dist/*.tar.gz
+          overwrite: true
 
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -68,6 +69,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
+          overwrite: true
 
   upload_pypi:
     needs: [build_wheels, build_sdist]
