@@ -40,10 +40,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-20.04
-            cibw_archs: "native"
-          - os: ubuntu-22.04
-            cibw_archs: "aarch64 armv7l"
+          - os: ubuntu-latest
+            cibw_archs: "native aarch64 armv7l"
           - os: windows-latest
             cibw_archs: "native ARM64"
           - os: macos-latest
