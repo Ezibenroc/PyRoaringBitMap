@@ -41,7 +41,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            cibw_archs: "native aarch64"
+            cibw_archs: "native armv7l"
           - os: windows-latest
             cibw_archs: "native ARM64"
           - os: macos-latest
