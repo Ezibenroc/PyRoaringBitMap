@@ -39,21 +39,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            cibw_archs: "native armv7l"
-          - os: windows-latest
-            cibw_archs: "native ARM64"
-          - os: macos-latest
-            cibw_archs: "x86_64 universal2 arm64"
+        # macos-13 is an intel runner, macos-14 is apple silicon
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-13, macos-14]
 
     steps:
       - uses: actions/checkout@v3
       - name: Set up QEMU
-        if: matrix.cibw_archs == 'aarch64' || matrix.cibw_archs == 'armv7l'
-        uses: docker/setup-qemu-action@v2
+        if: runner.os == 'Linux' && runner.arch == 'X64'
+        uses: docker/setup-qemu-action@v3
         with:
-          platforms: arm64, armv7l
+          platforms: all
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.23.2
         env:
@@ -61,6 +56,7 @@ jobs:
           CIBW_TEST_COMMAND: "py.test {project}/test.py -v && python {project}/cydoctest.py -v"
           CIBW_SKIP: "pp* cp36-* cp37-*"
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
+          CIBW_ARCHS_LINUX: ${{ runner.arch == 'X64' && 'auto' || 'auto armv7l' }}
           CIBW_TEST_SKIP: "*-win_arm64"
           CIBW_BUILD_FRONTEND: "build"
 
