@@ -50,10 +50,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Set up QEMU
-        if: matrix.cibw_archs == 'aarch64'
+        if: matrix.cibw_archs == 'aarch64' || matrix.cibw_archs == 'armv7l'
         uses: docker/setup-qemu-action@v2
         with:
-          platforms: arm64
+          platforms: arm64, armv7l
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.23.2
         env:
