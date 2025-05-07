@@ -56,6 +56,8 @@ jobs:
           CIBW_TEST_COMMAND: "python {project}/cydoctest.py -v"  # full test command: py.test {project}/test.py -v
           CIBW_SKIP: "pp* cp36-* cp37-*"
           CIBW_ARCHS_LINUX: ${{ runner.arch == 'X64' && 'auto' || 'auto armv7l' }}
+          CIBW_ARCHS_MACOS: ${{ runner.arch == 'X64' && 'auto' || 'auto universal2' }}
+          CIBW_ARCHS_WINDOWS: "auto ARM64"
           CIBW_TEST_SKIP: "*-win_arm64"
           CIBW_BUILD_FRONTEND: "build"
 
