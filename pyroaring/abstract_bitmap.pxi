@@ -421,6 +421,7 @@ cdef class AbstractBitMap:
             return bitmaps[0] - bitmaps[1]
         else:
             result = BitMap(bitmaps[0])
+            result._h_val = 0
             for bm in bitmaps[1:]:
                 result -= bm
             return bitmaps[0].__class__(result)
@@ -474,6 +475,7 @@ cdef class AbstractBitMap:
             return bitmaps[0] & bitmaps[1]
         else:
             result = BitMap(bitmaps[0])
+            result._h_val = 0
             for bm in bitmaps[1:]:
                 result &= bm
             return bitmaps[0].__class__(result)
