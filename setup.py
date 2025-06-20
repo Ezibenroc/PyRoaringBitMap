@@ -88,7 +88,7 @@ setup(
     version=VERSION,
     description='Library for handling efficiently sorted integer sets.',
     long_description=long_description,
-    setup_requires=['cython>=3.0.2'],
+    setup_requires=['cython>=3.0.2,<3.1.0'],
     url='https://github.com/Ezibenroc/PyRoaringBitMap',
     author='Tom Cornebize',
     author_email='tom.cornebize@gmail.com',
