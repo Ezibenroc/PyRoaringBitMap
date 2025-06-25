@@ -1221,6 +1221,17 @@ class TestFrozen:
         assert bm1.get_statistics() != bm2.get_statistics()
         assert hash(bm1) == hash(bm2)
 
+    def test_hash_eq_after_operations(self) -> None:
+        """Testing that bitmaps have the same hash even when they have been obtained after some operations.
+        Test for issue #129.
+        """
+        ref_hash = hash(FrozenBitMap([2, 3]))
+        assert ref_hash == hash(FrozenBitMap([1, 2, 3]) & FrozenBitMap([2, 3, 4]))
+        assert ref_hash == hash(FrozenBitMap([1, 2, 3]).intersection(FrozenBitMap([2, 3, 4]), FrozenBitMap([0, 2, 3])))
+        assert ref_hash == hash(FrozenBitMap([2]) | FrozenBitMap([3]))
+        assert ref_hash == hash(FrozenBitMap([2]).union(FrozenBitMap([3]), FrozenBitMap()))
+        assert ref_hash == hash(FrozenBitMap([1, 2, 3, 4]) - FrozenBitMap([1, 4]))
+        assert ref_hash == hash(FrozenBitMap([1, 2, 3, 4]).difference(FrozenBitMap([1]), FrozenBitMap([4])))
 
 class TestOptimization:
 
