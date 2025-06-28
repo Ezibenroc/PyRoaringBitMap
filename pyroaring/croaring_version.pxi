@@ -1,1 +1,1 @@
-__croaring_version__ = "v4.3.0"
+__croaring_version__ = "v4.2.0"
