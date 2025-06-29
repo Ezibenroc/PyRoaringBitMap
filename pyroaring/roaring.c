@@ -1,5 +1,5 @@
 // !!! DO NOT EDIT - THIS IS AN AUTO-GENERATED FILE !!!
-// Created by amalgamation.sh on 2024-09-30T21:45:33Z
+// Created by amalgamation.sh on 2025-02-26T22:28:04Z
 
 /*
  * The CRoaring project is under a dual license (Apache/MIT).
@@ -10418,7 +10418,7 @@ static art_val_t *art_find_at(const art_node_t *node,
 }
 
 // Returns the size in bytes of the subtrie.
-size_t art_size_in_bytes_at(const art_node_t *node) {
+static size_t art_size_in_bytes_at(const art_node_t *node) {
     if (art_is_leaf(node)) {
         return 0;
     }
@@ -10472,7 +10472,7 @@ static void art_node_print_type(const art_node_t *node) {
     }
 }
 
-void art_node_printf(const art_node_t *node, uint8_t depth) {
+static void art_node_printf(const art_node_t *node, uint8_t depth) {
     if (art_is_leaf(node)) {
         printf("{ type: Leaf, key: ");
         art_leaf_t *leaf = CROARING_CAST_LEAF(node);
@@ -14106,7 +14106,7 @@ int bitset_container_##opname##_nocard(const bitset_container_t *src_1,   \
 }                                                                         \
 int bitset_container_##opname##_justcard(const bitset_container_t *src_1, \
                               const bitset_container_t *src_2) {          \
-   printf("A1\n"); const uint64_t * __restrict__ words_1 = src_1->words;                 \
+    const uint64_t * __restrict__ words_1 = src_1->words;                 \
     const uint64_t * __restrict__ words_2 = src_2->words;                 \
     int32_t sum = 0;                                                      \
     for (size_t i = 0; i < BITSET_CONTAINER_SIZE_IN_WORDS; i += 2) {      \
@@ -22979,19 +22979,6 @@ roaring64_bitmap_t *roaring64_bitmap_of_ptr(size_t n_args,
                                             const uint64_t *vals) {
     roaring64_bitmap_t *r = roaring64_bitmap_create();
     roaring64_bitmap_add_many(r, n_args, vals);
-    return r;
-}
-
-roaring64_bitmap_t *roaring64_bitmap_of(size_t n_args, ...) {
-    roaring64_bitmap_t *r = roaring64_bitmap_create();
-    roaring64_bulk_context_t context = CROARING_ZERO_INITIALIZER;
-    va_list ap;
-    va_start(ap, n_args);
-    for (size_t i = 0; i < n_args; i++) {
-        uint64_t val = va_arg(ap, uint64_t);
-        roaring64_bitmap_add_bulk(r, &context, val);
-    }
-    va_end(ap);
     return r;
 }
 
