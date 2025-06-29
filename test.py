@@ -905,7 +905,7 @@ class TestSerialization(Util):
         bm = cls(list(range(0, 1000000, 3)))
         bitmap_bytes = bm.serialize()
         bitmap_bytes = bitmap_bytes[:42] + wrong_input + bitmap_bytes[42:]
-        with pytest.raises(ValueError, match='Invalid bitmap after deserialization'):
+        with pytest.raises(ValueError, match='Invalid bitmap after deserialization|Could not deserialize bitmap'):
             bitmap = cls.deserialize(bitmap_bytes)
 
 
