@@ -143,21 +143,37 @@ class Util:
         return [bitmap[i] for i in indices]
 
     def assert_is_not(self, bitmap1: AbstractBitMap, bitmap2: AbstractBitMap) -> None:
+        add1 = remove1 = add2 = remove2 = -1
         if isinstance(bitmap1, BitMap):
             if bitmap1:
-                bitmap1.remove(bitmap1[0])
+                remove1 = bitmap1[0]
+                bitmap1.remove(remove1)
             else:
-                bitmap1.add(27)
+                add1 = 27
+                bitmap1.add(add1)
         elif isinstance(bitmap2, BitMap):
             if bitmap2:
-                bitmap2.remove(bitmap1[0])
+                remove2 = bitmap2[0]
+                bitmap2.remove(remove2)
             else:
-                bitmap2.add(27)
+                add2 = 27
+                bitmap2.add(add2)
         else:  # The two are non-mutable, cannot do anything...
             return
         if bitmap1 == bitmap2:
             pytest.fail(
                 'The two bitmaps are identical (modifying one also modifies the other).')
+        # Restore the bitmaps to their original point
+        else:
+            if add1 >= 0:
+                bitmap1.remove(add1)
+            if remove1 >= 0:
+                bitmap1.add(remove1)
+            if add2 >= 0:
+                bitmap2.remove(add2)
+            if remove2 >= 0:
+                bitmap2.add(remove2)
+
 
 
 class TestBasic(Util):
@@ -900,6 +916,7 @@ class TestSerialization(Util):
                 for old_bm, new_bm in zip(old_bms, new_bms):
                     assert old_bm == new_bm
                     assert isinstance(new_bm, cls2)
+                    self.assert_is_not(old_bm, new_bm)
 
     @given(bitmap_cls, hyp_collection, st.integers(min_value=2, max_value=pickle.HIGHEST_PROTOCOL))
     def test_pickle_protocol(
