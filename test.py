@@ -892,14 +892,14 @@ class TestSerialization(Util):
             starts.append(s + starts[-1])
 
         combined = b''.join(serialized)
-        mv = memoryview(combined)
+        mutable_combined = bytearray(combined)
 
-        new_bms = [cls2.deserialize(mv[start: start + size])for start, size in zip(starts, sizes)]
-
-        for old_bm, new_bm in zip(old_bms, new_bms):
-            assert old_bm == new_bm
-            assert isinstance(new_bm, cls2)
-            self.assert_is_not(old_bm, new_bm)
+        for source in (combined, mutable_combined):
+            with memoryview(source) as mv:
+                new_bms = [cls2.deserialize(mv[start: start + size])for start, size in zip(starts, sizes)]
+                for old_bm, new_bm in zip(old_bms, new_bms):
+                    assert old_bm == new_bm
+                    assert isinstance(new_bm, cls2)
 
     @given(bitmap_cls, hyp_collection, st.integers(min_value=2, max_value=pickle.HIGHEST_PROTOCOL))
     def test_pickle_protocol(
