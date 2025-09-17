@@ -874,6 +874,33 @@ class TestSerialization(Util):
         assert isinstance(new_bm, cls2)
         self.assert_is_not(old_bm, new_bm)
 
+    @given(bitmap_cls, bitmap_cls, hyp_many_collections)
+    def test_deserialization_from_memoryview(
+        self,
+        cls1: type[EitherBitMap],
+        cls2: type[EitherBitMap],
+        values: list[HypCollection]
+    ) -> None:
+        old_bms = [cls1(vals) for vals in values]
+
+        # Create a memoryview with all of the items concatenated into a single bytes
+        # object.
+        serialized = [bm.serialize() for bm in old_bms]
+        sizes = [len(ser) for ser in serialized]
+        starts = [0]
+        for s in sizes:
+            starts.append(s + starts[-1])
+
+        combined = b''.join(serialized)
+        mv = memoryview(combined)
+
+        new_bms = [cls2.deserialize(mv[start: start + size])for start, size in zip(starts, sizes)]
+
+        for old_bm, new_bm in zip(old_bms, new_bms):
+            assert old_bm == new_bm
+            assert isinstance(new_bm, cls2)
+            self.assert_is_not(old_bm, new_bm)
+
     @given(bitmap_cls, hyp_collection, st.integers(min_value=2, max_value=pickle.HIGHEST_PROTOCOL))
     def test_pickle_protocol(
         self,
