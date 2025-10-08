@@ -68,10 +68,7 @@ def _string_rep(bm):
 
     num_columns = table_max_width // column_width
 
-    num_rows = len(bm) / float(num_columns)
-    if not num_rows.is_integer():
-        num_rows += 1
-    num_rows = int(num_rows)
+    num_rows = (len(bm) + num_columns - 1) // num_columns
     rows = []
     row_idx = 0
     skipped = False
