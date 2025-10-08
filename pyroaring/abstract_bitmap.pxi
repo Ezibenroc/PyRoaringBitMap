@@ -12,11 +12,16 @@ try:
 except NameError: # python 3
     pass
 
-cdef croaring.roaring_bitmap_t *deserialize_ptr(bytes buff):
+
+cdef croaring.roaring_bitmap_t *deserialize_ptr(const unsigned char[:] buff):
     cdef croaring.roaring_bitmap_t *ptr
     cdef const char *reason_failure = NULL
+
+    cdef char* buffer_ptr = <char*>&buff[0]
+
     buff_size = len(buff)
-    ptr = croaring.roaring_bitmap_portable_deserialize_safe(buff, buff_size)
+    ptr = croaring.roaring_bitmap_portable_deserialize_safe(buffer_ptr, buff_size)
+
     if ptr == NULL:
       raise ValueError("Could not deserialize bitmap")
     # Validate the bitmap
@@ -26,11 +31,14 @@ cdef croaring.roaring_bitmap_t *deserialize_ptr(bytes buff):
         raise ValueError(f"Invalid bitmap after deserialization: {reason_failure.decode('utf-8')}")
     return ptr
 
-cdef croaring.roaring64_bitmap_t *deserialize64_ptr(bytes buff):
+cdef croaring.roaring64_bitmap_t *deserialize64_ptr(const unsigned char[:] buff):
     cdef croaring.roaring64_bitmap_t *ptr
     cdef const char *reason_failure = NULL
+
+    cdef char* buffer_ptr = <char*>&buff[0]
+
     buff_size = len(buff)
-    ptr = croaring.roaring64_bitmap_portable_deserialize_safe(buff, buff_size)
+    ptr = croaring.roaring64_bitmap_portable_deserialize_safe(buffer_ptr, buff_size)
     if ptr == NULL:
       raise ValueError("Could not deserialize bitmap")
     # Validate the bitmap
@@ -760,7 +768,7 @@ cdef class AbstractBitMap:
 
 
     @classmethod
-    def deserialize(cls, bytes buff):
+    def deserialize(cls, const unsigned char[:] buff):
         """
         Generate a bitmap from the given serialization. See AbstractBitMap.serialize for the reverse operation.
 
@@ -1221,7 +1229,7 @@ cdef class AbstractBitMap64:
 
 
     @classmethod
-    def deserialize(cls, bytes buff):
+    def deserialize(cls, const unsigned char[:] buff):
         """
         Generate a bitmap from the given serialization. See AbstractBitMap64.serialize for the reverse operation.
 
