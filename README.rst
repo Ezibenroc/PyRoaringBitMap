@@ -37,29 +37,45 @@ The class ``BitMap`` is for 32 bit integers, it supports values from 0 to 2**32-
 
 For larger numbers, you can use the class ``BitMap64`` that supports values from 0 to 2**64-1 (included).
 
-Installation from Pypi
+Installation from Pypi with pip
 ----------------------
 
 Supported systems: Linux, MacOS or Windows, Python 3.8 or higher. Note that pyroaring might still work with older Python
 versions, but they are not tested anymore.
 
-To install pyroaring on your local account, use the following command:
+It is recommended to install pyroaring in a virtual environment to avoid conflicts with system packages.
+
+Create a virtual environment:
 
 .. code:: bash
 
-    pip install pyroaring --user
+    python -m venv venv
 
-For a system-wide installation, use the following command:
+Activate the virtual environment:
+
+.. code:: bash
+
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+Then install pyroaring:
 
 .. code:: bash
 
     pip install pyroaring
 
-Naturally, the latter may require superuser rights (consider prefixing
-the commands by ``sudo``).
-
 If you want to use Python 3 and your system defaults on Python 2.7, you
-may need to adjust the above commands, e.g., replace ``pip`` by ``pip3``.
+may need to adjust the above commands, e.g., replace ``python`` by ``python3``.
+
+Installation with uv
+----------------------
+
+If you are using uv to manage your project's dependencies, you can add pyroaring as follows:
+
+.. code:: bash
+
+    uv add pyroaring
+
+This will add pyroaring to your project's dependencies in pyproject.toml and install it.
 
 Installation from conda-forge
 -----------------------------
@@ -72,11 +88,25 @@ Conda users can install the package from `conda-forge`:
 
 (Supports Python 3.6 or higher; Mac/Linux/Windows)
 
-Installation from Source
+Installation from Source with pip
 ---------------------------------
 
 If you want to compile (and install) pyroaring by yourself, for instance
 to modify the Cython sources you can follow the following instructions.
+It is recommended to create a virtual environment for development to avoid conflicts with system packages.
+
+Create a virtual environment:
+
+.. code:: bash
+
+    python -m venv venv # or python3 -m venv venv
+
+Activate the virtual environment:
+
+.. code:: bash
+
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+
 Note that these examples will install in your currently active python
 virtual environment. Installing this way will require an appropriate
 C compiler to be installed on your system.
@@ -145,6 +175,31 @@ Example of use:
 .. code:: bash
 
     DEBUG=1 ARCHI=x86-64 python setup.py build_ext
+
+
+
+Installation from Source with uv
+---------------------------------
+
+If you want to compile and install pyroaring from source using uv, for instance to modify the Cython sources:
+
+First clone this repository.
+
+.. code:: bash
+
+    git clone https://github.com/Ezibenroc/PyRoaringBitMap.git
+
+To build the package without installing:
+
+.. code:: bash
+
+    uv build
+
+To run tests:
+
+.. code:: bash
+
+    uv run --with=pytest --with=hypothesis --with="$(ls dist/pyroaring-*.whl)" pytest test.py # windows users need a different way to specify the wheel
 
 
 Optimizing the builds for your machine (x64)
