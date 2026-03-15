@@ -23,12 +23,12 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
 
       - name: Build sdist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           path: dist/*.tar.gz
           name: cibw-sdist
@@ -40,17 +40,17 @@ jobs:
       fail-fast: false
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
-        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-13, macos-14]
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-latest, macos-15-intel]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Set up QEMU
         if: runner.os == 'Linux' && runner.arch == 'X64'
         uses: docker/setup-qemu-action@v3
         with:
           platforms: all
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.23.2
+        uses: pypa/cibuildwheel@v3.4.0
         env:
           CIBW_TEST_REQUIRES: hypothesis pytest
           CIBW_TEST_COMMAND: "python {project}/cydoctest.py -v"  # full test command: py.test {project}/test.py -v
@@ -61,7 +61,7 @@ jobs:
           CIBW_TEST_SKIP: "*-win_arm64"
           CIBW_BUILD_FRONTEND: "build"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           path: ./wheelhouse/*.whl
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
@@ -70,20 +70,20 @@ jobs:
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: cibw-*
           path: dist
           merge-multiple: true
 
-      - uses: pypa/gh-action-pypi-publish@v1.5.0
+      - uses: pypa/gh-action-pypi-publish@v1.13.0
         # Deploy releases to pypi.
         if: github.event_name == 'release' && github.event.action == 'released'
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
 
-      - uses: pypa/gh-action-pypi-publish@v1.5.0
+      - uses: pypa/gh-action-pypi-publish@v1.13.0
         # Deploy pre-releases to test pypi.
         if: github.event_name == 'release' && github.event.action == 'prereleased'
         with:
