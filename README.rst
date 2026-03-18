@@ -40,7 +40,7 @@ For larger numbers, you can use the class ``BitMap64`` that supports values from
 Installation from Pypi with pip
 ----------------------
 
-Supported systems: Linux, MacOS or Windows, Python 3.8 or higher. Note that pyroaring might still work with older Python
+Supported systems: Linux, MacOS or Windows, Python 3.9 or higher. Note that pyroaring might still work with older Python
 versions, but they are not tested anymore.
 
 It is recommended to install pyroaring in a virtual environment to avoid conflicts with system packages.
