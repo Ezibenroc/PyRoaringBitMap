@@ -38,7 +38,7 @@ The class ``BitMap`` is for 32 bit integers, it supports values from 0 to 2**32-
 For larger numbers, you can use the class ``BitMap64`` that supports values from 0 to 2**64-1 (included).
 
 Installation from Pypi with pip
-----------------------
+-------------------------------
 
 Supported systems: Linux, MacOS or Windows, Python 3.9 or higher. Note that pyroaring might still work with older Python
 versions, but they are not tested anymore.
@@ -67,7 +67,7 @@ If you want to use Python 3 and your system defaults on Python 2.7, you
 may need to adjust the above commands, e.g., replace ``python`` by ``python3``.
 
 Installation with uv
-----------------------
+--------------------
 
 If you are using uv to manage your project's dependencies, you can add pyroaring as follows:
 
