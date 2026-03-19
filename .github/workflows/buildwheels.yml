@@ -60,6 +60,7 @@ jobs:
           CIBW_ARCHS_WINDOWS: "auto ARM64"
           CIBW_TEST_SKIP: "*-win_arm64"
           CIBW_BUILD_FRONTEND: "build"
+          MACOSX_DEPLOYMENT_TARGET: "14.0"  # fix build for macos-15-intel
 
       - uses: actions/upload-artifact@v7
         with:
