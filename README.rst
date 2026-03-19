@@ -67,7 +67,7 @@ If you want to use Python 3 and your system defaults on Python 2.7, you
 may need to adjust the above commands, e.g., replace ``python`` by ``python3``.
 
 Installation with uv
-----------------------
+--------------------
 
 If you are using uv to manage your project's dependencies, you can add pyroaring as follows:
 
