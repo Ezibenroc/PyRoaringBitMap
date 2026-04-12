@@ -35,49 +35,47 @@ except (IOError, ImportError, RuntimeError):
 
 
 if PLATFORM_WINDOWS:
-    pyroaring_module = Extension(
-        'pyroaring',
-        sources=[os.path.join(PKG_DIR, 'pyroaring.pyx'), os.path.join(PKG_DIR, 'roaring.c')],
-        language='c++',
-    )
-    libraries = None
+    # MSVC defaults to C++14, so no explicit C++ standard flag is needed.
+    # roaring.c requires C11 for features like alignof and _Static_assert.
+    ext_compile_args = []
+    c_compile_args = ['/std:c11']
 else:
-    compile_args = ['-D__STDC_LIMIT_MACROS', '-D__STDC_CONSTANT_MACROS', '-D _GLIBCXX_ASSERTIONS']
+    c_compile_args = ['-D__STDC_LIMIT_MACROS', '-D__STDC_CONSTANT_MACROS', '-D _GLIBCXX_ASSERTIONS']
     if PLATFORM_MACOSX:
-        compile_args.append('-mmacosx-version-min=10.14')
+        c_compile_args.append('-mmacosx-version-min=10.14')
     if 'DEBUG' in os.environ:
-        compile_args.extend(['-O0', '-g'])
+        c_compile_args.extend(['-O0', '-g'])
     else:
-        compile_args.append('-O3')
+        c_compile_args.append('-O3')
     if 'ARCHI' in os.environ:
         if os.environ['ARCHI'] != "generic":
-            compile_args.extend(['-march=%s' % os.environ['ARCHI']])
+            c_compile_args.append('-march=%s' % os.environ['ARCHI'])
     # The '-march=native' flag is not universally allowed. In particular, it
     # will systematically fail on aarch64 systems (like the new Apple M1 systems). It
     # also creates troubles under macOS with pip installs and requires ugly workarounds.
     # The best way to handle people who want to use -march=native is to ask them
     # to pass ARCHI=native to their build process.
     # else:
-    #    compile_args.append('-march=native')
+    #    c_compile_args.append('-march=native')
+    ext_compile_args = c_compile_args + ['-std=c++11']
+    c_compile_args = c_compile_args + ['-std=c11']
 
-    pyroaring_module = Extension(
-        'pyroaring',
-        sources=[os.path.join(PKG_DIR, 'pyroaring.pyx')],
-        extra_compile_args=compile_args + ["-std=c++11"],
-        language='c++',
-    )
+pyroaring_module = Extension(
+    'pyroaring',
+    sources=[os.path.join(PKG_DIR, 'pyroaring.pyx')],
+    extra_compile_args=ext_compile_args,
+    language='c++',
+)
 
-    # Because we compile croaring with a c compiler with sometimes incompatible arguments,
-    # define croaring compilation with an extra argument for the c11 standard, which is
-    # required for atomic support.
-    croaring = (
-        'croaring',
-        {
-            'sources': [os.path.join(PKG_DIR, 'roaring.c')],
-            "extra_compile_args": compile_args + ["-std=c11"],
-        },
-    )
-    libraries = [croaring]
+# roaring.c is compiled as a separate static library because it must be compiled
+# as C (not C++), with a C11 standard flag.
+libraries = [(
+    'croaring',
+    {
+        'sources': [os.path.join(PKG_DIR, 'roaring.c')],
+        'extra_compile_args': c_compile_args,
+    },
+)]
 
 setup(
     name='pyroaring',
