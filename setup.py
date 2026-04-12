@@ -73,7 +73,7 @@ libraries = [(
     'croaring',
     {
         'sources': [os.path.join(PKG_DIR, 'roaring.c')],
-        'extra_compile_args': c_compile_args,
+        'cflags': c_compile_args,
     },
 )]
 
