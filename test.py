@@ -13,6 +13,7 @@ import operator
 import unittest
 import functools
 import base64
+import ctypes
 from typing import TYPE_CHECKING
 from collections.abc import Set, Callable, Iterable, Iterator
 
@@ -1855,6 +1856,33 @@ class TestVersion:
     def test_version(self) -> None:
         self.assert_regex(r'\d+\.\d+\.\d+(?:\.dev\d+)?', pyroaring.__version__)
         self.assert_regex(r'v\d+\.\d+\.\d+', pyroaring.__croaring_version__)
+
+
+class TestFFI:
+    def test_ffi_get_ptr(self) -> None:
+        bm1 = BitMap()
+        bm2 = BitMap()
+
+        assert bm1.raw_pointer == bm1.raw_pointer
+        assert bm2.raw_pointer == bm2.raw_pointer
+        assert bm1.raw_pointer != bm2.raw_pointer
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="Symbols are not exported on Windows")
+    def test_ffi_cardinality(self) -> None:
+        bm = BitMap()
+        lib = ctypes.cdll.LoadLibrary(pyroaring.__file__)
+
+        raw_ptr = bm.raw_pointer
+        ffi_ptr = ctypes.c_void_p(raw_ptr)
+
+        if is_32_bits:
+            ffi_cardinality_fn = lib.roaring_bitmap_get_cardinality
+        else:
+            ffi_cardinality_fn = lib.roaring64_bitmap_get_cardinality
+
+        assert ffi_cardinality_fn(ffi_ptr) == 0
+        bm.add(42)
+        assert ffi_cardinality_fn(ffi_ptr) == 1
 
 
 if __name__ == "__main__":
