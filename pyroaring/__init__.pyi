@@ -33,6 +33,10 @@ class AbstractBitMap:
         ...
 
     @property
+    def ptr(self) -> int:
+        ...
+
+    @property
     def copy_on_write(self) -> bool:
         ...
 

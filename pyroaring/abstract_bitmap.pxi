@@ -1,5 +1,5 @@
 cimport croaring
-from libc.stdint cimport uint32_t, uint64_t, int64_t
+from libc.stdint cimport uint32_t, uint64_t, uintptr_t, int64_t
 from libcpp cimport bool
 from libcpp.vector cimport vector
 from libc.stdlib cimport free, malloc
@@ -173,6 +173,13 @@ cdef class AbstractBitMap:
         bm = self.__class__.__new__(self.__class__, no_init=True)
         (<AbstractBitMap>bm)._c_bitmap = ptr
         return bm
+
+    @property
+    def ptr(self):
+        """
+        The pointer to the underlying CRoaring bitmap as an integer.
+        """
+        return <uintptr_t>self._c_bitmap
 
     @property
     def copy_on_write(self):
