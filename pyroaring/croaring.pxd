@@ -142,6 +142,7 @@ cdef extern from "roaring.h":
     uint64_t roaring64_bitmap_minimum(const roaring64_bitmap_t *r)
     uint64_t roaring64_bitmap_maximum(const roaring64_bitmap_t *r)
     bool roaring64_bitmap_run_optimize(roaring64_bitmap_t *r)
+    size_t roaring64_bitmap_shrink_to_fit(roaring64_bitmap_t *r)
     size_t roaring64_bitmap_size_in_bytes(const roaring64_bitmap_t *r)
     bool roaring64_bitmap_equals(const roaring64_bitmap_t *r1, const roaring64_bitmap_t *r2)
     bool roaring64_bitmap_is_subset(const roaring64_bitmap_t *r1, const roaring64_bitmap_t *r2)

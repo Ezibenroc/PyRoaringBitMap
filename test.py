@@ -1297,7 +1297,6 @@ class TestOptimization:
         bm3 = cls(bm1)  # optimize is True by default
         assert stats == bm3.get_statistics()
 
-    @pytest.mark.skipif(not is_32_bits, reason="not supported yet")
     @given(bitmap_cls)
     def test_shrink_to_fit(self, cls: type[EitherBitMap]) -> None:
         bm1 = BitMap()
