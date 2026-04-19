@@ -1560,7 +1560,6 @@ class TestPythonSetEquivalent:
         assert new_element in b2
         assert new_element not in b1
 
-    @pytest.mark.skipif(not is_32_bits, reason="not supported yet")
     @given(bitmap_cls, small_integer_list, small_integer_list, st.booleans())
     def test_overwrite(self, BitMapClass: type[EitherBitMap], list1: list[int], list2: list[int], cow: bool) -> None:
         assume(set(list1) != set(list2))
