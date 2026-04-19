@@ -1090,7 +1090,6 @@ class TestFlip(Util):
         bm_after.flip_inplace(start, end)
         self.check_flip(bm_before, bm_after, start, end)
 
-@pytest.mark.skipif(not is_32_bits, reason="not supported yet")
 class TestShift(Util):
     @given(bitmap_cls, hyp_collection, int64, st.booleans())
     def test_shift(
@@ -1104,7 +1103,8 @@ class TestShift(Util):
         bm_copy = cls(bm_before)
         bm_after = bm_before.shift(offset)
         assert bm_before == bm_copy
-        expected = cls([val + offset for val in values if val + offset in range(0, 2**32)], copy_on_write=cow)
+        upper = 2**32 if is_32_bits else 2**64
+        expected = cls([val + offset for val in values if val + offset in range(0, upper)], copy_on_write=cow)
         assert bm_after == expected
 
 @pytest.mark.skipif(not is_32_bits, reason="not supported yet")

@@ -167,6 +167,7 @@ cdef extern from "roaring.h":
     size_t roaring64_bitmap_portable_deserialize_size(const char *buf, size_t maxbytes)
     roaring64_bitmap_t *roaring64_bitmap_portable_deserialize_safe(const char *buf, size_t maxbytes)
     bool roaring64_bitmap_internal_validate(const roaring64_bitmap_t *r, const char **reason)
+    roaring64_bitmap_t *roaring64_bitmap_add_offset_signed(const roaring64_bitmap_t *r, bool positive, uint64_t offset)
     roaring64_iterator_t *roaring64_iterator_create(const roaring64_bitmap_t *r)
     void roaring64_iterator_free(roaring64_iterator_t *it)
     bool roaring64_iterator_has_value(const roaring64_iterator_t *it)

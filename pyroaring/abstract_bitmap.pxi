@@ -1048,6 +1048,21 @@ cdef class AbstractBitMap64:
         """
         return self.from_ptr(croaring.roaring64_bitmap_flip(self._c_bitmap, start, end))
 
+    def shift(self, int64_t offset):
+        """
+        Add the value 'offset' to each and every value of the bitmap.
+
+        If offset + element is outside of the range [0,2^64), that the element will be dropped.
+
+        >>> bm = BitMap64([3, 12])
+        >>> bm.shift(21)
+        BitMap64([24, 33])
+        """
+        if offset >= 0:
+            return self.from_ptr(croaring.roaring64_bitmap_add_offset_signed(self._c_bitmap, True, <uint64_t>offset))
+        else:
+            return self.from_ptr(croaring.roaring64_bitmap_add_offset_signed(self._c_bitmap, False, <uint64_t>0 - <uint64_t>offset))
+
     def get_statistics(self):
         """
         Return relevant metrics about the bitmap.
