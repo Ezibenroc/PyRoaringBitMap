@@ -441,6 +441,23 @@ cdef class BitMap64(AbstractBitMap64):
         """
         self.__ixor__(other)
 
+    def overwrite(self, AbstractBitMap64 other):
+        """
+        Clear the bitmap and overwrite it with another.
+
+        >>> bm = BitMap64([3, 12])
+        >>> other = BitMap64([4, 14])
+        >>> bm.overwrite(other)
+        >>> other.remove(4)
+        >>> bm
+        BitMap64([4, 14])
+        >>> other
+        BitMap64([14])
+        """
+        if self._c_bitmap == other._c_bitmap:
+            raise ValueError('Cannot overwrite itself')
+        croaring.roaring64_bitmap_overwrite(self._c_bitmap, other._c_bitmap)
+
     def clear(self):
         """
         Remove all elements from this set.

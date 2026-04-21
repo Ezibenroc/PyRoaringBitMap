@@ -856,6 +856,7 @@ cdef class AbstractBitMap64:
             self._h_val = 0
         if optimize:
             self.run_optimize()
+            self.shrink_to_fit()
 
     def __init__(self, values=None, copy_on_write=False, optimize=True):
         """
@@ -894,6 +895,9 @@ cdef class AbstractBitMap64:
 
     def run_optimize(self):
         return croaring.roaring64_bitmap_run_optimize(self._c_bitmap)
+
+    def shrink_to_fit(self):
+        return croaring.roaring64_bitmap_shrink_to_fit(self._c_bitmap)
 
     def __dealloc__(self):
         if self._c_bitmap is not NULL:
@@ -1043,6 +1047,21 @@ cdef class AbstractBitMap64:
         BitMap64([3, 10, 11, 13, 14])
         """
         return self.from_ptr(croaring.roaring64_bitmap_flip(self._c_bitmap, start, end))
+
+    def shift(self, int64_t offset):
+        """
+        Add the value 'offset' to each and every value of the bitmap.
+
+        If offset + element is outside of the range [0,2^64), that the element will be dropped.
+
+        >>> bm = BitMap64([3, 12])
+        >>> bm.shift(21)
+        BitMap64([24, 33])
+        """
+        if offset >= 0:
+            return self.from_ptr(croaring.roaring64_bitmap_add_offset_signed(self._c_bitmap, True, <uint64_t>offset))
+        else:
+            return self.from_ptr(croaring.roaring64_bitmap_add_offset_signed(self._c_bitmap, False, <uint64_t>0 - <uint64_t>offset))
 
     def get_statistics(self):
         """
