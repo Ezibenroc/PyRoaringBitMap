@@ -1821,6 +1821,21 @@ class TestString:
             string_repr = string_repr.replace("BitMap64", "BitMap")  # we redefined BitMap64 to BitMap at the top of this file
         assert bm == eval(string_repr)
 
+    def test_large_range_repr_32bit(self) -> None:
+        # Regression test for https://github.com/Ezibenroc/PyRoaringBitMap/issues/145
+        # len(range(first_elt, last_elt+1)) overflows Py_ssize_t on 32-bit platforms.
+        ns = {"BitMap": pyroaring.BitMap}
+        bm = pyroaring.BitMap([0, 2**31 - 1])
+        assert bm == eval(repr(bm), ns)
+        bm = pyroaring.BitMap([0, 2**32 - 1])
+        assert bm == eval(repr(bm), ns)
+
+    def test_large_range_repr_64bit(self) -> None:
+        # Same overflow, latent on 64-bit: a BitMap64 spanning [0, 2**63-1] also
+        # overflows Py_ssize_t even on 64-bit platforms.
+        bm = pyroaring.BitMap64([0, 2**63 - 1])
+        assert bm == eval(repr(bm), {"BitMap64": pyroaring.BitMap64})
+
     @settings(suppress_health_check=HealthCheck)
     @given(bitmap_cls, large_list_of_uin32)
     def test_large_list(self, cls: type[EitherBitMap], collection: list[int]) -> None:
