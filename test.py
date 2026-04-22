@@ -424,6 +424,12 @@ class TestSelectRank(Util):
         assume(step != 0)
         self.check_slice(cls, values, start, stop, step, cow)
 
+    def test_get_slice_large_span(self) -> None:
+        # Regression for https://github.com/Ezibenroc/PyRoaringBitMap/issues/145
+        bm = BitMap([0, 2**31 - 1 if is_32_bits else 2**63 - 1])
+        assert bm[:] == bm
+        assert bm[::-1] == bm
+
     @given(bitmap_cls, hyp_collection, st.booleans())
     def test_simple_rank(
         self,

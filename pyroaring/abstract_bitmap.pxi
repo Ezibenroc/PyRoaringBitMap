@@ -701,18 +701,21 @@ cdef class AbstractBitMap:
         assert len(r) > 0
         first_elt = self._get_elt(start)
         last_elt  = self._get_elt(stop-sign)
-        values = range(first_elt, last_elt+sign, step)
-        if abs(step) == 1 and len(values) <= len(self) / 100:  # contiguous and small chunk of the bitmap
-            return self & self.__class__(values, copy_on_write=self.copy_on_write)
-        else:  # generic case
-            if step < 0:
-                start = r[-1]
-                stop = r[0] + 1
-                step = -step
-            else:
-                start = r[0]
-                stop = r[-1] + 1
-            return self._generic_get_slice(start, stop, step)
+        if abs(step) == 1:
+            # Compute range size without len() to avoid OverflowError on 32-bit platforms
+            # when first_elt and last_elt span a range exceeding Py_ssize_t.
+            size = abs(last_elt - first_elt) + 1
+            if size <= len(self) / 100:  # contiguous and small chunk of the bitmap
+                return self & self.__class__(range(first_elt, last_elt+sign, step), copy_on_write=self.copy_on_write)
+        # generic case
+        if step < 0:
+            start = r[-1]
+            stop = r[0] + 1
+            step = -step
+        else:
+            start = r[0]
+            stop = r[-1] + 1
+        return self._generic_get_slice(start, stop, step)
 
     cdef _generic_get_slice(self, uint32_t start, uint32_t stop, uint32_t step):
         """Assume that start, stop and step > 0 and that the result will not be empty."""
@@ -1182,18 +1185,21 @@ cdef class AbstractBitMap64:
         assert len(r) > 0
         first_elt = self._get_elt(start)
         last_elt  = self._get_elt(stop-sign)
-        values = range(first_elt, last_elt+sign, step)
-        if abs(step) == 1 and len(values) <= len(self) / 100:  # contiguous and small chunk of the bitmap
-            return self & self.__class__(values)
-        else:  # generic case
-            if step < 0:
-                start = r[-1]
-                stop = r[0] + 1
-                step = -step
-            else:
-                start = r[0]
-                stop = r[-1] + 1
-            return self._generic_get_slice(start, stop, step)
+        if abs(step) == 1:
+            # Compute range size without len() to avoid OverflowError on platforms
+            # where Py_ssize_t cannot hold the distance between first_elt and last_elt.
+            size = abs(last_elt - first_elt) + 1
+            if size <= len(self) / 100:  # contiguous and small chunk of the bitmap
+                return self & self.__class__(range(first_elt, last_elt+sign, step))
+        # generic case
+        if step < 0:
+            start = r[-1]
+            stop = r[0] + 1
+            step = -step
+        else:
+            start = r[0]
+            stop = r[-1] + 1
+        return self._generic_get_slice(start, stop, step)
 
     cdef _generic_get_slice(self, uint64_t start, uint64_t stop, uint64_t step):
         """Assume that start, stop and step > 0 and that the result will not be empty."""

@@ -53,12 +53,11 @@ jobs:
         uses: pypa/cibuildwheel@v3.4.0
         env:
           CIBW_TEST_REQUIRES: hypothesis pytest
-          CIBW_TEST_COMMAND: "python {project}/cydoctest.py -v"  # full test command: py.test {project}/test.py -v
+          CIBW_TEST_COMMAND: "pytest {project}/test.py -v && python {project}/cydoctest.py -v"
           CIBW_SKIP: "cp38-*"
           CIBW_ARCHS_LINUX: ${{ runner.arch == 'X64' && 'auto' || 'auto armv7l' }}
           CIBW_ARCHS_MACOS: ${{ runner.arch == 'X64' && 'auto' || 'auto universal2' }}
           CIBW_ARCHS_WINDOWS: "auto ARM64"
-          CIBW_TEST_SKIP: "*-win_arm64"
           CIBW_BUILD_FRONTEND: "build"
           MACOSX_DEPLOYMENT_TARGET: "14.0"  # fix build for macos-15-intel
 
