@@ -1,5 +1,5 @@
 cimport croaring
-from libc.stdint cimport uint32_t, uint64_t, int64_t
+from libc.stdint cimport uint32_t, uint64_t, uintptr_t, int64_t
 from libcpp cimport bool
 from libcpp.vector cimport vector
 from libc.stdlib cimport free, malloc
@@ -173,6 +173,26 @@ cdef class AbstractBitMap:
         bm = self.__class__.__new__(self.__class__, no_init=True)
         (<AbstractBitMap>bm)._c_bitmap = ptr
         return bm
+
+    @property
+    def raw_pointer(self):
+        """
+        The address of the underlying `roaring_bitmap_t`, as a Python int.
+
+        Intended for FFI interop, e.g. passing the bitmap to another
+        native extension via CFFI or ctypes without a copy.
+
+        Caveats (the caller is responsible for all of these):
+
+        - The pointer is owned by this Python object. It is only valid
+          while the object is alive; the caller must not pass it to
+          `roaring_bitmap_free`.
+
+        - Mutating the bitmap through this pointer on a `FrozenBitMap`
+          is undefined behaviour: it silently invalidates the cached
+          hash and breaks set/dict semantics.
+        """
+        return <uintptr_t>self._c_bitmap
 
     @property
     def copy_on_write(self):
@@ -883,6 +903,26 @@ cdef class AbstractBitMap64:
         bm = self.__class__.__new__(self.__class__, no_init=True)
         (<AbstractBitMap64>bm)._c_bitmap = ptr
         return bm
+
+    @property
+    def raw_pointer(self):
+        """
+        The address of the underlying `roaring_bitmap_t`, as a Python int.
+
+        Intended for FFI interop, e.g. passing the bitmap to another
+        native extension via CFFI or ctypes without a copy.
+
+        Caveats (the caller is responsible for all of these):
+
+        - The pointer is owned by this Python object. It is only valid
+          while the object is alive; the caller must not pass it to
+          `roaring_bitmap_free`.
+
+        - Mutating the bitmap through this pointer on a `FrozenBitMap`
+          is undefined behaviour: it silently invalidates the cached
+          hash and breaks set/dict semantics.
+        """
+        return <uintptr_t>self._c_bitmap
 
     @property
     def copy_on_write(self):

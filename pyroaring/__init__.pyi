@@ -33,6 +33,10 @@ class AbstractBitMap:
         ...
 
     @property
+    def raw_pointer(self) -> int:
+        ...
+
+    @property
     def copy_on_write(self) -> bool:
         ...
 
@@ -254,6 +258,10 @@ class BitMap(AbstractBitMap):
 
 class AbstractBitMap64:
     def __init__(self, values: Iterable[int] | None = None, copy_on_write: bool = False, optimize: bool = True) -> None:
+        ...
+
+    @property
+    def raw_pointer(self) -> int:
         ...
 
     @property
