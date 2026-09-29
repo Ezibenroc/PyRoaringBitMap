@@ -1,5 +1,5 @@
 # distutils: language = c++
-# cython: binding = True, language_level=3
+# cython: binding = True, language_level=3, freethreading_compatible = True
 
 include 'version.pxi'
 include 'croaring_version.pxi'
