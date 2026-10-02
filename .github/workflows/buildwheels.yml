@@ -36,6 +36,7 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -53,6 +54,7 @@ jobs:
         uses: pypa/cibuildwheel@v4.2.1
         env:
           CIBW_TEST_REQUIRES: hypothesis pytest
+          CIBW_TEST_ENVIRONMENT: PIP_ONLY_BINARY=hypothesis  # no cp314t armv7l wheel, building the Rust sdist hangs
           CIBW_TEST_COMMAND: "pytest {project}/test.py -v && python {project}/cydoctest.py -v"
           CIBW_SKIP: "cp38-*"
           CIBW_ARCHS_LINUX: ${{ runner.arch == 'X64' && 'auto' || 'auto armv7l' }}
