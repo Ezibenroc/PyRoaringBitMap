@@ -37,6 +37,9 @@ The class ``BitMap`` is for 32 bit integers, it supports values from 0 to 2**32-
 
 For larger numbers, you can use the class ``BitMap64`` that supports values from 0 to 2**64-1 (included).
 
+``Pyroaring`` supports free-threaded Python.
+Multiple threads can read a bitmap concurrently, but need a lock if one of them modifies it or the bitmap uses ``copy_on_write``.
+
 Installation from Pypi with pip
 -------------------------------
 

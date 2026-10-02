@@ -50,7 +50,7 @@ jobs:
         with:
           platforms: all
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.4.0
+        uses: pypa/cibuildwheel@v4.2.1
         env:
           CIBW_TEST_REQUIRES: hypothesis pytest
           CIBW_TEST_COMMAND: "pytest {project}/test.py -v && python {project}/cydoctest.py -v"
@@ -60,6 +60,7 @@ jobs:
           CIBW_ARCHS_WINDOWS: "auto ARM64"
           CIBW_BUILD_FRONTEND: "build"
           MACOSX_DEPLOYMENT_TARGET: "11.0"  # fix build for macos-15-intel
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""  # delvewheel breaks win_arm64 cross-builds (no ARM64 msvcp140.dll)
 
       - uses: actions/upload-artifact@v7
         with:
