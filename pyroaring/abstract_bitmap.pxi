@@ -5,6 +5,7 @@ from libcpp.vector cimport vector
 from libc.stdlib cimport free, malloc
 
 from cpython cimport array
+from cpython.number cimport PyNumber_Index
 import array
 
 try:
@@ -831,6 +832,21 @@ cdef class AbstractBitMap:
         return result
 
 
+cdef object _check_range_end64(object range_end):
+    """Check the exclusive end of a range for the 64-bit bitmaps.
+
+    Including the largest value 2**64 - 1 takes an end of 2**64, which does
+    not fit in a uint64_t, so the end is taken as a Python int and the closed
+    range functions are used with range_end - 1.
+    """
+    range_end = PyNumber_Index(range_end)
+    if range_end < 0:
+        raise OverflowError("can't convert negative int to unsigned")
+    if range_end > 2**64:
+        raise OverflowError("range end too large, the maximum is 2**64")
+    return range_end
+
+
 cdef class AbstractBitMap64:
     """
     An efficient and light-weight ordered set of 64 bits integers.
@@ -857,7 +873,14 @@ cdef class AbstractBitMap64:
             if start >= stop:
                 self._c_bitmap = croaring.roaring64_bitmap_create()
             else:
-                self._c_bitmap = croaring.roaring64_bitmap_from_range(start, stop, step)
+                # The stop of a range ending at 2**64 - 1 does not fit in a
+                # uint64_t, so build up to the last value and add it.
+                last = values[-1]
+                if start == last:
+                    self._c_bitmap = croaring.roaring64_bitmap_create()
+                else:
+                    self._c_bitmap = croaring.roaring64_bitmap_from_range(start, last, step)
+                croaring.roaring64_bitmap_add(self._c_bitmap, last)
         elif isinstance(values, array.array):
             size = len(values)
             if size == 0:
@@ -989,7 +1012,7 @@ cdef class AbstractBitMap64:
         self._check_compatibility(other)
         return croaring.roaring64_bitmap_is_subset((<AbstractBitMap64?>other)._c_bitmap, (<AbstractBitMap64?>self)._c_bitmap)
 
-    def contains_range(self, uint64_t range_start, uint64_t range_end):
+    def contains_range(self, uint64_t range_start, range_end):
         """
         Check whether a range of values from range_start (included) to range_end (excluded) is present.
 
@@ -999,11 +1022,12 @@ cdef class AbstractBitMap64:
         >>> bm.contains_range(8, 12)
         False
         """
+        range_end = _check_range_end64(range_end)
         if range_end <= range_start or range_end == 0:
             return True  # empty range
-        return croaring.roaring64_bitmap_contains_range(self._c_bitmap, range_start, range_end)
+        return croaring.roaring64_bitmap_contains_range_closed(self._c_bitmap, range_start, <uint64_t>(range_end - 1))
 
-    def range_cardinality(self, uint64_t range_start, uint64_t range_end):
+    def range_cardinality(self, uint64_t range_start, range_end):
         """
         Return cardinality from range_start (included) to range_end (excluded).
 
@@ -1013,9 +1037,12 @@ cdef class AbstractBitMap64:
         >>> bm.range_cardinality(10, 100)
         0
         """
+        range_end = _check_range_end64(range_end)
         if range_end < range_start:
             raise AssertionError('range_end must not be lower than range_start')
-        return croaring.roaring64_bitmap_range_cardinality(self._c_bitmap, range_start, range_end)
+        if range_end == range_start:
+            return 0
+        return croaring.roaring64_bitmap_range_closed_cardinality(self._c_bitmap, range_start, <uint64_t>(range_end - 1))
 
     cdef compute_hash(self):
         cdef int64_t h_val = 0
@@ -1079,7 +1106,7 @@ cdef class AbstractBitMap64:
     def __str__(self):
         return _string_rep(self)
 
-    def flip(self, uint64_t start, uint64_t end):
+    def flip(self, uint64_t start, end):
         """
         Compute the negation of the bitmap within the specified interval.
 
@@ -1089,7 +1116,10 @@ cdef class AbstractBitMap64:
         >>> bm.flip(10, 15)
         BitMap64([3, 10, 11, 13, 14])
         """
-        return self.from_ptr(croaring.roaring64_bitmap_flip(self._c_bitmap, start, end))
+        end = _check_range_end64(end)
+        if end <= start:
+            return self.from_ptr(croaring.roaring64_bitmap_copy(self._c_bitmap))
+        return self.from_ptr(croaring.roaring64_bitmap_flip_closed(self._c_bitmap, start, <uint64_t>(end - 1)))
 
     def shift(self, int64_t offset):
         """

@@ -1114,6 +1114,46 @@ class TestShift(Util):
         expected = cls([val + offset for val in values if val + offset in range(0, upper)], copy_on_write=cow)
         assert bm_after == expected
 
+class TestRangeToMaximum:
+    upper = 2**32 if is_32_bits else 2**64
+
+    def test_constructor(self) -> None:
+        upper = self.upper
+        expected = [upper - 3, upper - 2, upper - 1]
+        assert list(BitMap(range(upper - 3, upper))) == expected
+        assert list(FrozenBitMap(range(upper - 3, upper))) == expected
+        assert list(BitMap(range(upper - 1, upper - 4, -1))) == expected
+        assert list(BitMap(range(upper - 5, upper, 2))) == [upper - 5, upper - 3, upper - 1]
+
+    def test_add_remove_range(self) -> None:
+        upper = self.upper
+        bm = BitMap([1])
+        bm.add_range(upper - 2, upper)
+        assert list(bm) == [1, upper - 2, upper - 1]
+        bm.remove_range(upper - 1, upper)
+        assert list(bm) == [1, upper - 2]
+
+    def test_contains_range_and_cardinality(self) -> None:
+        upper = self.upper
+        bm = BitMap([upper - 2, upper - 1])
+        assert bm.contains_range(upper - 2, upper)
+        assert not bm.contains_range(upper - 3, upper)
+        assert bm.range_cardinality(upper - 3, upper) == 2
+
+    def test_flip(self) -> None:
+        upper = self.upper
+        bm = BitMap([upper - 1])
+        assert list(bm.flip(upper - 3, upper)) == [upper - 3, upper - 2]
+        bm.flip_inplace(upper - 3, upper)
+        assert list(bm) == [upper - 3, upper - 2]
+
+    @pytest.mark.skipif(is_32_bits, reason="the 32-bit bitmaps take larger ends")
+    def test_end_past_maximum(self) -> None:
+        bm = BitMap()
+        with pytest.raises(OverflowError):
+            bm.add_range(0, self.upper + 1)
+
+
 @pytest.mark.skipif(not is_32_bits, reason="not supported yet")
 class TestIncompatibleInteraction(Util):
 
