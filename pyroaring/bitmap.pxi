@@ -492,7 +492,7 @@ cdef class BitMap64(AbstractBitMap64):
         self.remove(value)
         return value
 
-    def add_range(self, uint64_t range_start, uint64_t range_end):
+    def add_range(self, uint64_t range_start, range_end):
         """
         Add a range of values from range_start (included) to range_end (excluded).
 
@@ -501,11 +501,12 @@ cdef class BitMap64(AbstractBitMap64):
         >>> bm
         BitMap64([5, 6, 7, 8])
         """
+        range_end = _check_range_end64(range_end)
         if range_end <= range_start or range_end == 0:
             return
-        croaring.roaring64_bitmap_add_range(self._c_bitmap, range_start, range_end)
+        croaring.roaring64_bitmap_add_range_closed(self._c_bitmap, range_start, <uint64_t>(range_end - 1))
 
-    def flip_inplace(self, uint64_t start, uint64_t end):
+    def flip_inplace(self, uint64_t start, end):
         """
         Compute (in place) the negation of the bitmap within the specified interval.
 
@@ -516,9 +517,12 @@ cdef class BitMap64(AbstractBitMap64):
         >>> bm
         BitMap64([3, 10, 11, 13, 14])
         """
-        croaring.roaring64_bitmap_flip_inplace(self._c_bitmap, start, end)
+        end = _check_range_end64(end)
+        if end <= start:
+            return
+        croaring.roaring64_bitmap_flip_closed_inplace(self._c_bitmap, start, <uint64_t>(end - 1))
 
-    def remove_range(self, uint64_t range_start, uint64_t range_end):
+    def remove_range(self, uint64_t range_start, range_end):
         """
         Remove a range of values from range_start (included) to range_end (excluded).
 
@@ -527,6 +531,7 @@ cdef class BitMap64(AbstractBitMap64):
         >>> bm
         BitMap64([5, 9, 10])
         """
+        range_end = _check_range_end64(range_end)
         if range_end <= range_start or range_end == 0:
             return
-        croaring.roaring64_bitmap_remove_range(self._c_bitmap, range_start, range_end)
+        croaring.roaring64_bitmap_remove_range_closed(self._c_bitmap, range_start, <uint64_t>(range_end - 1))

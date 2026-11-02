@@ -18,3 +18,5 @@ docs/_build
 Pipfile.lock
 .mypy_cache
 pyroaring/pyroaring.cpp
+config.bat
+node_modules
