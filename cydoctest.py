@@ -14,7 +14,6 @@ Further options can be passed to testmod() as desired, e.g.
 verbose=True.)
 """
 
-import utils.session
 import sys
 import doctest
 import inspect
