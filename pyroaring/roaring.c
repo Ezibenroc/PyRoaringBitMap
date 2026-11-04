@@ -1,5 +1,5 @@
 // !!! DO NOT EDIT - THIS IS AN AUTO-GENERATED FILE !!!
-// Created by amalgamation.sh on 2026-11-04T13:35:46Z
+// Created by amalgamation.sh on 2026-11-04T18:04:16Z
 
 /*
  * The CRoaring project is under a dual license (Apache/MIT).
@@ -1122,6 +1122,7 @@ CROARING_UNTARGET_AVX2
  * smaller than target1, and so forth.
  * It has logarithmic complexity.
  */
+CROARING_ALLOW_UNALIGNED
 static void binarySearch4(const uint16_t *array, int32_t n, uint16_t target1,
                           uint16_t target2, uint16_t target3, uint16_t target4,
                           int32_t *index1, int32_t *index2, int32_t *index3,
@@ -1153,6 +1154,7 @@ static void binarySearch4(const uint16_t *array, int32_t n, uint16_t target1,
  * smaller than target1, and so forth.
  * It has logarithmic complexity.
  */
+CROARING_ALLOW_UNALIGNED
 static void binarySearch2(const uint16_t *array, int32_t n, uint16_t target1,
                           uint16_t target2, int32_t *index1, int32_t *index2) {
     const uint16_t *base1 = array;
@@ -1301,6 +1303,7 @@ bool intersect_skewed_uint16_nonempty(const uint16_t *small, size_t size_s,
 // of four values to handle at once (all below the other side's current value,
 // or equal to the other side's next four values), which is common and well
 // predicted on clustered data. Otherwise they take four branchless steps.
+CROARING_ALLOW_UNALIGNED
 static inline bool croaring_equal4_uint16(const uint16_t *a,
                                           const uint16_t *b) {
     uint64_t x, y;
@@ -1316,6 +1319,7 @@ static inline bool croaring_equal4_uint16(const uint16_t *a,
 // galloping and copy the values in between in bulk.
 
 // Returns the first index i in [lo, n) with array[i] >= key, or n.
+CROARING_ALLOW_UNALIGNED
 static inline size_t croaring_gallop_uint16(const uint16_t *array, size_t lo,
                                             size_t n, uint16_t key) {
     if (lo >= n || array[lo] >= key) return lo;
@@ -1340,6 +1344,7 @@ static inline size_t croaring_gallop_uint16(const uint16_t *array, size_t lo,
 // Union of a short and a long sorted array. Every write goes to
 // out[pos] with pos <= i + j, where i and j count the values read so
 // far.
+CROARING_ALLOW_UNALIGNED
 static size_t union_skewed_uint16(const uint16_t *small, size_t size_s,
                                   const uint16_t *large, size_t size_l,
                                   uint16_t *out) {
@@ -1358,6 +1363,7 @@ static size_t union_skewed_uint16(const uint16_t *small, size_t size_s,
 }
 
 // Symmetric difference of a short and a long sorted array.
+CROARING_ALLOW_UNALIGNED
 static int32_t xor_skewed_uint16(const uint16_t *small, size_t size_s,
                                  const uint16_t *large, size_t size_l,
                                  uint16_t *out) {
@@ -1380,6 +1386,7 @@ static int32_t xor_skewed_uint16(const uint16_t *small, size_t size_s,
 
 // a1 minus a short a2. Every write goes to a_out[k..] with k <= i, so
 // a_out may be a1.
+CROARING_ALLOW_UNALIGNED
 static int difference_skewed_small_a2_uint16(const uint16_t *a1, int length1,
                                              const uint16_t *a2, int length2,
                                              uint16_t *a_out) {
@@ -1398,6 +1405,7 @@ static int difference_skewed_small_a2_uint16(const uint16_t *a1, int length1,
 
 // A short a1 minus a2. Every write goes to a_out[k] with k <= i, so
 // a_out may be a1.
+CROARING_ALLOW_UNALIGNED
 static int difference_skewed_small_a1_uint16(const uint16_t *a1, int length1,
                                              const uint16_t *a2, int length2,
                                              uint16_t *a_out) {
@@ -1414,6 +1422,7 @@ static int difference_skewed_small_a1_uint16(const uint16_t *a1, int length1,
 // Intersection of a short and a long sorted array, writing only on a
 // match: every write goes to out[k] with k no larger than the index of
 // the matched value on either side, so out may be either input.
+CROARING_ALLOW_UNALIGNED
 static size_t intersect_tail_uint16(const uint16_t *small, size_t size_s,
                                     const uint16_t *large, size_t size_l,
                                     uint16_t *out) {
@@ -1429,6 +1438,7 @@ static size_t intersect_tail_uint16(const uint16_t *small, size_t size_s,
     return k;
 }
 
+CROARING_ALLOW_UNALIGNED
 static size_t intersect_tail_uint16_cardinality(const uint16_t *small,
                                                 size_t size_s,
                                                 const uint16_t *large,
@@ -4644,16 +4654,17 @@ static size_t art_shrink_node_arrays(art_t *art) {
     size_t freed = 0;
     for (art_typecode_t t = CROARING_ART_MIN_TYPE; t <= CROARING_ART_MAX_TYPE;
          ++t) {
-        if (art->first_free[t] < art->capacities[t]) {
-            uint64_t new_capacity = art->first_free[t];
-            if (new_capacity == 0) {
-                roaring_free(art->nodes[t]);
-                art->nodes[t] = NULL;
-            } else {
-                art->nodes[t] = roaring_realloc(
-                    art->nodes[t], new_capacity * ART_NODE_SIZES[t]);
+        uint64_t new_capacity = art->first_free[t];
+        uint64_t capacity = art->capacities[t];
+        if (new_capacity < capacity) {
+            bool shrunk;
+            art->nodes[t] = croaring_realloc_shrink(
+                art->nodes[t], new_capacity * ART_NODE_SIZES[t], &shrunk);
+            if (shrunk) {
+                freed += (capacity - new_capacity) * ART_NODE_SIZES[t];
             }
-            freed += (art->capacities[t] - new_capacity) * ART_NODE_SIZES[t];
+            // Even when the array kept its size: the slots past first_free
+            // are not a free list.
             art->capacities[t] = new_capacity;
         }
     }
@@ -5900,20 +5911,10 @@ bool bitset_trim(bitset_t *bitset) {
             break;
     }
     if (bitset->capacity == newsize) return true;  // nothing to do
-    if (newsize == 0) {
-        // realloc(array, 0) may free the array and return NULL
-        roaring_free(bitset->array);
-        bitset->array = NULL;
-        bitset->capacity = 0;
-        bitset->arraysize = 0;
-        return true;
-    }
-    uint64_t *newarray;
-    if ((newarray = (uint64_t *)roaring_realloc(
-             bitset->array, sizeof(uint64_t) * newsize)) == NULL) {
-        return false;
-    }
-    bitset->array = newarray;
+    bool shrunk;
+    bitset->array = (uint64_t *)croaring_realloc_shrink(
+        bitset->array, sizeof(uint64_t) * newsize, &shrunk);
+    if (!shrunk) return false;
     bitset->capacity = newsize;
     bitset->arraysize = newsize;
     return true;
@@ -7425,20 +7426,15 @@ void array_container_offset(const array_container_t *c, container_t **loc,
 }
 
 int array_container_shrink_to_fit(array_container_t *src) {
-    if (src->cardinality == src->capacity) return 0;  // nothing to do
-    int savings = src->capacity - src->cardinality;
-    src->capacity = src->cardinality;
-    if (src->capacity ==
-        0) {  // we do not want to rely on realloc for zero allocs
-        roaring_free(src->array);
-        src->array = NULL;
-    } else {
-        uint16_t *oldarray = src->array;
-        src->array = (uint16_t *)roaring_realloc(
-            oldarray, src->capacity * sizeof(uint16_t));
-        if (src->array == NULL) roaring_free(oldarray);  // should never happen?
-    }
-    return savings;
+    int32_t cardinality = src->cardinality;
+    int32_t capacity = src->capacity;
+    if (cardinality == capacity) return 0;  // nothing to do
+    bool shrunk;
+    src->array = (uint16_t *)croaring_realloc_shrink(
+        src->array, cardinality * sizeof(uint16_t), &shrunk);
+    if (!shrunk) return 0;
+    src->capacity = cardinality;
+    return (capacity - cardinality) * (int)sizeof(uint16_t);
 }
 
 /* Free memory. */
@@ -7852,6 +7848,7 @@ int32_t array_container_number_of_runs(const array_container_t *ac) {
  * array_container_size_in_bytes(container).
  *
  */
+CROARING_ALLOW_UNALIGNED
 int32_t array_container_write(const array_container_t *container, char *buf) {
 #if CROARING_IS_BIG_ENDIAN
     for (int32_t i = 0; i < container->cardinality; ++i) {
@@ -9002,6 +8999,7 @@ int bitset_container_number_of_runs(bitset_container_t *bc) {
 }
 
 
+CROARING_ALLOW_UNALIGNED
 int32_t bitset_container_write(const bitset_container_t *container,
                                   char *buf) {
 #if CROARING_IS_BIG_ENDIAN
@@ -13250,14 +13248,15 @@ run_container_t *run_container_create_given_capacity(int32_t size) {
 }
 
 int run_container_shrink_to_fit(run_container_t *src) {
-    if (src->n_runs == src->capacity) return 0;  // nothing to do
-    int savings = src->capacity - src->n_runs;
-    src->capacity = src->n_runs;
-    rle16_t *oldruns = src->runs;
-    src->runs =
-        (rle16_t *)roaring_realloc(oldruns, src->capacity * sizeof(rle16_t));
-    if (src->runs == NULL) roaring_free(oldruns);  // should never happen?
-    return savings;
+    int32_t n_runs = src->n_runs;
+    int32_t capacity = src->capacity;
+    if (n_runs == capacity) return 0;  // nothing to do
+    bool shrunk;
+    src->runs = (rle16_t *)croaring_realloc_shrink(
+        src->runs, n_runs * sizeof(rle16_t), &shrunk);
+    if (!shrunk) return 0;
+    src->capacity = n_runs;
+    return (capacity - n_runs) * (int)sizeof(rle16_t);
 }
 /* Create a new run container. Return NULL in case of failure. */
 run_container_t *run_container_create(void) {
@@ -13869,6 +13868,7 @@ bool run_container_validate(const run_container_t *run, const char **reason) {
     return true;
 }
 
+CROARING_ALLOW_UNALIGNED
 int32_t run_container_write(const run_container_t *container, char *buf) {
     uint16_t cast_16 = container->n_runs;
     uint16_t n_runs_le = croaring_htole16(cast_16);
@@ -18994,9 +18994,7 @@ static void remove_container(roaring64_bitmap_t *r, leaf_t leaf) {
 static inline leaf_t copy_leaf_container(const roaring64_bitmap_t *r1,
                                          roaring64_bitmap_t *r2, leaf_t leaf) {
     uint8_t typecode = get_typecode(leaf);
-    // get_copy_of_container modifies the typecode passed in.
-    container_t *container = get_copy_of_container(
-        get_container(r1, leaf), &typecode, /*copy_on_write=*/false);
+    container_t *container = container_clone(get_container(r1, leaf), typecode);
     return add_container(r2, container, typecode);
 }
 
@@ -19130,8 +19128,8 @@ roaring64_bitmap_t *roaring64_bitmap_copy(const roaring64_bitmap_t *r) {
     while (it.value != NULL) {
         leaf_t leaf = (leaf_t)*it.value;
         uint8_t result_typecode = get_typecode(leaf);
-        container_t *result_container = get_copy_of_container(
-            get_container(r, leaf), &result_typecode, /*copy_on_write=*/false);
+        container_t *result_container =
+            container_clone(get_container(r, leaf), result_typecode);
         leaf_t result_leaf =
             add_container(result, result_container, result_typecode);
         art_insert(&result->art, it.key, (art_val_t)result_leaf);
@@ -19171,8 +19169,8 @@ void roaring64_bitmap_overwrite(roaring64_bitmap_t *dest,
     while (it.value != NULL) {
         leaf_t leaf = (leaf_t)*it.value;
         uint8_t typecode = get_typecode(leaf);
-        container_t *container = get_copy_of_container(
-            get_container(src, leaf), &typecode, /*copy_on_write=*/false);
+        container_t *container =
+            container_clone(get_container(src, leaf), typecode);
         leaf_t dest_leaf = add_container(dest, container, typecode);
         art_insert(&dest->art, it.key, (art_val_t)dest_leaf);
         art_iterator_next(&it);
@@ -19180,8 +19178,7 @@ void roaring64_bitmap_overwrite(roaring64_bitmap_t *dest,
 }
 
 /**
- * Steal the containers from a 32-bit bitmap and insert them into a 64-bit
- * bitmap (with an offset)
+ * Steal src's containers into dst at high_bits, copying those still shared.
  *
  * After calling this function, the original bitmap will be empty, and the
  * returned bitmap will contain all the values from the original bitmap.
@@ -19197,6 +19194,7 @@ static void move_from_roaring32_offset(roaring64_bitmap_t *dst,
         uint8_t typecode;
         container_t *container = ra_get_container_at_index(
             &src->high_low_container, (uint16_t)i, &typecode);
+        container = get_writable_copy_if_shared(container, &typecode);
 
         uint8_t high48[ART_KEY_BYTES];
         uint64_t high48_bits = key_base | ((uint64_t)key << 16);
@@ -19935,19 +19933,22 @@ size_t roaring64_bitmap_shrink_to_fit(roaring64_bitmap_t *r) {
         r->holes = NULL;
         r->holes_capacity = 0;
     }
-    if (is_shrunken(r)) {
+    uint64_t new_capacity = r->first_free;
+    uint64_t capacity = r->capacity;
+    if (new_capacity == capacity) {
         return freed;
     }
-    uint64_t new_capacity = r->first_free;
-    if (new_capacity < r->capacity) {
-        r->containers = (container_t **)roaring_realloc(
-            r->containers, new_capacity * sizeof(container_t *));
-        r->typecodes = (uint8_t *)roaring_realloc(
-            r->typecodes, new_capacity * sizeof(uint8_t));
-        freed += (r->capacity - new_capacity) *
-                 (sizeof(container_t *) + sizeof(uint8_t));
-        r->capacity = new_capacity;
-    }
+    size_t slack = (size_t)(capacity - new_capacity);
+    // A failed realloc keeps the larger block, valid under the smaller capacity
+    // since growth reallocs from the block; a later shrink does not retry it.
+    bool shrunk;
+    r->containers = (container_t **)croaring_realloc_shrink(
+        r->containers, new_capacity * sizeof(container_t *), &shrunk);
+    if (shrunk) freed += slack * sizeof(container_t *);
+    r->typecodes = (uint8_t *)croaring_realloc_shrink(
+        r->typecodes, new_capacity * sizeof(uint8_t), &shrunk);
+    if (shrunk) freed += slack * sizeof(uint8_t);
+    r->capacity = new_capacity;
     return freed;
 }
 
@@ -19965,8 +19966,7 @@ void roaring64_bitmap_statistics(const roaring64_bitmap_t *r,
     while (it.value != NULL) {
         leaf_t leaf = (leaf_t)*it.value;
         stat->n_containers++;
-        uint8_t truetype =
-            get_container_type(get_container(r, leaf), get_typecode(leaf));
+        uint8_t truetype = get_typecode(leaf);
         uint32_t card = container_get_cardinality(get_container(r, leaf),
                                                   get_typecode(leaf));
         uint32_t sbytes =
@@ -20009,6 +20009,10 @@ static bool roaring64_leaf_internal_validate(const art_val_t val,
     }
     if (r->typecodes[index] != typecode) {
         *reason = "typecode array does not match ART leaf";
+        return false;
+    }
+    if (typecode == SHARED_CONTAINER_TYPE) {
+        *reason = "64-bit bitmaps cannot hold shared containers";
         return false;
     }
     return container_internal_validate(r->containers[index], typecode, reason);
@@ -20249,29 +20253,16 @@ void roaring64_bitmap_and_inplace(roaring64_bitmap_t *r1,
         if (it2_present) {
             compare_result = compare_high48(it1.key, it2.key);
             if (compare_result == 0) {
-                // Case 2a: iterators at the same high key position.
+                // Case 2b: iterators at the same high key position.
                 leaf_t *leaf1 = (leaf_t *)it1.value;
                 leaf_t leaf2 = (leaf_t)*it2.value;
 
-                // We do the computation "in place" only when c1 is not a
-                // shared container. Rationale: using a shared container
-                // safely with in place computation would require making a
-                // copy and then doing the computation in place which is
-                // likely less efficient than avoiding in place entirely and
-                // always generating a new container.
                 uint8_t typecode = get_typecode(*leaf1);
                 container_t *container = get_container(r1, *leaf1);
                 uint8_t typecode2;
-                container_t *container2;
-                if (typecode == SHARED_CONTAINER_TYPE) {
-                    container2 = container_and(container, typecode,
-                                               get_container(r2, leaf2),
-                                               get_typecode(leaf2), &typecode2);
-                } else {
-                    container2 = container_iand(
-                        container, typecode, get_container(r2, leaf2),
-                        get_typecode(leaf2), &typecode2);
-                }
+                container_t *container2 = container_iand(
+                    container, typecode, get_container(r2, leaf2),
+                    get_typecode(leaf2), &typecode2);
 
                 if (container2 != container) {
                     container_free(container, typecode);
@@ -20293,7 +20284,7 @@ void roaring64_bitmap_and_inplace(roaring64_bitmap_t *r1,
         }
 
         if (!it2_present || compare_result < 0) {
-            // Cases 1 and 3a: it1 is the only iterator or is before it2.
+            // Cases 1 and 2a: it1 is the only iterator or is before it2.
             leaf_t leaf = 0;
             bool erased = art_iterator_erase(&it1, (art_val_t *)&leaf);
             assert(erased);
@@ -20309,23 +20300,25 @@ void roaring64_bitmap_and_inplace(roaring64_bitmap_t *r1,
 
 bool roaring64_bitmap_intersect(const roaring64_bitmap_t *r1,
                                 const roaring64_bitmap_t *r2) {
-    bool intersect = false;
     art_iterator_t it1 = art_init_iterator((art_t *)&r1->art, /*first=*/true);
     art_iterator_t it2 = art_init_iterator((art_t *)&r2->art, /*first=*/true);
 
     while (it1.value != NULL && it2.value != NULL) {
         // Cases:
         // 1. it1 <  it2 -> it1++
-        // 2. it1 == it1 -> intersect |= it1 & it2, it1++, it2++
+        // 2. it1 == it2 -> return true if the containers intersect,
+        //    else it1++, it2++
         // 3. it1 >  it2 -> it2++
         int compare_result = compare_high48(it1.key, it2.key);
         if (compare_result == 0) {
             // Case 2: iterators at the same high key position.
             leaf_t leaf1 = (leaf_t)*it1.value;
             leaf_t leaf2 = (leaf_t)*it2.value;
-            intersect |= container_intersect(
-                get_container(r1, leaf1), get_typecode(leaf1),
-                get_container(r2, leaf2), get_typecode(leaf2));
+            if (container_intersect(
+                    get_container(r1, leaf1), get_typecode(leaf1),
+                    get_container(r2, leaf2), get_typecode(leaf2))) {
+                return true;
+            }
             art_iterator_next(&it1);
             art_iterator_next(&it2);
         } else if (compare_result < 0) {
@@ -20336,7 +20329,7 @@ bool roaring64_bitmap_intersect(const roaring64_bitmap_t *r1,
             art_iterator_lower_bound(&it2, it1.key);
         }
     }
-    return intersect;
+    return false;
 }
 
 bool roaring64_bitmap_intersect_with_range(const roaring64_bitmap_t *r,
@@ -20456,16 +20449,9 @@ void roaring64_bitmap_or_inplace(roaring64_bitmap_t *r1,
                 uint8_t typecode1 = get_typecode(*leaf1);
                 container_t *container1 = get_container(r1, *leaf1);
                 uint8_t typecode2;
-                container_t *container2;
-                if (get_typecode(*leaf1) == SHARED_CONTAINER_TYPE) {
-                    container2 = container_or(container1, typecode1,
-                                              get_container(r2, leaf2),
-                                              get_typecode(leaf2), &typecode2);
-                } else {
-                    container2 = container_ior(container1, typecode1,
-                                               get_container(r2, leaf2),
-                                               get_typecode(leaf2), &typecode2);
-                }
+                container_t *container2 = container_ior(
+                    container1, typecode1, get_container(r2, leaf2),
+                    get_typecode(leaf2), &typecode2);
                 if (container2 != container1) {
                     container_free(container1, typecode1);
                     replace_container(r1, leaf1, container2, typecode2);
@@ -20581,22 +20567,9 @@ void roaring64_bitmap_xor_inplace(roaring64_bitmap_t *r1,
                 uint8_t typecode1 = get_typecode(*leaf1);
                 container_t *container1 = get_container(r1, *leaf1);
                 uint8_t typecode2;
-                container_t *container2;
-                if (typecode1 == SHARED_CONTAINER_TYPE) {
-                    container2 = container_xor(container1, typecode1,
-                                               get_container(r2, leaf2),
-                                               get_typecode(leaf2), &typecode2);
-                    if (container2 != container1) {
-                        // We only free when doing container_xor, not
-                        // container_ixor, as ixor frees the original
-                        // internally.
-                        container_free(container1, typecode1);
-                    }
-                } else {
-                    container2 = container_ixor(
-                        container1, typecode1, get_container(r2, leaf2),
-                        get_typecode(leaf2), &typecode2);
-                }
+                container_t *container2 = container_ixor(
+                    container1, typecode1, get_container(r2, leaf2),
+                    get_typecode(leaf2), &typecode2);
 
                 if (!container_nonzero_cardinality(container2, typecode2)) {
                     container_free(container2, typecode2);
@@ -20717,22 +20690,9 @@ void roaring64_bitmap_andnot_inplace(roaring64_bitmap_t *r1,
                 uint8_t typecode1 = get_typecode(*leaf1);
                 container_t *container1 = get_container(r1, *leaf1);
                 uint8_t typecode2;
-                container_t *container2;
-                if (typecode1 == SHARED_CONTAINER_TYPE) {
-                    container2 = container_andnot(
-                        container1, typecode1, get_container(r2, leaf2),
-                        get_typecode(leaf2), &typecode2);
-                    if (container2 != container1) {
-                        // We only free when doing container_andnot, not
-                        // container_iandnot, as iandnot frees the original
-                        // internally.
-                        container_free(container1, typecode1);
-                    }
-                } else {
-                    container2 = container_iandnot(
-                        container1, typecode1, get_container(r2, leaf2),
-                        get_typecode(leaf2), &typecode2);
-                }
+                container_t *container2 = container_iandnot(
+                    container1, typecode1, get_container(r2, leaf2),
+                    get_typecode(leaf2), &typecode2);
 
                 if (!container_nonzero_cardinality(container2, typecode2)) {
                     container_free(container2, typecode2);
@@ -20858,8 +20818,8 @@ roaring64_bitmap_t *roaring64_bitmap_flip_closed(const roaring64_bitmap_t *r1,
     while (it.value != NULL && compare_high48(it.key, min_high48_key) < 0) {
         leaf_t leaf1 = (leaf_t)*it.value;
         uint8_t typecode2 = get_typecode(leaf1);
-        container_t *container2 = get_copy_of_container(
-            get_container(r1, leaf1), &typecode2, /*copy_on_write=*/false);
+        container_t *container2 =
+            container_clone(get_container(r1, leaf1), typecode2);
         leaf_t leaf2 = add_container(r2, container2, typecode2);
         art_insert(&r2->art, it.key, (art_val_t)leaf2);
         art_iterator_next(&it);
@@ -20890,8 +20850,8 @@ roaring64_bitmap_t *roaring64_bitmap_flip_closed(const roaring64_bitmap_t *r1,
     while (it.value != NULL) {
         leaf_t leaf1 = (leaf_t)*it.value;
         uint8_t typecode2 = get_typecode(leaf1);
-        container_t *container2 = get_copy_of_container(
-            get_container(r1, leaf1), &typecode2, /*copy_on_write=*/false);
+        container_t *container2 =
+            container_clone(get_container(r1, leaf1), typecode2);
         leaf_t leaf2 = add_container(r2, container2, typecode2);
         art_insert(&r2->art, it.key, (art_val_t)leaf2);
         art_iterator_next(&it);
@@ -20978,8 +20938,7 @@ roaring64_bitmap_t *roaring64_bitmap_add_offset_signed(
                 split_key((uint64_t)k << 16, new_high48);
                 uint8_t typecode = get_typecode(leaf);
                 container_t *container =
-                    get_copy_of_container(get_container(r, leaf), &typecode,
-                                          /*copy_on_write=*/false);
+                    container_clone(get_container(r, leaf), typecode);
                 leaf_t new_leaf = add_container(answer, container, typecode);
                 art_insert(&answer->art, new_high48, (art_val_t)new_leaf);
             }
@@ -21012,8 +20971,7 @@ roaring64_bitmap_t *roaring64_bitmap_add_offset_signed(
         }
 
         uint8_t typecode = get_typecode(leaf);
-        const container_t *c =
-            container_unwrap_shared(get_container(r, leaf), &typecode);
+        const container_t *c = get_container(r, leaf);
         container_add_offset(c, typecode, lo_ptr, hi_ptr, in_offset);
 
         if (lo != NULL) {
@@ -21104,8 +21062,7 @@ size_t roaring64_bitmap_portable_size_in_bytes(const roaring64_bitmap_t *r) {
             for (int32_t i = 0; i < num_leaves; ++i) {
                 const container_t *container = get_container(r, leaves[i]);
                 uint8_t typecode = get_typecode(leaves[i]);
-                hasrun |= get_container_type(container, typecode) ==
-                          RUN_CONTAINER_TYPE;
+                hasrun |= typecode == RUN_CONTAINER_TYPE;
                 size += container_size_in_bytes(container, typecode);
             }
             containers_with_high32 += num_leaves;
@@ -21279,7 +21236,6 @@ roaring64_bitmap_t *roaring64_bitmap_portable_deserialize_safe(
             roaring64_bitmap_free(r);
             return NULL;
         }
-        roaring_bitmap_set_copy_on_write(bitmap32, false);
         buf += bytesread;
         read_bytes += bytesread;
 
@@ -22085,8 +22041,7 @@ void roaring64_bitmap_to_uint64_array(const roaring64_bitmap_t *r,
         leaf_t leaf = (leaf_t)*it.value;
         uint64_t high48 = combine_key(it.key, 0);
         uint8_t typecode = get_typecode(leaf);
-        const container_t *c =
-            container_unwrap_shared(get_container(r, leaf), &typecode);
+        const container_t *c = get_container(r, leaf);
         switch (typecode) {
             case BITSET_CONTAINER_TYPE: {
                 const bitset_container_t *bc = const_CAST_bitset(c);
@@ -22558,13 +22513,14 @@ bool ra_init_with_capacity(roaring_array_t *new_ra, uint32_t cap) {
 }
 
 int ra_shrink_to_fit(roaring_array_t *ra) {
-    int savings = (ra->allocation_size - ra->size) *
-                  (sizeof(uint16_t) + sizeof(container_t *) + sizeof(uint8_t));
-    if (!realloc_array(ra, ra->size)) {
+    int32_t size = ra->size;
+    int32_t allocation_size = ra->allocation_size;
+    if (allocation_size == size) return 0;  // nothing to do
+    if (!realloc_array(ra, size)) {
         return 0;
     }
-    ra->allocation_size = ra->size;
-    return savings;
+    return (allocation_size - size) *
+           (sizeof(uint16_t) + sizeof(container_t *) + sizeof(uint8_t));
 }
 
 void ra_init(roaring_array_t *new_ra) {
