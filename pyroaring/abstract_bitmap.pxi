@@ -704,8 +704,13 @@ cdef class AbstractBitMap:
             return index
 
     cdef uint32_t _get_elt(self, int64_t index) except? 0:
-        cdef uint64_t s_index = self._shift_index(index)
         cdef uint32_t elt
+        if 0 <= index <= 0xFFFFFFFF:
+            # select reports out-of-range ranks itself: skip len(), which scans every container.
+            if croaring.roaring_bitmap_select(self._c_bitmap, <uint32_t>index, &elt):
+                return elt
+            raise IndexError('Index out of bound')
+        cdef uint64_t s_index = self._shift_index(index)
         cdef bool valid = croaring.roaring_bitmap_select(self._c_bitmap, s_index, &elt)
         if not valid:
             raise ValueError('Invalid rank')
@@ -1208,8 +1213,13 @@ cdef class AbstractBitMap64:
             return index
 
     cdef uint64_t _get_elt(self, int64_t index) except? 0:
-        cdef uint64_t s_index = self._shift_index(index)
         cdef uint64_t elt
+        if index >= 0:
+            # select reports out-of-range ranks itself: skip len(), which scans every container.
+            if croaring.roaring64_bitmap_select(self._c_bitmap, <uint64_t>index, &elt):
+                return elt
+            raise IndexError('Index out of bound')
+        cdef uint64_t s_index = self._shift_index(index)
         cdef bool valid = croaring.roaring64_bitmap_select(self._c_bitmap, s_index, &elt)
         if not valid:
             raise ValueError('Invalid rank')
