@@ -69,8 +69,29 @@ jobs:
           path: ./wheelhouse/*.whl
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
 
+  build_pyodide:
+    # WebAssembly wheels for Pyodide, one per Pyodide ABI (cp313: Pyodide
+    # 0.28 and 0.29; cp314: Pyodide 314; cp315). The tests run in Node.
+    name: Build Pyodide (WebAssembly) wheels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v4.2.1
+        env:
+          CIBW_PLATFORM: pyodide
+          CIBW_TEST_REQUIRES: hypothesis pytest
+          # python -m pytest: in a Pyodide venv, the pytest script starts with
+          # a shebang to a shell script, which some systems cannot run.
+          CIBW_TEST_COMMAND: "python -m pytest {project}/test.py -v && python {project}/cydoctest.py -v"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          path: ./wheelhouse/*.whl
+          name: cibw-wheels-pyodide
+
   upload_pypi:
-    needs: [build_wheels, build_sdist]
+    needs: [build_wheels, build_pyodide, build_sdist]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v8

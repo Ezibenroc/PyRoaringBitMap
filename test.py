@@ -1871,7 +1871,7 @@ class TestFFI:
         assert bm2.raw_pointer == bm2.raw_pointer
         assert bm1.raw_pointer != bm2.raw_pointer
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="Symbols are not exported on Windows")
+    @pytest.mark.skipif(sys.platform in ("win32", "emscripten"), reason="Symbols are not exported on Windows or Pyodide")
     def test_ffi_cardinality(self) -> None:
         bm = BitMap()
         lib = ctypes.cdll.LoadLibrary(pyroaring.__file__)
