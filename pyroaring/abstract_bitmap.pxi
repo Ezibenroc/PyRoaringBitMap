@@ -647,7 +647,7 @@ cdef class AbstractBitMap:
         >>> BitMap([3, 12]).min()
         3
         """
-        if len(self) == 0:
+        if not self:
             raise ValueError('Empty roaring bitmap, there is no minimum.')
         else:
             return croaring.roaring_bitmap_minimum(self._c_bitmap)
@@ -661,7 +661,7 @@ cdef class AbstractBitMap:
         >>> BitMap([3, 12]).max()
         12
         """
-        if len(self) == 0:
+        if not self:
             raise ValueError('Empty roaring bitmap, there is no maximum.')
         else:
             return croaring.roaring_bitmap_maximum(self._c_bitmap)
@@ -1151,7 +1151,7 @@ cdef class AbstractBitMap64:
         >>> BitMap64([3, 12]).min()
         3
         """
-        if len(self) == 0:
+        if not self:
             raise ValueError('Empty roaring bitmap, there is no minimum.')
         else:
             return croaring.roaring64_bitmap_minimum(self._c_bitmap)
@@ -1165,7 +1165,7 @@ cdef class AbstractBitMap64:
         >>> BitMap64([3, 12]).max()
         12
         """
-        if len(self) == 0:
+        if not self:
             raise ValueError('Empty roaring bitmap, there is no maximum.')
         else:
             return croaring.roaring64_bitmap_maximum(self._c_bitmap)
