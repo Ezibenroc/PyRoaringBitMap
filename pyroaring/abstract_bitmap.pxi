@@ -1485,6 +1485,7 @@ cdef class AbstractBitMap64:
         >>> BitMap64([3, 12]).union_cardinality(BitMap64([3, 5, 8]))
         4
         """
+        self._check_compatibility(other)
         return croaring.roaring64_bitmap_or_cardinality(self._c_bitmap, other._c_bitmap)
 
     def intersection_cardinality(self, AbstractBitMap64 other):
@@ -1496,6 +1497,7 @@ cdef class AbstractBitMap64:
         >>> BitMap64([3, 12]).intersection_cardinality(BitMap64([3, 5, 8]))
         1
         """
+        self._check_compatibility(other)
         return croaring.roaring64_bitmap_and_cardinality(self._c_bitmap, other._c_bitmap)
 
     def difference_cardinality(self, AbstractBitMap64 other):
@@ -1507,6 +1509,7 @@ cdef class AbstractBitMap64:
         >>> BitMap64([3, 12]).difference_cardinality(BitMap64([3, 5, 8]))
         1
         """
+        self._check_compatibility(other)
         return croaring.roaring64_bitmap_andnot_cardinality(self._c_bitmap, other._c_bitmap)
 
     def symmetric_difference_cardinality(self, AbstractBitMap64 other):
@@ -1518,6 +1521,7 @@ cdef class AbstractBitMap64:
         >>> BitMap64([3, 12]).symmetric_difference_cardinality(BitMap64([3, 5, 8]))
         3
         """
+        self._check_compatibility(other)
         return croaring.roaring64_bitmap_xor_cardinality(self._c_bitmap, other._c_bitmap)
 
     def intersect(self, AbstractBitMap64 other):
@@ -1531,6 +1535,7 @@ cdef class AbstractBitMap64:
         >>> BitMap64([3, 12]).intersect(BitMap64([5, 18]))
         False
         """
+        self._check_compatibility(other)
         return croaring.roaring64_bitmap_intersect(self._c_bitmap, other._c_bitmap)
 
     def jaccard_index(self, AbstractBitMap64 other):
@@ -1543,4 +1548,5 @@ cdef class AbstractBitMap64:
         >>> BitMap64([3, 10, 12]).jaccard_index(BitMap64([3, 18]))
         0.25
         """
+        self._check_compatibility(other)
         return croaring.roaring64_bitmap_jaccard_index(self._c_bitmap, other._c_bitmap)
