@@ -174,7 +174,7 @@ cdef class BitMap(AbstractBitMap):
         """
         self.__ixor__(other)
         
-    def overwrite(self, AbstractBitMap other):
+    def overwrite(self, AbstractBitMap other not None):
         """
         Clear the bitmap and overwrite it with another.
 
@@ -441,7 +441,7 @@ cdef class BitMap64(AbstractBitMap64):
         """
         self.__ixor__(other)
 
-    def overwrite(self, AbstractBitMap64 other):
+    def overwrite(self, AbstractBitMap64 other not None):
         """
         Clear the bitmap and overwrite it with another.
 

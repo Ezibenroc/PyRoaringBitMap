@@ -1205,6 +1205,14 @@ class TestBitMap:
         with pytest.raises(TypeError):
             hash(bm)
 
+    @pytest.mark.parametrize('method', [
+        'union_cardinality', 'intersection_cardinality', 'difference_cardinality',
+        'symmetric_difference_cardinality', 'intersect', 'jaccard_index', 'isdisjoint', 'overwrite',
+    ])
+    def test_none_argument(self, method: str) -> None:
+        with pytest.raises(TypeError):
+            getattr(BitMap([1]), method)(None)
+
 
 class TestFrozen:
 
