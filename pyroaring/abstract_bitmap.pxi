@@ -759,7 +759,7 @@ cdef class AbstractBitMap:
             if count != max_count or i_glob >= stop:
                 break
             i_loc = 0
-            i_buff = i_buff % max_count
+            i_buff -= max_count
         croaring.roaring_uint32_iterator_free(iterator)
         free(buff)
         return self.from_ptr(result)
@@ -1262,7 +1262,7 @@ cdef class AbstractBitMap64:
             if count != max_count or i_glob >= stop:
                 break
             i_loc = 0
-            i_buff = i_buff % max_count
+            i_buff -= max_count
         croaring.roaring64_iterator_free(iterator)
         free(buff)
         return self.from_ptr(result)

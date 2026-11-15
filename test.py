@@ -431,6 +431,11 @@ class TestSelectRank(Util):
         assert bm[:] == bm
         assert bm[::-1] == bm
 
+    @pytest.mark.parametrize('step', [257, 513, 1000, -600])
+    def test_slice_large_step(self, step: int) -> None:
+        values = list(range(5000))
+        assert list(BitMap(values)[::step]) == sorted(values[::step])
+
     @given(bitmap_cls, hyp_collection, st.booleans())
     def test_simple_rank(
         self,
