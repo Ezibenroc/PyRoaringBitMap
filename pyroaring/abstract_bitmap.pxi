@@ -290,7 +290,7 @@ cdef class AbstractBitMap:
         return croaring.roaring_bitmap_range_cardinality(self._c_bitmap, range_start, range_end)
 
     cdef compute_hash(self):
-        cdef int64_t h_val = 0
+        cdef uint64_t h_val = 0
         cdef uint32_t i, count, max_count=256
         cdef croaring.roaring_uint32_iterator_t *iterator = croaring.roaring_iterator_create(self._c_bitmap)
         cdef uint32_t *buff = <uint32_t*>malloc(max_count*4)
@@ -298,10 +298,7 @@ cdef class AbstractBitMap:
             count = croaring.roaring_uint32_iterator_read(iterator, buff, max_count)
             i = 0
             while i < count:
-                h_val = (h_val << 2) + buff[i] + 1
-                # TODO find a good hash formula
-                # This one should be better, but is too long:
-                # h_val = ((h_val<<16) + buff[i]) % 1748104473534059
+                h_val = (h_val + buff[i] + 1) * 0x9E3779B97F4A7C15ULL
                 i += 1
             if count != max_count:
                 break
@@ -309,7 +306,7 @@ cdef class AbstractBitMap:
         free(buff)
         if not self:
             return -1
-        return h_val
+        return <int64_t>(h_val ^ (h_val >> 32))
 
     def __hash__(self):
         if self._h_val == 0: 
@@ -1018,7 +1015,7 @@ cdef class AbstractBitMap64:
         return croaring.roaring64_bitmap_range_cardinality(self._c_bitmap, range_start, range_end)
 
     cdef compute_hash(self):
-        cdef int64_t h_val = 0
+        cdef uint64_t h_val = 0
         cdef uint32_t i, count, max_count=256
         cdef croaring.roaring64_iterator_t *iterator = croaring.roaring64_iterator_create(self._c_bitmap)
         cdef uint64_t *buff = <uint64_t*>malloc(max_count*8)
@@ -1026,8 +1023,7 @@ cdef class AbstractBitMap64:
             count = croaring.roaring64_iterator_read(iterator, buff, max_count)
             i = 0
             while i < count:
-                h_val += buff[i]
-                # TODO find a good hash formula
+                h_val = (h_val + buff[i] + 1) * 0x9E3779B97F4A7C15ULL
                 i += 1
             if count != max_count:
                 break
@@ -1035,7 +1031,7 @@ cdef class AbstractBitMap64:
         free(buff)
         if not self:
             return -1
-        return h_val
+        return <int64_t>(h_val ^ (h_val >> 32))
 
     def __hash__(self):
         if self._h_val == 0:
