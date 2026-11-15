@@ -1272,6 +1272,11 @@ class TestFrozen:
         assert bm1.get_statistics() != bm2.get_statistics()
         assert hash(bm1) == hash(bm2)
 
+    def test_hash_spread(self) -> None:
+        tail = list(range(1000, 1040))
+        assert len({hash(FrozenBitMap([i] + tail)) for i in range(100)}) == 100
+        assert len({hash(FrozenBitMap([i, 999 - i])) for i in range(100)}) == 100
+
     def test_hash_eq_after_operations(self) -> None:
         """Testing that bitmaps have the same hash even when they have been obtained after some operations.
         Test for issue #129.
